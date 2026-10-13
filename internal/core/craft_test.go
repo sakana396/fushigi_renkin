@@ -3,10 +3,42 @@ package core
 import (
 	"errors"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/sakana396/fushigi_renkin/internal/defs"
 )
+
+func TestCraftSlotNumber(t *testing.T) {
+	herb := craftStack("herb", 40, 2)
+	water := craftStack("water", 31, 1)
+	for _, tt := range []struct {
+		name      string
+		selection Selection
+		reason    error
+		wantSlot  string
+	}{
+		{"TC-FR-ALC-02-05 一番目の枠は個数不足", craftSelection(nil, []Stack{water}), ErrInvalidCount, "入力枠 1"},
+		{"TC-FR-ALC-02-05 二番目の枠は個数不足", craftSelection([]Stack{herb}, nil), ErrInvalidCount, "入力枠 2"},
+		{"TC-FR-ALC-02-05 二番目の枠は品質不正", craftSelection([]Stack{herb}, []Stack{craftStack("water", 0, 1)}), ErrInvalidQuality, "入力枠 2"},
+		{"TC-FR-ALC-02-05 二番目の枠は種類不適合", craftSelection([]Stack{herb}, []Stack{craftStack("herb", 40, 1)}), ErrInvalidSelection, "入力枠 2"},
+		{"TC-FR-ALC-02-05 二番目の枠は個数不正", craftSelection([]Stack{herb}, []Stack{craftStack("water", 31, 0)}), ErrInvalidCount, "入力枠 2"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			w := NewWorld(craftCatalog(), 1)
+			w.Inventory.Add(herb.Key, herb.Count)
+			w.Inventory.Add(water.Key, water.Count)
+			before := w.Inventory.Stacks()
+			_, err := w.Craft("potion", tt.selection)
+			if !errors.Is(err, tt.reason) || !strings.Contains(err.Error(), tt.wantSlot) {
+				t.Fatalf("error = %v", err)
+			}
+			if !reflect.DeepEqual(before, w.Inventory.Stacks()) {
+				t.Fatal("失敗後に在庫が変化")
+			}
+		})
+	}
+}
 
 func craftCatalog() defs.Catalog {
 	return defs.Catalog{

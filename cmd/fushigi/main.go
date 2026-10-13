@@ -16,7 +16,7 @@ import (
 func main() {
 	catalog, err := defload.Load(data.Base)
 	if err != nil {
-		fmt.Fprintln(os.Stderr, "本体の定義データに誤りがあります:\n"+err.Error())
+		reportDataError(fmt.Sprintf("本体の定義データに誤りがあります:\n%s", err))
 		os.Exit(1)
 	}
 	if err := ui.Run(core.NewWorld(catalog, 1), catalog); err != nil {

@@ -9,7 +9,8 @@ func (w *World) Gather(gatherID string) ([]Stack, error) {
 		return nil, fmt.Errorf("採取地 %s: %w", gatherID, ErrUnknownID)
 	}
 	if ready, used := w.gatherReady[gatherID]; used && w.Now < ready {
-		return nil, ErrGatherCooldown
+		remaining := ready - w.Now
+		return nil, fmt.Errorf("残り %d 秒: %w", 1+(remaining-1)/60, ErrGatherCooldown)
 	}
 	if site.Rolls <= 0 || site.CooldownSeconds < 0 || len(site.Drops) == 0 {
 		return nil, ErrInvalidCount

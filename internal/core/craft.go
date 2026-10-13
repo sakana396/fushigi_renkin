@@ -66,27 +66,27 @@ func (w *World) planCraft(recipeID string, selection Selection) (craftPlan, erro
 		total := 0
 		for _, stack := range selection.Slots[idx] {
 			if stack.Count <= 0 || stack.Count > maxInt-total {
-				return craftPlan{}, fmt.Errorf("入力枠 %d の個数: %w", idx, ErrInvalidCount)
+				return craftPlan{}, fmt.Errorf("入力枠 %d の個数: %w", idx+1, ErrInvalidCount)
 			}
 			item, found := w.catalog.Item(stack.Key.ItemID)
 			if !found {
 				return craftPlan{}, fmt.Errorf("アイテム %q: %w", stack.Key.ItemID, ErrUnknownID)
 			}
 			if stack.Key.Quality < 1 || stack.Key.Quality > 200 {
-				return craftPlan{}, fmt.Errorf("入力枠 %d の品質: %w", idx, ErrInvalidQuality)
+				return craftPlan{}, fmt.Errorf("入力枠 %d の品質: %w", idx+1, ErrInvalidQuality)
 			}
 			if slot.Item != "" && stack.Key.ItemID != slot.Item || slot.Attribute != "" && !hasAttribute(item, slot.Attribute) {
-				return craftPlan{}, fmt.Errorf("入力枠 %d に %q は使えません: %w", idx, stack.Key.ItemID, ErrInvalidSelection)
+				return craftPlan{}, fmt.Errorf("入力枠 %d に %q は使えません: %w", idx+1, stack.Key.ItemID, ErrInvalidSelection)
 			}
 			if stack.Count > maxInt-consumed[stack.Key] {
-				return craftPlan{}, fmt.Errorf("入力枠 %d の合計個数: %w", idx, ErrInvalidCount)
+				return craftPlan{}, fmt.Errorf("入力枠 %d の合計個数: %w", idx+1, ErrInvalidCount)
 			}
 			consumed[stack.Key] += stack.Count
 			total += stack.Count
 			selected = append(selected, stack)
 		}
 		if total != slot.Count {
-			return craftPlan{}, fmt.Errorf("入力枠 %d の個数 %d (必要数 %d): %w", idx, total, slot.Count, ErrInvalidCount)
+			return craftPlan{}, fmt.Errorf("入力枠 %d の個数 %d (必要数 %d): %w", idx+1, total, slot.Count, ErrInvalidCount)
 		}
 	}
 	for key, count := range consumed {

@@ -72,13 +72,13 @@ func (w *World) AssignGolem(index int, assignment Assignment) error {
 		id := assignment.SlotItems[i]
 		item, ok := w.catalog.Item(id)
 		if !ok {
-			return fmt.Errorf("入力枠 %d の種類 %q: %w", i, id, ErrUnknownID)
+			return fmt.Errorf("入力枠 %d の種類 %q: %w", i+1, id, ErrUnknownID)
 		}
 		if slot.Count <= 0 {
-			return fmt.Errorf("入力枠 %d の個数: %w", i, ErrInvalidCount)
+			return fmt.Errorf("入力枠 %d の個数: %w", i+1, ErrInvalidCount)
 		}
 		if slot.Item != "" && id != slot.Item || slot.Attribute != "" && !hasAttribute(item, slot.Attribute) {
-			return fmt.Errorf("入力枠 %d の種類 %q: %w", i, id, ErrInvalidSelection)
+			return fmt.Errorf("入力枠 %d の種類 %q: %w", i+1, id, ErrInvalidSelection)
 		}
 	}
 	selected := Assignment{RecipeID: assignment.RecipeID, SlotItems: append([]string(nil), assignment.SlotItems...)}
