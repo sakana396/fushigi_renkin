@@ -1,0 +1,10 @@
+# ビルド成果物
+/fushigi
+/fushigi.exe
+/bin/
+*.test
+*.out
+coverage.*
+
+# 個人用の Claude Code 設定
+.claude/settings.local.json
