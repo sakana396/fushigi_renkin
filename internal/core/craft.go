@@ -75,7 +75,7 @@ func (w *World) planCraft(recipeID string, selection Selection) (craftPlan, erro
 			if stack.Key.Quality < 1 || stack.Key.Quality > 200 {
 				return craftPlan{}, fmt.Errorf("入力枠 %d の品質: %w", idx+1, ErrInvalidQuality)
 			}
-			if slot.Item != "" && stack.Key.ItemID != slot.Item || slot.Attribute != "" && !hasAttribute(item, slot.Attribute) {
+			if !slotAcceptsItem(slot, stack.Key.ItemID, item) {
 				return craftPlan{}, fmt.Errorf("入力枠 %d に %q は使えません: %w", idx+1, stack.Key.ItemID, ErrInvalidSelection)
 			}
 			if stack.Count > maxInt-consumed[stack.Key] {
@@ -127,6 +127,33 @@ func (w *World) planCraft(recipeID string, selection Selection) (craftPlan, erro
 		return craftPlan{}, fmt.Errorf("出力後の個数: %w", ErrInvalidCount)
 	}
 	return craftPlan{output: output, consumed: consumed, preview: CraftPreview{AverageQuality: average, Quality: output.Key.Quality, Bonuses: bonuses}}, nil
+}
+
+// SlotCandidates は指定した入力枠に合う在庫を種類・品質順に返す（DES-ALC-04）。
+func (w *World) SlotCandidates(recipeID string, slotIndex int) ([]Stack, error) {
+	recipe, ok := w.catalog.Recipe(recipeID)
+	if !ok {
+		return nil, fmt.Errorf("レシピ %q: %w", recipeID, ErrUnknownID)
+	}
+	if slotIndex < 0 {
+		return nil, fmt.Errorf("入力枠の番号: %w", ErrUnknownID)
+	}
+	if slotIndex >= len(recipe.Inputs) {
+		return nil, fmt.Errorf("入力枠 %d: %w", slotIndex+1, ErrUnknownID)
+	}
+	var candidates []Stack
+	for _, stack := range w.Inventory.Stacks() {
+		item, ok := w.catalog.Item(stack.Key.ItemID)
+		if ok && slotAcceptsItem(recipe.Inputs[slotIndex], stack.Key.ItemID, item) {
+			candidates = append(candidates, stack)
+		}
+	}
+	return candidates, nil
+}
+
+// slotAcceptsItem は入力枠のアイテムまたは属性の条件を判定する（DES-ALC-04）。
+func slotAcceptsItem(slot defs.InputSlot, itemID string, item defs.ItemDef) bool {
+	return (slot.Item == "" || itemID == slot.Item) && (slot.Attribute == "" || hasAttribute(item, slot.Attribute))
 }
 
 // hasAttribute は定義された属性をアイテムが持つか調べる（DES-DEF-02、DES-QLT-03）。
