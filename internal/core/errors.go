@@ -10,3 +10,6 @@ var (
 	ErrInvalidCount   = errors.New("個数が正しくありません")
 	ErrInvalidQuality = errors.New("品質は 1〜200 で指定してください")
 )
+
+// ErrInvalidSelection は入力枠の条件に合わない素材を表す（DES-ALC-02）。
+var ErrInvalidSelection = errors.New("入力枠の条件に合わない素材です")
