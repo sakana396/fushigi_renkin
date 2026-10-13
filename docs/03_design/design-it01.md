@@ -1,7 +1,7 @@
 # 設計書（反復 1: プロトタイプ）
 
 - 文書 ID: DES-IT01
-- 版: 0.1（承認、REV-002）
+- 版: 0.2（承認、REV-003）
 - 作成日: 2026-10-14
 - 対象: [反復 1 計画書](../iterations/it01/plan.md) の範囲
 - 入力: [SRS-001](../02_requirements/srs.md) v0.1、[ユースケース](../02_requirements/use-cases.md)、[ADR-0001](../adr/0001-tech-stack.md)、[ADR-0002](../adr/0002-definition-data-format.md)
@@ -52,11 +52,11 @@ flowchart TB
 classDiagram
   class Catalog {
     +Game GameDef
-    +Item(id) ItemDef
-    +Recipe(id) RecipeDef
-    +Gather(id) GatherDef
-    +Golem(id) GolemDef
-    +Facility(id) FacilityDef
+    +Item(id) ItemDef, bool
+    +Recipe(id) RecipeDef, bool
+    +Gather(id) GatherDef, bool
+    +Golem(id) GolemDef, bool
+    +Facility(id) FacilityDef, bool
   }
   class GameDef {
     +StartMoney int
@@ -125,6 +125,10 @@ classDiagram
     +Kind string
     +Value int
   }
+  class ItemAmount {
+    +Item string
+    +Count int
+  }
   Catalog --> GameDef
   Catalog --> "*" ItemDef
   Catalog --> "*" RecipeDef
@@ -137,10 +141,14 @@ classDiagram
   GatherDef --> "1..*" Drop
   FacilityDef --> "1..*" FacilityLevel
   FacilityLevel --> "*" Effect
+  GolemDef --> "1..*" ItemAmount
+  FacilityLevel --> "*" ItemAmount
 ```
 
 - **入力枠（InputSlot）** は、`Item`（特定のアイテム）か `Attribute`（その属性を持つ任意のアイテム）の**どちらか一方**を指定する（DES-DEF-01）
 - 属性は、アイテムの種類ごとに固定する（DES-DEF-02）。個体ごとに変えると、同じ種類・同じ品質をまとめて数える規則（FR-ITM-03）が成り立たなくなるため
+- 目録（Catalog）の検索は、定義と「見つかったか」の 2 つを返す。存在しない ID を渡したときに、呼び出し側が `ErrUnknownID` などの誤りを返せるようにするため（DES-DEF-04）
+- **ItemAmount** は、アイテムの種類と個数の組。ゴーレムや施設の材料に使い、品質は問わない（DES-GOL-06）
 - 効果（Effect）の種類は、コードで決めた固定の一覧から選ぶ（DES-DEF-03）。反復 1 では次の 2 つ
 
 | Kind | 意味 |
@@ -407,3 +415,10 @@ sequenceDiagram
 | DES-GOL-04 | ゴーレムは品質の低い素材から使う |
 | DES-ECO-01 | 売値の式 |
 | DES-GAT-01 | 採取は即時で、再使用待ちがある |
+
+## 7. 変更履歴
+
+| 版 | 日付 | 内容 |
+|---|---|---|
+| 0.1 | 2026-10-14 | 初版（REV-002 で承認） |
+| 0.2 | 2026-10-14 | 目録の検索の戻り値に「見つかったか」を追加（DES-DEF-04）、ItemAmount を明記（REV-003） |
