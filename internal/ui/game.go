@@ -258,7 +258,7 @@ func (g *Game) drawShop(dst *ebiten.Image) {
 	g.box(dst, x, y, w, 175, "店（クリックで指定数購入）")
 	for i, offer := range g.catalog.Game.Shop {
 		index := i
-		title := fmt.Sprintf("%s Q%d   %d 円×%d", g.itemName(offer.Item), offer.Quality, offer.Price, g.quantity)
+		title := fmt.Sprintf("%s Q%d   %d 円×%d = %d 円", g.itemName(offer.Item), offer.Quality, offer.Price, g.quantity, offer.Price*g.quantity)
 		g.button(dst, x+8, y+33+i*30, w-16, 27, title, false, func() { g.result("購入しました", g.world.Buy(index, g.quantity)) })
 	}
 }

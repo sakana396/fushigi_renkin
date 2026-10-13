@@ -3,10 +3,37 @@ package core
 import (
 	"errors"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/sakana396/fushigi_renkin/internal/defs"
 )
+
+func TestGolemAssignmentSlotNumber(t *testing.T) {
+	for _, tt := range []struct {
+		name     string
+		items    []string
+		want     error
+		wantSlot string
+	}{
+		{"TC-FR-GOL-02-04 一番目の枠は未知の種類", []string{"missing", "water"}, ErrUnknownID, "入力枠 1"},
+		{"TC-FR-GOL-02-04 二番目の枠は未知の種類", []string{"herb", "missing"}, ErrUnknownID, "入力枠 2"},
+		{"TC-FR-GOL-02-04 二番目の枠は不適合", []string{"herb", "herb"}, ErrInvalidSelection, "入力枠 2"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			w := NewWorld(golemCatalog(), 1)
+			buildWorker(t, w)
+			before := w.Golems[0]
+			err := w.AssignGolem(0, Assignment{RecipeID: "potion", SlotItems: tt.items})
+			if !errors.Is(err, tt.want) || !strings.Contains(err.Error(), tt.wantSlot) {
+				t.Fatalf("error = %v", err)
+			}
+			if !reflect.DeepEqual(before, w.Golems[0]) {
+				t.Fatal("失敗後にゴーレムが変化")
+			}
+		})
+	}
+}
 
 func golemCatalog() defs.Catalog {
 	c := craftCatalog()

@@ -3,6 +3,7 @@ package core
 import (
 	"errors"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/sakana396/fushigi_renkin/internal/defs"
@@ -111,6 +112,42 @@ func TestGather(t *testing.T) {
 			t.Fatal("失敗後に再使用待ちが設定された")
 		}
 	})
+}
+
+func TestGatherCooldownRemaining(t *testing.T) {
+	for _, tt := range []struct {
+		name    string
+		seconds int
+		ticks   int
+		want    string
+	}{
+		{"TC-FR-MAT-01-07 開始直後は二秒", 2, 0, "残り 2 秒"},
+		{"TC-FR-MAT-01-07 一 tick 後も切り上げ", 2, 1, "残り 2 秒"},
+		{"TC-FR-MAT-01-07 一秒経過後は一秒", 2, 60, "残り 1 秒"},
+		{"TC-FR-MAT-01-07 終了直前も一秒", 2, 119, "残り 1 秒"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			catalog := economyCatalog()
+			site := catalog.Gathers["field"]
+			site.CooldownSeconds = tt.seconds
+			catalog.Gathers["field"] = site
+			w := NewWorld(catalog, 1)
+			if _, err := w.Gather("field"); err != nil {
+				t.Fatal(err)
+			}
+			before := w.Inventory.Stacks()
+			for i := 0; i < tt.ticks; i++ {
+				w.Tick()
+			}
+			_, err := w.Gather("field")
+			if !errors.Is(err, ErrGatherCooldown) || !strings.Contains(err.Error(), tt.want) {
+				t.Fatalf("error = %v", err)
+			}
+			if !reflect.DeepEqual(before, w.Inventory.Stacks()) {
+				t.Fatal("再使用待ちで在庫が変化")
+			}
+		})
+	}
 }
 
 func TestBuy(t *testing.T) {
