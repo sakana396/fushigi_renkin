@@ -48,6 +48,13 @@
 
 | ID | 対象 | 前提 | 入力・操作 | 期待結果 | 種別 |
 |---|---|---|---|---|---|
+| TC-FR-ALC-08-01 | FR-ALC-08、DES-ALC-04 | 草属性の入力枠。薬草と雑草を品質違いで在庫に持つ | `SlotCandidates("potion", 0)` | 草属性を持つ在庫だけをアイテム ID、品質の昇順で返し、在庫は変わらない | 正常 |
+| TC-FR-ALC-08-02 | FR-ALC-08、DES-ALC-04 | 水を複数品質、ほかの種類も在庫に持つ | `SlotCandidates("potion", 1)` | 水の在庫だけを品質の昇順で返す | 正常 |
+| TC-FR-ALC-08-03 | FR-ALC-08、DES-ALC-04 | 入力枠に合う在庫がない | `SlotCandidates("potion", 0)` | 空の候補と誤りなしを返す | 境界 |
+| TC-FR-ALC-08-04 | FR-ALC-08、DES-ALC-04 | 入力枠が 2 個のレシピ | 枠番号 -1 または 2 を指定 | `ErrUnknownID` を返し、誤り文の枠番号は 1 始まり | 異常 |
+| TC-FR-ALC-08-05 | FR-ALC-08、DES-ALC-04 | 未知のレシピ ID | `SlotCandidates("missing", 0)` | `ErrUnknownID` を返す | 異常 |
+| TC-FR-ALC-08-06 | FR-ALC-08、DES-ALC-04 | どちらの枠にも十分な在庫がある | 各枠の候補を 1 種類ずつ使って `Craft` する | どの候補もその枠の条件検査に通る | 正常 |
+| TC-FR-ALC-08-07 | FR-ALC-08、DES-ALC-04 | 同じ在庫が二つの枠に合い、在庫は 1 個だけ | `SlotCandidates` で両枠を照会 | 両方に同じ在庫が出る。選択中の個数は差し引かない | 境界 |
 
 ### FR-ITM-07 属性の表示
 
