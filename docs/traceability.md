@@ -30,5 +30,5 @@
 | FR-MOD-01 | #3 | DES-PKG-03, DES-PKG-06 | | | 未着手 |
 | FR-MOD-02 | #3, #8 | DES-PKG-03, DES-PKG-06 | | | 未着手 |
 | FR-MOD-04 | #3 | DES-VAL-01〜08 | | | 未着手 |
-| NFR-04 | #2 | DES-PKG-04 | | | 未着手 |
+| NFR-04 | #2 | DES-PKG-04 | TC-NFR-04-01〜03 | `internal/core/dependency_test.go`, `.github/workflows/ci.yml` | 実装済み |
 | NFR-06 | #4, #7 | DES-TIME-01, DES-GOL-05 | | | 未着手 |
