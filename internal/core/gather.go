@@ -1,6 +1,10 @@
 package core
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/sakana396/fushigi_renkin/internal/defs"
+)
 
 // Gather は重み付きで素材を抽選し、品質を一様に決める（DES-GAT-01、DES-GAT-02、DES-WLD-01）。
 func (w *World) Gather(gatherID string) ([]Stack, error) {
@@ -12,6 +16,23 @@ func (w *World) Gather(gatherID string) ([]Stack, error) {
 		remaining := ready - w.Now
 		return nil, fmt.Errorf("残り %d 秒: %w", 1+(remaining-1)/60, ErrGatherCooldown)
 	}
+	cooldown := uint64(site.CooldownSeconds) * 60
+	if site.CooldownSeconds < 0 || cooldown/60 != uint64(site.CooldownSeconds) || w.Now > ^uint64(0)-cooldown {
+		return nil, ErrInvalidCount
+	}
+	stacks, err := w.gatherIntoInventory(site)
+	if err != nil {
+		return nil, err
+	}
+	if w.gatherReady == nil {
+		w.gatherReady = make(map[string]uint64)
+	}
+	w.gatherReady[gatherID] = w.Now + cooldown
+	return stacks, nil
+}
+
+// gatherIntoInventory は共通の抽選を行い、失敗時は在庫と乱数を保つ（DES-GAT-01、DES-GAT-03、DES-WLD-01）。
+func (w *World) gatherIntoInventory(site defs.GatherDef) ([]Stack, error) {
 	if site.Rolls <= 0 || site.CooldownSeconds < 0 || len(site.Drops) == 0 {
 		return nil, ErrInvalidCount
 	}
@@ -28,10 +49,6 @@ func (w *World) Gather(gatherID string) ([]Stack, error) {
 			return nil, ErrInvalidQuality
 		}
 		total += drop.Weight
-	}
-	cooldown := uint64(site.CooldownSeconds) * 60
-	if cooldown/60 != uint64(site.CooldownSeconds) || w.Now > ^uint64(0)-cooldown {
-		return nil, ErrInvalidCount
 	}
 	rngState, err := w.rngSource.MarshalBinary()
 	if err != nil {
@@ -63,9 +80,5 @@ func (w *World) Gather(gatherID string) ([]Stack, error) {
 		}
 	}
 	w.Inventory = trial
-	if w.gatherReady == nil {
-		w.gatherReady = make(map[string]uint64)
-	}
-	w.gatherReady[gatherID] = w.Now + cooldown
 	return stacks, nil
 }
