@@ -29,6 +29,8 @@
 | FR-GOL-06 | #7 | DES-TIME-01, DES-GOL-05 | TC-FR-GOL-06-01〜03 | `internal/core/world.go`, `internal/core/golem.go` | 実装済み |
 | FR-MOD-01 | #3 | DES-PKG-03, DES-PKG-06 | TC-FR-MOD-01-01〜03 | `internal/defload/load.go` | 実装済み |
 | FR-MOD-02 | #3, #8 | DES-PKG-03, DES-PKG-06 | TC-FR-MOD-02-01〜05 | `internal/defload/load.go`, `data/base.go`, `data/base/*.toml` | 実装済み |
-| FR-MOD-04 | #3 | DES-VAL-01〜08 | TC-FR-MOD-04-01〜09 | `internal/defload/load.go` | 実装済み |
+| FR-MOD-04 | #3, #9 | DES-VAL-01〜08, DES-PKG-01 | TC-FR-MOD-04-01〜10 | `internal/defload/load.go`, `cmd/fushigi/main.go` | 実装済み（#9 の起動時表示は手動確認待ち） |
 | NFR-04 | #2 | DES-PKG-04 | TC-NFR-04-01〜03 | `internal/core/dependency_test.go`, `.github/workflows/ci.yml` | 実装済み |
 | NFR-06 | #4, #7 | DES-TIME-01, DES-GOL-05 | TC-NFR-06-01〜04 | `internal/core/world.go`, `internal/core/golem.go` | 実装済み（反復 1 の自動生産） |
+| IF-01 | #9 | DES-PKG-05、DES-IT01 4 章、DES-TIME-01 | TC-IF-01-01〜09（手動） | `internal/ui/game.go`, `cmd/fushigi/main.go` | 実装済み（実機確認待ち） |
+| IF-02 | #9 | DES-PKG-05、DES-IT01 4 章 | TC-IF-02-01（手動） | `internal/ui/game.go` | 実装済み（実機確認待ち） |
