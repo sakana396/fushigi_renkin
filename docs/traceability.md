@@ -1,7 +1,7 @@
 # トレーサビリティマトリクス
 
 - 文書 ID: TRC-001
-- 対象: 反復 1（IT01）の範囲。反復ごとに行を追加する
+- 対象: 反復 1（IT01）〜反復 2（IT02）の範囲。反復ごとに行を追加する
 
 要求から設計・テスト・実装までの対応を表す。実装の担当者（エージェントを含む）は、自分が担当した要求の行だけを更新する。
 
@@ -36,3 +36,6 @@
 | IF-01 | #9, #21, #24 | DES-PKG-05、DES-IT01 4 章、DES-TIME-01 | TC-IF-01-01〜10（手動） | `internal/ui/game.go`, `internal/ui/cheat.go`, `cmd/fushigi/main.go` | 実装済み。マウスで UC-01〜08 を操作できる。キーボードはテスト用のチート（F11、F12）だけ |
 | IF-02 | #9 | DES-PKG-05、DES-IT01 4 章 | TC-IF-02-01（手動） | `internal/ui/game.go` | 実装済み |
 | QA-02 | — | tools/tccheck | TC-QA-02-01〜04 | `tools/tccheck`、CI | 実装済み |
+| FR-GOL-04 | #29, #31, #33 | DES-GOL-07, DES-GOL-08, DES-GOL-09, DES-GAT-03, DES-UI-04 |  |  | 未着手 |
+| FR-ALC-08 | #30, #32 | DES-ALC-04, DES-UI-01, DES-UI-03 |  |  | 未着手 |
+| FR-ITM-07 | #32 | DES-ITM-01, DES-UI-02 |  |  | 未着手 |
