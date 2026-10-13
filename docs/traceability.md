@@ -17,12 +17,12 @@
 | FR-ITM-03 | #4 | DES-INV-01 | TC-FR-ITM-03-01〜07 | `internal/core/inventory.go` | 実装済み |
 | FR-ITM-04 | #4, #7 | DES-QLT-01, DES-QLT-04 | TC-FR-ITM-04-01〜05 | `internal/core/quality.go` | 一部実装（自動生産への接続は #7） |
 | FR-ITM-05 | #5 | DES-QLT-02, DES-QLT-04 | TC-FR-ITM-05-01〜03 | `internal/core/craft.go`, `internal/core/quality.go` | 一部実装（手作りの製品生成まで。自動生産は #7） |
-| FR-MAT-01 | #6 | DES-GAT-01, DES-GAT-02 | | | 未着手 |
-| FR-MAT-02 | #6 | DES-ECO-02 | | | 未着手 |
-| FR-ECO-01 | #6 | DES-ECO-01 | | | 未着手 |
-| FR-ECO-02 | #6 | DES-ECO-01 | | | 未着手 |
-| FR-ECO-04 | #6 | World.Buy, World.BuildFacility | | | 未着手 |
-| FR-TWN-02 | #6 | DES-TWN-01, DES-TWN-02 | | | 未着手 |
+| FR-MAT-01 | #6 | DES-GAT-01, DES-GAT-02 | TC-FR-MAT-01-01〜06 | `internal/core/gather.go` | 実装済み |
+| FR-MAT-02 | #6 | DES-ECO-02 | TC-FR-MAT-02-01〜03 | `internal/core/economy.go` | 実装済み |
+| FR-ECO-01 | #6 | DES-ECO-01 | TC-FR-ECO-01-01〜03 | `internal/core/economy.go` | 実装済み |
+| FR-ECO-02 | #6 | DES-ECO-01 | TC-FR-ECO-02-01〜03 | `internal/core/economy.go` | 実装済み |
+| FR-ECO-04 | #6 | World.Buy, World.BuildFacility | TC-FR-ECO-04-01〜03 | `internal/core/economy.go` | 実装済み |
+| FR-TWN-02 | #6 | DES-TWN-01, DES-TWN-02 | TC-FR-TWN-02-01〜03 | `internal/core/economy.go`, `internal/core/world.go` | 実装済み |
 | FR-GOL-01 | #7 | World.BuildGolem, DES-GOL-06 | | | 未着手 |
 | FR-GOL-02 | #7 | DES-GOL-01, DES-GOL-03, DES-GOL-04 | | | 未着手 |
 | FR-GOL-03 | #7 | DES-GOL-01, DES-GOL-03, DES-GOL-04 | | | 未着手 |
