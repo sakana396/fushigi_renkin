@@ -92,7 +92,7 @@ func (w *World) AssignGolem(index int, assignment Assignment) error {
 		if slot.Count <= 0 {
 			return fmt.Errorf("入力枠 %d の個数: %w", i+1, ErrInvalidCount)
 		}
-		if slot.Item != "" && id != slot.Item || slot.Attribute != "" && !hasAttribute(item, slot.Attribute) {
+		if !slotAcceptsItem(slot, id, item) {
 			return fmt.Errorf("入力枠 %d の種類 %q: %w", i+1, id, ErrInvalidSelection)
 		}
 	}
