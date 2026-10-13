@@ -18,6 +18,7 @@
 | 設計 | 設計書（反復 2）: 自動採取・錬金の素材選び・画面 | [03_design/design-it02.md](03_design/design-it02.md) | v0.2 承認 |
 | 設計 | 定義データ形式 ADR | [adr/0002-definition-data-format.md](adr/0002-definition-data-format.md) | 承認 |
 | 試験 | テスト仕様書（反復 1） | [04_test/test-spec-it01.md](04_test/test-spec-it01.md) | 雛形 |
+| 試験 | テスト仕様書（反復 2） | [04_test/test-spec-it02.md](04_test/test-spec-it02.md) | 雛形 |
 | 横断 | トレーサビリティマトリクス | [traceability.md](traceability.md) | 反復 1 の行を用意 |
 | 横断 | レビュー記録 | [reviews/](reviews/) | 記録中 |
 
