@@ -1,0 +1,95 @@
+[[item]]
+id = "wheat"
+name = "小麦"
+attributes = ["穀物", "太陽"]
+base_price = 6
+
+[[item]]
+id = "water"
+name = "水"
+attributes = ["水", "清浄"]
+base_price = 3
+
+[[item]]
+id = "milk"
+name = "牛乳"
+attributes = ["乳", "まろやか"]
+base_price = 10
+
+[[item]]
+id = "meat"
+name = "肉"
+attributes = ["肉", "活力"]
+base_price = 16
+
+[[item]]
+id = "herb"
+name = "薬草"
+attributes = ["草", "癒し", "香り"]
+base_price = 8
+
+[[item]]
+id = "ore"
+name = "鉄鉱石"
+attributes = ["鉱石", "硬質"]
+base_price = 10
+
+[[item]]
+id = "glow_moss"
+name = "ひかり苔"
+attributes = ["草", "発光"]
+base_price = 12
+
+[[item]]
+id = "flour"
+name = "小麦粉"
+attributes = ["穀物", "粉"]
+base_price = 12
+
+[[item]]
+id = "bread"
+name = "パン"
+attributes = ["穀物", "香り"]
+base_price = 22
+
+[[item]]
+id = "cheese"
+name = "チーズ"
+attributes = ["乳", "まろやか"]
+base_price = 25
+
+[[item]]
+id = "burger"
+name = "ハンバーガー"
+attributes = ["活力", "香り"]
+base_price = 55
+
+[[item]]
+id = "deluxe_burger"
+name = "ごちそうバーガー"
+attributes = ["活力", "癒し", "香り"]
+base_price = 110
+
+[[item]]
+id = "potion"
+name = "回復薬"
+attributes = ["癒し", "清浄"]
+base_price = 28
+
+[[item]]
+id = "tonic"
+name = "元気の薬"
+attributes = ["活力", "癒し"]
+base_price = 48
+
+[[item]]
+id = "glow_crystal"
+name = "ひかり結晶"
+attributes = ["発光", "鉱石"]
+base_price = 42
+
+[[item]]
+id = "lantern"
+name = "ひかりランタン"
+attributes = ["発光", "道具"]
+base_price = 70
