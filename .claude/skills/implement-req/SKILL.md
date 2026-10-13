@@ -82,13 +82,20 @@ git push -u origin HEAD
 gh pr create --base main --title "<要約>" --body "<AGENTS.md の形式>"
 ```
 
-3. マージはしない
+3. マージはまだしない（手順 8 で判断する）
 
-## 8. 報告
+## 8. レビューとマージ
+
+1. CI の結果を待つ: `gh pr checks <番号> --watch`。失敗したら直して push し直す
+2. 実装者とは別のエージェントにレビューを頼む（例: 実装が Codex なら Claude Code）。人がいる場合は人でもよい。指摘に対応し、`docs/reviews/REV-<連番>-issue<番号>.md` に記録する
+3. AGENTS.md の「自動マージの条件」をすべて確かめる。特に、`git diff --name-only origin/main...HEAD` に `docs/01_concept/`、`docs/02_requirements/`、`docs/03_design/`、`docs/adr/` が含まれるなら、人の承認がレビュー記録にあるかを確かめる
+4. 条件を満たせば `gh pr merge <番号> --merge` でマージする。満たさなければマージせず、理由を報告する
+
+## 9. 報告
 
 人に次を短く報告する。
 
 - 対象の Issue 番号、実装した ID、追加したテストケースの数
 - 検証コマンドの結果
-- プルリクエストの URL
+- プルリクエストの URL と、マージしたかどうか（しなかった場合はその理由）
 - 設計への提案や、未解決の点（あれば）
