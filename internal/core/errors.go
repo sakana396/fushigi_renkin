@@ -4,6 +4,7 @@ import "errors"
 
 // 状態変更の失敗理由を表す誤り（DES-WLD-01）。
 var (
+	ErrNoGolemSlots     = errors.New("ゴーレムの所有枠がありません")
 	ErrNotEnoughItems   = errors.New("アイテムが足りません")
 	ErrNotEnoughMoney   = errors.New("お金が足りません")
 	ErrUnknownID        = errors.New("ID が見つかりません")

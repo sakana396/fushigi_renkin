@@ -12,6 +12,7 @@ type World struct {
 	rng         *rand.Rand
 	rngSource   *rand.PCG
 	Inventory   Inventory
+	Golems      []Golem
 	Money       int
 	Now         uint64
 	Facilities  map[string]int
@@ -25,4 +26,9 @@ func NewWorld(catalog defs.Catalog, seed uint64) *World {
 }
 
 // Tick はゲーム内時刻を 1 tick 進める（DES-TIME-01）。
-func (w *World) Tick() { w.Now++ }
+func (w *World) Tick() {
+	w.Now++
+	for i := range w.Golems {
+		w.stepGolem(i)
+	}
+}
