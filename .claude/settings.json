@@ -22,6 +22,8 @@
       "Bash(gh pr create *)",
       "Bash(gh pr view *)",
       "Bash(gh pr list *)",
+      "Bash(gh pr checks *)",
+      "Bash(gh pr merge * --merge)",
       "Bash(gh issue view *)",
       "Bash(gh issue list *)"
     ],
@@ -29,8 +31,7 @@
       "Bash(git push --force*)",
       "Bash(git push -f*)",
       "Bash(git push * --force*)",
-      "Bash(git push * -f*)",
-      "Bash(gh pr merge *)"
+      "Bash(git push * -f*)"
     ]
   },
   "hooks": {
