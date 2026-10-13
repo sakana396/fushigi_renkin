@@ -117,17 +117,19 @@ func TestGolemGatherRules(t *testing.T) {
 	t.Run("TC-FR-GOL-04-06 プレイヤーの再使用待ちに干渉しない", func(t *testing.T) {
 		w := NewWorld(golemGatherCatalog(), 1)
 		buildWorker(t, w)
+		assignMeadow(t, w, 0)
+		runTicks(w, 100)
+		// プレイヤーの再使用待ちは 820 tick まで続く。ゴーレムは 720 回目の Tick() で採取する。
 		if _, err := w.Gather("meadow"); err != nil {
 			t.Fatal(err)
 		}
 		ready := w.gatherReady["meadow"]
-		assignMeadow(t, w, 0)
-		runTicks(w, 720)
-		if inventoryTotal(w) != 6 || w.gatherReady["meadow"] != ready {
+		runTicks(w, 620)
+		if inventoryTotal(w) != 6 || w.gatherReady["meadow"] != ready || ready != 820 {
 			t.Fatalf("採取または再使用待ち: %v %v", w.Inventory.Stacks(), w.gatherReady)
 		}
-		if _, err := w.Gather("meadow"); err != nil {
-			t.Fatalf("プレイヤーが採取できない: %v", err)
+		if _, err := w.Gather("meadow"); !errors.Is(err, ErrGatherCooldown) {
+			t.Fatalf("プレイヤーの再使用待ちが続いていない: %v", err)
 		}
 	})
 	t.Run("TC-FR-GOL-04-07 在庫あふれで次 tick に再試行 / TC-NFR-06-06 乱数を戻す", func(t *testing.T) {
