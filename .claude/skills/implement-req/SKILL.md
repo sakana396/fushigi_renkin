@@ -1,14 +1,20 @@
 ---
 name: implement-req
-description: 要求 ID（FR-/NFR-）または設計 ID（DES-）を指定して、設計書どおりに実装し、テスト・文書の更新・プルリクエスト作成まで行う。「FR-ITM-04 を実装して」「DES-GOL-01 をやって」のような依頼で使う。
-argument-hint: "<要求IDまたは設計ID> [...]"
+description: GitHub Issue 番号、または要求 ID（FR-/NFR-）・設計 ID（DES-）を指定して、設計書どおりに実装し、テスト・文書の更新・プルリクエスト作成まで行う。「#4 をやって」「Issue 5 を実装して」「FR-ITM-04 を実装して」のような依頼で使う。
+argument-hint: "<#Issue番号 | 要求ID | 設計ID> [...]"
 ---
 
-# 要求 ID を指定した実装
+# Issue・要求 ID を指定した実装
 
 対象: $ARGUMENTS
 
 AGENTS.md のルールに従う。以下の手順を順に行い、各段階で問題があれば止めて人に報告する。
+
+## 0. Issue の確認（Issue 番号が指定されたとき）
+
+1. `gh issue view <番号>` で Issue を読み、「対象」（要求・設計・ユースケース）、「作業内容」、「作らないもの」、「依存」を把握する。以降の手順の対象 ID は Issue の「対象」に書かれたものとする
+2. 「依存」の Issue がすべて閉じているか `gh issue view <依存の番号> --json state` で確かめる。**閉じていないものがあれば着手せずに報告する**
+3. 要求 ID だけが指定されたときは、`docs/traceability.md` の Issue 列から該当の Issue を探し、あればその Issue として扱う
 
 ## 1. 範囲の確認
 
@@ -20,8 +26,11 @@ AGENTS.md のルールに従う。以下の手順を順に行い、各段階で�
 ## 2. ブランチの作成
 
 ```sh
-git switch -c it<反復番号>/<短い説明>
+git fetch origin
+git switch -c it<反復番号>/<Issue 番号>-<短い説明> origin/main
 ```
+
+例: `it01/4-inventory`。依存の Issue のマージ結果を取り込むため、最新の `origin/main` から切る。
 
 すでに作業用のブランチにいる場合は、そのまま使う。
 
@@ -53,7 +62,7 @@ go test ./...
 ## 6. 文書の更新
 
 1. テスト仕様書: 追加・変更したテストケース
-2. トレーサビリティマトリクス（`docs/traceability.md`）: 対象の要求の行に、設計 ID・テストケース ID・実装したファイル（パッケージ）を書く。他の行は触らない
+2. トレーサビリティマトリクス（`docs/traceability.md`）: 対象の要求の行に、テストケース ID・実装したファイル（パッケージ）・状態（「実装済み」）を書く。他の行は触らない
 3. 設計書・SRS は変更しない（変更が必要なら「設計への提案」に書く）
 
 ## 7. コミットとプルリクエスト
@@ -66,7 +75,7 @@ feat: 在庫の積み上げと平均品質の計算を実装
 FR-ITM-03, FR-ITM-04 / DES-INV-01, DES-QLT-01
 ```
 
-2. push してプルリクエストを作る。説明は AGENTS.md の形式に従う
+2. push してプルリクエストを作る。説明は AGENTS.md の形式に従い、先頭に `Closes #<Issue 番号>` を書く（マージで Issue が自動で閉じる）
 
 ```sh
 git push -u origin HEAD
@@ -79,7 +88,7 @@ gh pr create --base main --title "<要約>" --body "<AGENTS.md の形式>"
 
 人に次を短く報告する。
 
-- 実装した ID と、追加したテストケースの数
+- 対象の Issue 番号、実装した ID、追加したテストケースの数
 - 検証コマンドの結果
 - プルリクエストの URL
 - 設計への提案や、未解決の点（あれば）
