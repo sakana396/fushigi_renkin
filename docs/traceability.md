@@ -37,5 +37,5 @@
 | IF-02 | #9 | DES-PKG-05、DES-IT01 4 章 | TC-IF-02-01（手動） | `internal/ui/game.go` | 実装済み |
 | QA-02 | — | tools/tccheck | TC-QA-02-01〜04 | `tools/tccheck`、CI | 実装済み |
 | FR-GOL-04 | #29, #31, #33 | DES-GOL-07, DES-GOL-08, DES-GOL-09, DES-GAT-03, DES-UI-04 | TC-FR-GOL-04-01〜08 | `internal/core/golem.go`, `internal/core/gather.go` | 一部実装（#29 の core 自動採取） |
-| FR-ALC-08 | #30, #32 | DES-ALC-04, DES-UI-01, DES-UI-03 | TC-FR-ALC-08-01〜07 | `internal/core/craft.go`, `internal/core/golem.go` | core 実装済み（画面は #32） |
-| FR-ITM-07 | #32 | DES-ITM-01, DES-UI-02 |  |  | 未着手 |
+| FR-ALC-08 | #30, #32 | DES-ALC-04, DES-UI-01, DES-UI-03 | TC-FR-ALC-08-01〜07、TC-FR-ALC-08-20〜25（手動） | `internal/core/craft.go`, `internal/core/golem.go`, `internal/ui/game.go` | 実装済み（画面の手動確認待ち） |
+| FR-ITM-07 | #32 | DES-ITM-01, DES-UI-02 | TC-FR-ITM-07-01〜04（手動） | `internal/ui/game.go` | 実装済み（手動確認待ち） |

@@ -35,6 +35,7 @@ type Game struct {
 	selectedStack core.ItemKey
 	hasStack      bool
 	inventoryPage int
+	candidatePage int
 	recipePage    int
 	selectedGolem int
 	slotItems     []string
@@ -63,7 +64,9 @@ func (g *Game) Update() error {
 		for i := len(g.buttons) - 1; i >= 0; i-- {
 			b := g.buttons[i]
 			if x >= b.x && x < b.x+b.w && y >= b.y && y < b.y+b.h {
-				b.action()
+				if b.action != nil {
+					b.action()
+				}
 				break
 			}
 		}
@@ -105,6 +108,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	})
 	g.label(screen, 14, 35, g.message, white)
 	g.drawInventory(screen)
+	g.drawCandidates(screen)
 	g.drawShop(screen)
 	g.drawGather(screen)
 	g.drawFacilities(screen)
@@ -134,9 +138,14 @@ func (g *Game) button(dst *ebiten.Image, x, y, w, h int, title string, selected 
 	if selected {
 		ink = activeColor
 	}
+	if action == nil {
+		ink = panelColor
+	}
 	vector.DrawFilledRect(dst, float32(x), float32(y), float32(w), float32(h), ink, false)
 	g.label(dst, x+5, y+5, title, white)
-	g.buttons = append(g.buttons, button{x, y, w, h, action})
+	if action != nil {
+		g.buttons = append(g.buttons, button{x, y, w, h, action})
+	}
 }
 
 // result は状態変更の成功または失敗を画面に示す（DES-PKG-05、DES-WLD-01）。
@@ -156,6 +165,31 @@ func (g *Game) itemName(id string) string {
 	return id
 }
 
+// itemAttributes は定義データの属性を表示し、空なら属性なしとする（DES-ITM-01、DES-UI-02）。
+func (g *Game) itemAttributes(id string) string {
+	item, ok := g.catalog.Item(id)
+	if !ok || len(item.Attributes) == 0 {
+		return "属性なし"
+	}
+	return strings.Join(item.Attributes, "、")
+}
+
+// candidateRemaining は全入力枠の選択済み数を在庫数から差し引く（DES-UI-01）。
+func (g *Game) candidateRemaining(stack core.Stack) int {
+	remaining := stack.Count
+	for _, picked := range g.selection.Slots {
+		for _, used := range picked {
+			if used.Key == stack.Key {
+				remaining -= used.Count
+			}
+		}
+	}
+	if remaining < 0 {
+		return 0
+	}
+	return remaining
+}
+
 // keys は目録の ID を一定の順で一覧化する（DES-PKG-05）。
 func keys[T any](values map[string]T) []string {
 	ids := make([]string, 0, len(values))
@@ -166,12 +200,12 @@ func keys[T any](values map[string]T) []string {
 	return ids
 }
 
-// drawInventory は品質別の在庫、素材選択、売値と売却操作を表示する（DES-PKG-05、UC-03、UC-04）。
+// drawInventory は品質別の在庫と売却操作を表示する（DES-PKG-05、DES-UI-02、DES-UI-03、UC-04）。
 func (g *Game) drawInventory(dst *ebiten.Image) {
 	const x, y, w = 10, 70, 385
-	g.box(dst, x, y, w, 855, "在庫（クリックで錬金枠へ 1 個追加）")
+	g.box(dst, x, y, w, 555, "在庫（クリックで売る物を選択）")
 	stacks := g.world.Inventory.Stacks()
-	const rows = 27
+	const rows = 17
 	maxPage := 0
 	if len(stacks) > 0 {
 		maxPage = (len(stacks) - 1) / rows
@@ -182,34 +216,88 @@ func (g *Game) drawInventory(dst *ebiten.Image) {
 	for i := g.inventoryPage * rows; i < len(stacks) && i < (g.inventoryPage+1)*rows; i++ {
 		stack := stacks[i]
 		yy := y + 33 + (i%rows)*26
-		title := fmt.Sprintf("%s Q%d ×%d", g.itemName(stack.Key.ItemID), stack.Key.Quality, stack.Count)
+		title := fmt.Sprintf("%s Q%d ×%d  %s", g.itemName(stack.Key.ItemID), stack.Key.Quality, stack.Count, g.itemAttributes(stack.Key.ItemID))
 		g.button(dst, x+8, yy, w-16, 24, title, g.hasStack && stack.Key == g.selectedStack, func() {
 			g.selectedStack = stack.Key
 			g.hasStack = true
-			g.addCraftItem(stack.Key)
 		})
 	}
-	g.button(dst, x+8, y+747, 45, 25, "前", false, func() {
+	g.button(dst, x+8, y+480, 45, 25, "前", false, func() {
 		if g.inventoryPage > 0 {
 			g.inventoryPage--
 		}
 	})
-	g.label(dst, x+62, y+752, fmt.Sprintf("%d / %d", g.inventoryPage+1, maxPage+1), muted)
-	g.button(dst, x+139, y+747, 45, 25, "次", false, func() {
+	g.label(dst, x+62, y+485, fmt.Sprintf("%d / %d", g.inventoryPage+1, maxPage+1), muted)
+	g.button(dst, x+139, y+480, 45, 25, "次", false, func() {
 		if g.inventoryPage < maxPage {
 			g.inventoryPage++
 		}
 	})
 	if g.hasStack {
-		g.label(dst, x+8, y+788, fmt.Sprintf("選択: %s Q%d / 売値 %d×%d", g.itemName(g.selectedStack.ItemID), g.selectedStack.Quality, g.world.SellPrice(g.selectedStack), g.quantity), white)
-		g.button(dst, x+8, y+814, 140, 25, "指定数を売る", false, func() {
+		g.label(dst, x+8, y+510, fmt.Sprintf("選択: %s Q%d / 売値 %d×%d", g.itemName(g.selectedStack.ItemID), g.selectedStack.Quality, g.world.SellPrice(g.selectedStack), g.quantity), white)
+		g.button(dst, x+8, y+529, 140, 22, "指定数を売る", false, func() {
 			money, err := g.world.Sell(g.selectedStack, g.quantity)
 			g.result(fmt.Sprintf("%d 円で売却", money), err)
 		})
 	}
 }
 
-// addCraftItem は選択中の入力枠へ品質別の在庫を 1 個追加する（DES-ALC-01、DES-PKG-05）。
+// drawCandidates は選択した入力枠に合う在庫の残数を表示する（DES-ALC-04、DES-UI-01、DES-UI-02）。
+func (g *Game) drawCandidates(dst *ebiten.Image) {
+	const x, y, w = 10, 635, 385
+	g.box(dst, x, y, w, 290, "錬金の素材候補")
+	recipe, ok := g.catalog.Recipe(g.recipeID)
+	if !ok || g.craftSlot < 0 || g.craftSlot >= len(recipe.Inputs) {
+		g.label(dst, x+8, y+36, "レシピと入力枠を選んでください", muted)
+		return
+	}
+	candidates, err := g.world.SlotCandidates(g.recipeID, g.craftSlot)
+	if err != nil {
+		g.label(dst, x+8, y+36, err.Error(), muted)
+		return
+	}
+	if len(candidates) == 0 {
+		g.label(dst, x+8, y+36, "合う素材がありません", muted)
+		return
+	}
+	available := 0
+	for _, stack := range candidates {
+		if g.candidateRemaining(stack) > 0 {
+			available++
+		}
+	}
+	pickedCount := 0
+	for _, stack := range g.selection.Slots[g.craftSlot] {
+		pickedCount += stack.Count
+	}
+	if available == 0 && pickedCount < recipe.Inputs[g.craftSlot].Count {
+		g.label(dst, x+205, y+7, "合う素材がありません", muted)
+	}
+	const rows = 8
+	maxPage := (len(candidates) - 1) / rows
+	if g.candidatePage > maxPage {
+		g.candidatePage = maxPage
+	}
+	for i := g.candidatePage * rows; i < len(candidates) && i < (g.candidatePage+1)*rows; i++ {
+		stack := candidates[i]
+		remaining := g.candidateRemaining(stack)
+		title := fmt.Sprintf("%s Q%d ×%d  %s", g.itemName(stack.Key.ItemID), stack.Key.Quality, remaining, g.itemAttributes(stack.Key.ItemID))
+		g.button(dst, x+8, y+32+(i%rows)*26, w-16, 24, title, false, func() { g.addCraftItem(stack.Key) })
+	}
+	g.button(dst, x+8, y+252, 45, 25, "前", false, func() {
+		if g.candidatePage > 0 {
+			g.candidatePage--
+		}
+	})
+	g.label(dst, x+62, y+257, fmt.Sprintf("%d / %d", g.candidatePage+1, maxPage+1), muted)
+	g.button(dst, x+139, y+252, 45, 25, "次", false, func() {
+		if g.candidatePage < maxPage {
+			g.candidatePage++
+		}
+	})
+}
+
+// addCraftItem は候補から選択中の入力枠へ在庫を 1 個追加する（DES-ALC-01、DES-UI-01）。
 func (g *Game) addCraftItem(key core.ItemKey) {
 	recipe, ok := g.catalog.Recipe(g.recipeID)
 	if !ok || g.craftSlot < 0 || g.craftSlot >= len(recipe.Inputs) {
@@ -348,7 +436,8 @@ func (g *Game) selectRecipe(id string) {
 		}
 	}
 	g.craftSlot = 0
-	g.message = "レシピを選択しました。入力枠を選び、在庫をクリックしてください"
+	g.candidatePage = 0
+	g.message = "レシピを選択しました。入力枠を選び、素材候補をクリックしてください"
 }
 
 // drawRecipes はすべてのレシピへページ送りでアクセスできる一覧を描く（DES-PKG-05、UC-03）。
@@ -396,7 +485,10 @@ func (g *Game) drawCraft(dst *ebiten.Image) {
 		index := i
 		yy := y + 62 + i*77
 		condition := g.slotName(slot)
-		g.button(dst, x+8, yy, w-55, 24, fmt.Sprintf("枠%d: %s ×%d", i+1, condition, slot.Count), i == g.craftSlot, func() { g.craftSlot = index })
+		g.button(dst, x+8, yy, w-55, 24, fmt.Sprintf("枠%d: %s ×%d", i+1, condition, slot.Count), i == g.craftSlot, func() {
+			g.craftSlot = index
+			g.candidatePage = 0
+		})
 		g.button(dst, x+w-43, yy, 35, 24, "戻", false, func() {
 			stacks := g.selection.Slots[index]
 			if len(stacks) > 0 {
@@ -424,16 +516,20 @@ func (g *Game) drawCraft(dst *ebiten.Image) {
 		}
 		g.label(dst, x+8, bottom+23, "成立ボーナス: "+strings.Join(bonus, "、"), white)
 	}
-	g.button(dst, x+8, y+407, 160, 32, "この素材で錬金", false, func() {
-		output, err := g.world.Craft(g.recipeID, g.selection)
-		if err != nil {
-			g.result("", err)
-			return
+	var craftAction func()
+	if err == nil {
+		craftAction = func() {
+			output, err := g.world.Craft(g.recipeID, g.selection)
+			if err != nil {
+				g.result("", err)
+				return
+			}
+			g.message = fmt.Sprintf("完成: %s Q%d ×%d", g.itemName(output.Key.ItemID), output.Key.Quality, output.Count)
+			g.selection = core.Selection{Slots: make([][]core.Stack, len(recipe.Inputs))}
+			g.craftSlot = 0
 		}
-		g.message = fmt.Sprintf("完成: %s Q%d ×%d", g.itemName(output.Key.ItemID), output.Key.Quality, output.Count)
-		g.selection = core.Selection{Slots: make([][]core.Stack, len(recipe.Inputs))}
-		g.craftSlot = 0
-	})
+	}
+	g.button(dst, x+8, y+407, 160, 32, "この素材で錬金", false, craftAction)
 	g.button(dst, x+179, y+407, 120, 32, "選択を取消", false, func() {
 		g.selection = core.Selection{Slots: make([][]core.Stack, len(recipe.Inputs))}
 		g.craftSlot = 0
@@ -514,7 +610,7 @@ func (g *Game) drawAssignment(dst *ebiten.Image) {
 		index := i
 		yy := y + 92 + i*53
 		g.label(dst, x+8, yy, fmt.Sprintf("枠%d %s ×%d", i+1, g.slotName(slot), slot.Count), muted)
-		g.button(dst, x+8, yy+21, w-16, 26, "使用: "+g.itemName(g.slotItems[i]), false, func() {
+		g.button(dst, x+8, yy+21, w-16, 26, "使用: "+g.itemName(g.slotItems[i])+"  "+g.itemAttributes(g.slotItems[i]), false, func() {
 			options := g.choices(slot)
 			for j, id := range options {
 				if id == g.slotItems[index] {
