@@ -1,0 +1,15 @@
+[[item]]
+id = "herb"
+name = "薬草"
+attributes = ["草", "癒し", "緑"]
+base_price = 10
+
+[[item]]
+id = "water"
+name = "水"
+base_price = 2
+
+[[item]]
+id = "potion"
+name = "薬"
+base_price = 20
