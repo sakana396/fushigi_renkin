@@ -10,10 +10,12 @@
 | 企画 | 要求抽出記録（ヒアリング） | [01_concept/elicitation-notes.md](01_concept/elicitation-notes.md) | 追記中 |
 | 企画 | 技術選定 ADR | [adr/0001-tech-stack.md](adr/0001-tech-stack.md) | 承認 |
 | 要求 | 要求仕様書 (SRS) | [02_requirements/srs.md](02_requirements/srs.md) | v0.2 確定 |
-| 要求 | ユースケース記述・図 | [02_requirements/use-cases.md](02_requirements/use-cases.md) | v0.1（反復 1 の範囲） |
+| 要求 | ユースケース記述・図 | [02_requirements/use-cases.md](02_requirements/use-cases.md) | v0.2 承認（反復 2 の範囲を追加） |
 | 反復 | 反復 1（プロトタイプ）計画書 | [iterations/it01/plan.md](iterations/it01/plan.md) | 承認 |
 | 反復 | 反復 1 振り返り | [iterations/it01/retrospective.md](iterations/it01/retrospective.md) | v1.0 確定 |
+| 反復 | 反復 2 計画書 | [iterations/it02/plan.md](iterations/it02/plan.md) | v1.0 確定 |
 | 設計 | 設計書（反復 1）: アーキテクチャ・クラス図・状態遷移図・シーケンス図 | [03_design/design-it01.md](03_design/design-it01.md) | v0.3 承認 |
+| 設計 | 設計書（反復 2）: 自動採取・錬金の素材選び・画面 | [03_design/design-it02.md](03_design/design-it02.md) | v0.2 承認 |
 | 設計 | 定義データ形式 ADR | [adr/0002-definition-data-format.md](adr/0002-definition-data-format.md) | 承認 |
 | 試験 | テスト仕様書（反復 1） | [04_test/test-spec-it01.md](04_test/test-spec-it01.md) | 雛形 |
 | 横断 | トレーサビリティマトリクス | [traceability.md](traceability.md) | 反復 1 の行を用意 |
