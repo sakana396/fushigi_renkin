@@ -33,6 +33,6 @@
 | NFR-03 | #21 | DES-PKG-01 | TC-FR-MOD-04-10（手動） | `cmd/fushigi/error_windows.go`, `cmd/fushigi/error_other.go` | 実装済み（Windows 11 で MessageBox を確認） |
 | NFR-04 | #2 | DES-PKG-04 | TC-NFR-04-01〜03 | `internal/core/dependency_test.go`, `.github/workflows/ci.yml` | 実装済み |
 | NFR-06 | #4, #7 | DES-TIME-01, DES-GOL-05 | TC-NFR-06-01〜04 | `internal/core/world.go`, `internal/core/golem.go` | 実装済み（反復 1 の自動生産） |
-| IF-01 | #9, #21 | DES-PKG-05、DES-IT01 4 章、DES-TIME-01 | TC-IF-01-01〜09（手動） | `internal/ui/game.go`, `cmd/fushigi/main.go` | マウス操作は実装済み（TC-IF-01-06〜09 の成功の流れは確認待ち）。キーボード操作は反復 1 の対象外 |
+| IF-01 | #9, #21, #24 | DES-PKG-05、DES-IT01 4 章、DES-TIME-01 | TC-IF-01-01〜10（手動） | `internal/ui/game.go`, `internal/ui/cheat.go`, `cmd/fushigi/main.go` | 実装済み。マウスで UC-01〜08 を操作できる。キーボードはテスト用のチート（F11、F12）だけ |
 | IF-02 | #9 | DES-PKG-05、DES-IT01 4 章 | TC-IF-02-01（手動） | `internal/ui/game.go` | 実装済み |
 | QA-02 | — | tools/tccheck | TC-QA-02-01〜04 | `tools/tccheck`、CI | 実装済み |
