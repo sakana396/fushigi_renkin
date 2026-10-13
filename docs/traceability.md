@@ -27,8 +27,8 @@
 | FR-GOL-02 | #7 | DES-GOL-01, DES-GOL-03, DES-GOL-04 | | | 未着手 |
 | FR-GOL-03 | #7 | DES-GOL-01, DES-GOL-03, DES-GOL-04 | | | 未着手 |
 | FR-GOL-06 | #7 | DES-TIME-01, DES-GOL-05 | | | 未着手 |
-| FR-MOD-01 | #3 | DES-PKG-03, DES-PKG-06 | | | 未着手 |
-| FR-MOD-02 | #3, #8 | DES-PKG-03, DES-PKG-06 | | | 未着手 |
-| FR-MOD-04 | #3 | DES-VAL-01〜08 | | | 未着手 |
+| FR-MOD-01 | #3 | DES-PKG-03, DES-PKG-06 | TC-FR-MOD-01-01〜03 | `internal/defload/load.go` | 実装済み |
+| FR-MOD-02 | #3, #8 | DES-PKG-03, DES-PKG-06 | TC-FR-MOD-02-01〜03 | `internal/defload/load.go`（本体データは #8） | 実装済み |
+| FR-MOD-04 | #3 | DES-VAL-01〜08 | TC-FR-MOD-04-01〜09 | `internal/defload/load.go` | 実装済み |
 | NFR-04 | #2 | DES-PKG-04 | TC-NFR-04-01〜03 | `internal/core/dependency_test.go`, `.github/workflows/ci.yml` | 実装済み |
 | NFR-06 | #4, #7 | DES-TIME-01, DES-GOL-05 | TC-NFR-06-01〜03 | `internal/core/world.go` | 一部実装（自動生産の決定性は #7） |

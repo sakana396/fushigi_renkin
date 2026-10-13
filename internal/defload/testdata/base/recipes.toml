@@ -1,0 +1,7 @@
+[[recipe]]
+id = "potion"
+output = "potion"
+output_count = 1
+seconds = 5
+inputs = [{ attribute = "草", count = 2 }, { item = "water", count = 1 }]
+bonuses = [{ attribute = "癒し", min_count = 2, add = 15 }]
