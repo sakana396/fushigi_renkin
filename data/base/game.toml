@@ -1,0 +1,8 @@
+[game]
+start_money = 100
+base_golem_slots = 1
+shop = [
+  { item = "milk", quality = 80, price = 16 },
+  { item = "meat", quality = 80, price = 25 },
+  { item = "water", quality = 80, price = 5 },
+]

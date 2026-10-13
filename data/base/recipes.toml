@@ -1,0 +1,95 @@
+[[recipe]]
+id = "flour"
+output = "flour"
+output_count = 1
+seconds = 3
+inputs = [{ item = "wheat", count = 2 }]
+bonuses = [{ attribute = "穀物", min_count = 2, add = 10 }]
+
+[[recipe]]
+id = "bread_flour"
+output = "bread"
+output_count = 1
+seconds = 5
+inputs = [{ item = "flour", count = 2 }, { item = "water", count = 1 }]
+bonuses = [{ attribute = "穀物", min_count = 2, add = 12 }]
+
+[[recipe]]
+id = "bread_whole_wheat"
+output = "bread"
+output_count = 1
+seconds = 7
+inputs = [{ item = "wheat", count = 3 }, { item = "water", count = 1 }]
+bonuses = [{ attribute = "穀物", min_count = 3, add = 8 }]
+
+[[recipe]]
+id = "cheese"
+output = "cheese"
+output_count = 1
+seconds = 5
+inputs = [{ item = "milk", count = 2 }, { attribute = "草", count = 1 }]
+bonuses = [{ attribute = "香り", min_count = 1, add = 10 }]
+
+[[recipe]]
+id = "burger_cheese"
+output = "burger"
+output_count = 1
+seconds = 7
+inputs = [{ item = "bread", count = 1 }, { item = "meat", count = 1 }, { item = "cheese", count = 1 }]
+bonuses = [{ attribute = "香り", min_count = 1, add = 10 }]
+
+[[recipe]]
+id = "burger_double"
+output = "burger"
+output_count = 1
+seconds = 8
+inputs = [{ item = "bread", count = 1 }, { item = "meat", count = 2 }]
+bonuses = [{ attribute = "活力", min_count = 2, add = 15 }]
+
+[[recipe]]
+id = "deluxe_burger"
+output = "deluxe_burger"
+output_count = 1
+seconds = 9
+inputs = [{ item = "burger", count = 1 }, { item = "tonic", count = 1 }]
+bonuses = [{ attribute = "活力", min_count = 2, add = 15 }]
+
+[[recipe]]
+id = "potion_herb"
+output = "potion"
+output_count = 1
+seconds = 4
+inputs = [{ attribute = "草", count = 2 }, { item = "water", count = 1 }]
+bonuses = [{ attribute = "癒し", min_count = 2, add = 15 }]
+
+[[recipe]]
+id = "potion_moss"
+output = "potion"
+output_count = 1
+seconds = 5
+inputs = [{ item = "herb", count = 1 }, { item = "glow_moss", count = 1 }, { item = "water", count = 1 }]
+bonuses = [{ attribute = "草", min_count = 2, add = 12 }]
+
+[[recipe]]
+id = "tonic"
+output = "tonic"
+output_count = 1
+seconds = 6
+inputs = [{ item = "potion", count = 1 }, { item = "glow_moss", count = 1 }]
+bonuses = [{ attribute = "癒し", min_count = 1, add = 10 }]
+
+[[recipe]]
+id = "glow_crystal"
+output = "glow_crystal"
+output_count = 1
+seconds = 6
+inputs = [{ item = "ore", count = 2 }, { item = "glow_moss", count = 1 }]
+bonuses = [{ attribute = "発光", min_count = 1, add = 12 }]
+
+[[recipe]]
+id = "lantern"
+output = "lantern"
+output_count = 1
+seconds = 8
+inputs = [{ item = "glow_crystal", count = 1 }, { item = "ore", count = 1 }]
+bonuses = [{ attribute = "発光", min_count = 1, add = 10 }]

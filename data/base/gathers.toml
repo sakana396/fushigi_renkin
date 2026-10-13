@@ -1,0 +1,21 @@
+[[gather]]
+id = "meadow"
+name = "風の草原"
+rolls = 3
+cooldown_seconds = 12
+drops = [
+  { item = "wheat", weight = 5, quality_min = 40, quality_max = 130 },
+  { item = "herb", weight = 3, quality_min = 30, quality_max = 150 },
+  { item = "glow_moss", weight = 1, quality_min = 60, quality_max = 170 },
+]
+
+[[gather]]
+id = "spring_cave"
+name = "泉の洞窟"
+rolls = 3
+cooldown_seconds = 15
+drops = [
+  { item = "water", weight = 4, quality_min = 40, quality_max = 140 },
+  { item = "ore", weight = 3, quality_min = 30, quality_max = 160 },
+  { item = "glow_moss", weight = 1, quality_min = 60, quality_max = 180 },
+]
