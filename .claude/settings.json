@@ -21,7 +21,9 @@
       "Bash(git push *)",
       "Bash(gh pr create *)",
       "Bash(gh pr view *)",
-      "Bash(gh pr list *)"
+      "Bash(gh pr list *)",
+      "Bash(gh issue view *)",
+      "Bash(gh issue list *)"
     ],
     "deny": [
       "Bash(git push --force*)",
