@@ -14,7 +14,7 @@ func (w *World) Gather(gatherID string) ([]Stack, error) {
 	}
 	if ready, used := w.gatherReady[gatherID]; used && w.Now < ready {
 		remaining := ready - w.Now
-		return nil, fmt.Errorf("残り %d 秒: %w", 1+(remaining-1)/60, ErrGatherCooldown)
+		return nil, fmt.Errorf("採取地 %s は残り %d 秒: %w", w.gatherName(gatherID), 1+(remaining-1)/60, ErrGatherCooldown)
 	}
 	cooldown := uint64(site.CooldownSeconds) * 60
 	if site.CooldownSeconds < 0 || cooldown/60 != uint64(site.CooldownSeconds) || w.Now > ^uint64(0)-cooldown {
