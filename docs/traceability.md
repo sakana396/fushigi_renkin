@@ -34,3 +34,4 @@
 | NFR-06 | #4, #7 | DES-TIME-01, DES-GOL-05 | TC-NFR-06-01〜04 | `internal/core/world.go`, `internal/core/golem.go` | 実装済み（反復 1 の自動生産） |
 | IF-01 | #9 | DES-PKG-05、DES-IT01 4 章、DES-TIME-01 | TC-IF-01-01〜09（手動） | `internal/ui/game.go`, `cmd/fushigi/main.go` | 実装済み（実機確認待ち） |
 | IF-02 | #9 | DES-PKG-05、DES-IT01 4 章 | TC-IF-02-01（手動） | `internal/ui/game.go` | 実装済み（実機確認待ち） |
+| QA-02 | — | tools/tccheck | TC-QA-02-01〜04 | `tools/tccheck`、CI | 実装済み |

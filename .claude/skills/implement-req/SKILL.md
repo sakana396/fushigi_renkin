@@ -55,6 +55,7 @@ git switch -c it<反復番号>/<Issue 番号>-<短い説明> origin/main
 gofmt -l .
 go vet ./...
 go test ./...
+go run ./tools/tccheck
 ```
 
 すべて通るまで直す。テストを通すために期待値を書き換えるときは、設計書・テスト仕様書の根拠を確かめる。
@@ -87,7 +88,7 @@ gh pr create --base main --title "<要約>" --body "<AGENTS.md の形式>"
 ## 8. レビューとマージ
 
 1. CI の結果を待つ: `gh pr checks <番号> --watch`。失敗したら直して push し直す
-2. 実装者とは別のエージェントにレビューを頼む（例: 実装が Codex なら Claude Code）。人がいる場合は人でもよい。指摘に対応し、`docs/reviews/REV-<連番>-issue<番号>.md` に記録する
+2. 実装者とは別のエージェントにレビューを頼む。Claude Code では、サブエージェント `spec-reviewer`（`.claude/agents/spec-reviewer.md`）に、Issue 番号とブランチ（またはワークツリーの場所）を渡す。人がいる場合は人でもよい。指摘に対応し、`docs/reviews/REV-<連番>-issue<番号>.md` に記録する（spec-reviewer が下書きを返す）
 3. AGENTS.md の「自動マージの条件」をすべて確かめる。特に、`git diff --name-only origin/main...HEAD` に `docs/01_concept/`、`docs/02_requirements/`、`docs/03_design/`、`docs/adr/` が含まれるなら、人の承認がレビュー記録にあるかを確かめる
 4. 条件を満たせば `gh pr merge <番号> --merge` でマージする。満たさなければマージせず、理由を報告する
 
