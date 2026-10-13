@@ -2,6 +2,7 @@ name: CI
 
 on:
   push:
+    branches: [main]
   pull_request:
 
 jobs:
@@ -13,6 +14,10 @@ jobs:
         with:
           go-version-file: go.mod
           cache: false
+      - name: Ebitengine のビルドに必要なパッケージ
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgl1-mesa-dev libx11-dev libxrandr-dev libxcursor-dev libxinerama-dev libxi-dev libxxf86vm-dev
       - name: gofmt
         run: test -z "$(gofmt -l .)"
       - name: go vet
