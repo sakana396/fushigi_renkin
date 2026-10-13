@@ -15,10 +15,11 @@ const (
 	GolemWorking
 )
 
-// Assignment はレシピと各入力枠で使うアイテムの種類を表す（DES-GOL-03）。
+// Assignment はレシピの入力枠または採取地の割り当てを表す（DES-GOL-03、DES-GOL-07）。
 type Assignment struct {
 	RecipeID  string
 	SlotItems []string
+	GatherID  string
 }
 
 // Golem は作業状態と取り出し済みの素材を保持する（DES-GOL-01）。
@@ -56,10 +57,24 @@ func (w *World) BuildGolem(golemID string) error {
 	return nil
 }
 
-// AssignGolem は入力枠に指定した種類を検査して割り当てる（DES-GOL-01、DES-GOL-03、DES-WLD-01）。
+// AssignGolem はレシピまたは採取地を検査して割り当てる（DES-GOL-01、DES-GOL-03、DES-GOL-07、DES-WLD-01）。
 func (w *World) AssignGolem(index int, assignment Assignment) error {
 	if index < 0 || index >= len(w.Golems) {
 		return fmt.Errorf("ゴーレム番号 %d: %w", index, ErrUnknownID)
+	}
+	if assignment.GatherID != "" {
+		if assignment.RecipeID != "" || len(assignment.SlotItems) != 0 {
+			return fmt.Errorf("採取とレシピの同時割り当て: %w", ErrInvalidSelection)
+		}
+		if _, ok := w.catalog.Gather(assignment.GatherID); !ok {
+			return fmt.Errorf("採取地 %q: %w", assignment.GatherID, ErrUnknownID)
+		}
+		selected := Assignment{GatherID: assignment.GatherID}
+		w.Golems[index].Assignment = &selected
+		w.Golems[index].State = GolemWorking
+		w.Golems[index].Progress = 0
+		w.Golems[index].Holding = nil
+		return nil
 	}
 	recipe, ok := w.catalog.Recipe(assignment.RecipeID)
 	if !ok {
@@ -141,10 +156,14 @@ func golemDuration(seconds, speed int) int {
 	return 1 + (numerator-1)/speed
 }
 
-// stepGolem は順番に 1 体の状態を 1 tick 分進める（DES-GOL-01〜05、DES-QLT-04）。
+// stepGolem は順番に 1 体の状態を 1 tick 分進める（DES-GOL-01〜05、DES-GOL-08、DES-QLT-04）。
 func (w *World) stepGolem(index int) {
 	g := &w.Golems[index]
 	if g.Assignment == nil {
+		return
+	}
+	if g.Assignment.GatherID != "" {
+		w.stepGatherGolem(g)
 		return
 	}
 	recipe, ok := w.catalog.Recipe(g.Assignment.RecipeID)
@@ -178,6 +197,28 @@ func (w *World) stepGolem(index int) {
 		// 素材待ちに入った tick のうちに入力がそろっていれば、同じ tick で作業中に移る（DES-GOL-01）。
 		w.startGolem(g, recipe)
 	}
+}
+
+// stepGatherGolem は採取の進捗を進め、完了時に共通の抽選を行う（DES-GOL-08、DES-GAT-03）。
+func (w *World) stepGatherGolem(g *Golem) {
+	if g.State != GolemWorking {
+		return
+	}
+	site, ok := w.catalog.Gather(g.Assignment.GatherID)
+	if !ok {
+		return
+	}
+	duration := golemDuration(site.CooldownSeconds, w.golemSpeed(g.DefID))
+	if g.Progress < duration {
+		g.Progress++
+	}
+	if g.Progress < duration {
+		return
+	}
+	if _, err := w.gatherIntoInventory(site); err != nil {
+		return
+	}
+	g.Progress = 0
 }
 
 // startGolem は入力がそろっていれば在庫から取り出して作業中にする（DES-GOL-01、DES-GOL-03、DES-GOL-04）。
