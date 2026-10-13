@@ -39,11 +39,12 @@ type Game struct {
 	selectedGolem int
 	slotItems     []string
 	quantity      int
+	timeScale     int
 }
 
 // NewGame は本体の目録と World を画面に結び付ける（DES-PKG-05）。
 func NewGame(world *core.World, catalog defs.Catalog) *Game {
-	return &Game{world: world, catalog: catalog, face: text.NewGoXFace(bitmapfont.Face), selectedGolem: -1, quantity: 1, message: "採取地をクリックして素材を集めてください"}
+	return &Game{world: world, catalog: catalog, face: text.NewGoXFace(bitmapfont.Face), selectedGolem: -1, quantity: 1, timeScale: 1, message: "採取地をクリックして素材を集めてください"}
 }
 
 // Run は画面を開き、ゲームを起動する（DES-PKG-05）。
@@ -54,8 +55,9 @@ func Run(world *core.World, catalog defs.Catalog) error {
 	return ebiten.RunGame(NewGame(world, catalog))
 }
 
-// Update はクリックを処理し、1 回の更新につき 1 tick 進める（DES-PKG-05、DES-TIME-01）。
+// Update はクリックとチートのキーを処理し、1 回の更新につき時間の倍率の分だけ tick を進める（DES-PKG-05、DES-TIME-01）。
 func (g *Game) Update() error {
+	g.handleCheatKeys()
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 		x, y := ebiten.CursorPosition()
 		for i := len(g.buttons) - 1; i >= 0; i-- {
@@ -66,7 +68,9 @@ func (g *Game) Update() error {
 			}
 		}
 	}
-	g.world.Tick()
+	for i := 0; i < g.timeScale; i++ {
+		g.world.Tick()
+	}
 	return nil
 }
 
@@ -86,7 +90,8 @@ var (
 func (g *Game) Draw(screen *ebiten.Image) {
 	screen.Fill(bg)
 	g.buttons = g.buttons[:0]
-	g.label(screen, 14, 10, fmt.Sprintf("ふしぎ錬金   お金: %d   経過: %d 秒   ゴーレム: %d/%d", g.world.Money, g.world.Now/60, len(g.world.Golems), g.world.GolemSlots()), white)
+	g.label(screen, 14, 10, fmt.Sprintf("ふしぎ錬金   お金: %d   経過: %d 秒   ゴーレム: %d/%d   時間 ×%d", g.world.Money, g.world.Now/60, len(g.world.Golems), g.world.GolemSlots(), g.timeScale), white)
+	g.label(screen, 1100, 10, "F12: チート（お金と素材）  F11: 時間 ×10", muted)
 	g.label(screen, 800, 10, fmt.Sprintf("売買数: %d", g.quantity), white)
 	g.button(screen, 920, 5, 35, 24, "－", false, func() {
 		if g.quantity > 1 {
