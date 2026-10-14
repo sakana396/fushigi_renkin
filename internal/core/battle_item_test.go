@@ -269,7 +269,7 @@ func TestBattleItemEffects(t *testing.T) {
 		if err := w.BattleUseItem(key, 1, 3); err != nil {
 			t.Fatal(err)
 		}
-		if w.Battle.Units[0].HP != 27 || !reflect.DeepEqual(w.Battle.Log[logStart:], []string{"剣士はハンバーガー（品質160）を使用", "剣士の体力が0回復", "剣士の攻撃が8上がった", "剣士の素早さが4上がった", "スライムは剣士に3のダメージ"}) {
+		if w.Battle.Units[0].HP != 27 || !reflect.DeepEqual(w.Battle.Log[logStart:], []string{"剣士はハンバーガー（品質160）を使用", "剣士の攻撃が8上がった", "剣士の素早さが4上がった", "スライムは剣士に3のダメージ"}) {
 			t.Fatalf("敵の行動=%+v 記録=%v", w.Battle.Units[0], w.Battle.Log[logStart:])
 		}
 		if !reflect.DeepEqual(w.Battle.Order, []int{0, 1, 2, 3}) || w.Battle.Turn != 0 || w.Battle.Moved {

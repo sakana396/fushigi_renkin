@@ -57,7 +57,10 @@ func (w *World) BattleUseItem(key ItemKey, x, y int) error {
 				if u.HP > maxHP {
 					u.HP = maxHP
 				}
-				b.Log = append(b.Log, fmt.Sprintf("%sの体力が%d回復", u.Label, u.HP-before))
+				// 体力が満タンで回復しなかったときは記録しない（DES-UI-08 の記録を読みやすくする）。
+				if u.HP > before {
+					b.Log = append(b.Log, fmt.Sprintf("%sの体力が%d回復", u.Label, u.HP-before))
+				}
 			case "damage":
 				u.HP -= e.Value
 				if u.HP < 0 {
