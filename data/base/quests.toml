@@ -1,0 +1,27 @@
+[[quest]]
+id = "q_burger"
+item = "burger"
+min_quality = 20
+count = 2
+reward = 120
+
+[[quest]]
+id = "q_potion"
+item = "potion"
+min_quality = 20
+count = 2
+reward = 70
+
+[[quest]]
+id = "q_bomb"
+item = "bomb"
+min_quality = 20
+count = 2
+reward = 80
+
+[[quest]]
+id = "q_bread"
+item = "bread"
+min_quality = 20
+count = 3
+reward = 65
