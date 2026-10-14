@@ -167,7 +167,7 @@ type source[T any] struct {
 	Value T
 }
 
-// Load は fs.FS 内の TOML をすべて読み、検証済みの目録を返す（DES-PKG-03、DES-VAL-01〜08）。
+// Load は fs.FS 内の TOML をすべて読み、検証済みの目録を返す（DES-PKG-03、DES-VAL-01〜13）。
 func Load(fsys fs.FS) (defs.Catalog, error) {
 	c := defs.Catalog{Items: map[string]defs.ItemDef{}, Recipes: map[string]defs.RecipeDef{}, Gathers: map[string]defs.GatherDef{}, Golems: map[string]defs.GolemDef{}, Facilities: map[string]defs.FacilityDef{}, Units: map[string]defs.UnitDef{}, Quests: map[string]defs.QuestDef{}}
 	var errs Errors
@@ -414,7 +414,12 @@ func Load(fsys fs.FS) (defs.Catalog, error) {
 		}
 	}
 	if battleConfigured && len(games) == 0 {
-		add("<game>", "game", "戦闘には game の設定が必要")
+		for _, s := range gathers {
+			if s.Value.Battle != nil {
+				add(s.File, "gather[id="+s.Value.ID+"].battle", "戦闘には game の設定が必要")
+				break
+			}
+		}
 	}
 	for _, s := range recipes {
 		v := s.Value
