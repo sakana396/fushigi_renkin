@@ -90,6 +90,7 @@ func TestUseEffectOfStages(t *testing.T) {
 		{"TC-FR-ITM-09-04 品質120で同種効果を合計する", bomb, 120, UseEffectResult{Radius: 1, Effects: []defs.UseEffect{{Kind: "damage", Value: 72}}}, true},
 		{"TC-FR-ITM-09-05 品質160で三種類の効果を選ぶ", burger, 160, UseEffectResult{Effects: []defs.UseEffect{{Kind: "heal", Value: 48}, {Kind: "attack_up", Value: 8}, {Kind: "speed_up", Value: 4}}}, true},
 		{"TC-FR-ITM-09-06 品質200は順不同の段階を選び範囲の最大値を使う", unordered, 200, UseEffectResult{Radius: 2, Effects: []defs.UseEffect{{Kind: "heal", Value: 2}, {Kind: "damage", Value: 80}}}, true},
+		{"TC-FR-ITM-09-08 品質100は順不同でも届く段階だけを選ぶ", unordered, 100, UseEffectResult{Radius: 2, Effects: []defs.UseEffect{{Kind: "damage", Value: 40}}}, true},
 		{"TC-FR-ITM-09-07 Useがなければ使えない", defs.ItemDef{ID: "ore"}, 100, UseEffectResult{}, false},
 	}
 	for _, tt := range tests {
