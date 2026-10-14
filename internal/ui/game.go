@@ -283,7 +283,7 @@ func (g *Game) itemEffectText(key core.ItemKey) string {
 	}
 	parts := []string{fmt.Sprintf("範囲 %d", effect.Radius)}
 	for _, value := range effect.Effects {
-		name := map[string]string{"heal": "回復", "damage": "ダメージ", "attack_up": "攻撃 +", "speed_up": "素早さ +"}[value.Kind]
+		name := map[string]string{"heal": "回復 ", "damage": "ダメージ ", "attack_up": "攻撃 +", "speed_up": "素早さ +"}[value.Kind]
 		parts = append(parts, fmt.Sprintf("%s%d", name, value.Value))
 	}
 	return "使用効果: " + strings.Join(parts, "・")
@@ -320,7 +320,7 @@ func (g *Game) drawInventory(dst *ebiten.Image, canSell bool) {
 	const x, y, w = 10, 95, 775
 	title := "在庫（クリックで売る物を選択）"
 	if !canSell {
-		title = "在庫（売る物の選択のみ）"
+		title = "在庫"
 	}
 	g.box(dst, x, y, w, 555, title)
 	stacks := g.world.Inventory.Stacks()
@@ -336,10 +336,14 @@ func (g *Game) drawInventory(dst *ebiten.Image, canSell bool) {
 		stack := stacks[i]
 		yy := y + 33 + (i%rows)*43
 		title := fmt.Sprintf("%s Q%d ×%d  %s", g.itemName(stack.Key.ItemID), stack.Key.Quality, stack.Count, g.itemAttributes(stack.Key.ItemID))
-		g.button(dst, x+8, yy, w-16, 24, title, g.hasStack && stack.Key == g.selectedStack, func() {
-			g.selectedStack = stack.Key
-			g.hasStack = true
-		})
+		var selectForSale func()
+		if canSell {
+			selectForSale = func() {
+				g.selectedStack = stack.Key
+				g.hasStack = true
+			}
+		}
+		g.button(dst, x+8, yy, w-16, 24, title, canSell && g.hasStack && stack.Key == g.selectedStack, selectForSale)
 		if effect := g.itemEffectText(stack.Key); effect != "" {
 			g.label(dst, x+13, yy+25, effect, muted)
 		}

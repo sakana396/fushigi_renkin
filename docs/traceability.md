@@ -46,7 +46,7 @@
 | FR-BTL-04 | #47, #51 | DES-BTL-02 |  |  | 未着手 |
 | FR-BTL-05 | #45, #47 | DES-QLT-05 | TC-FR-ITM-08-01〜10、TC-FR-ITM-09-01〜08 | `internal/core/use_effect.go` | core の効果計算を実装済み（戦闘中の適用は #47）。core の効果計算を実装済み（戦闘中の適用は #47）。未着手。core の効果計算を実装済み（戦闘中の適用は #47） |
 | FR-BTL-07 | #46, #51 | DES-BTL-02, DES-BTL-04 | TC-FR-BTL-07-01〜03 | `internal/core/battle.go`, `internal/core/world.go`, `internal/core/battle_test.go` | 未着手。未着手。core の負傷を実装済み、REV-028 の HP 下限試験を追加（画面は #51）。未着手 |
-| FR-BTL-10 | #46, #50, #51 | DES-BTL-02, DES-UI-07 | TC-FR-BTL-10-01、TC-FR-BTL-10-10〜13 | `internal/core/battle.go`, `internal/core/battle_test.go`, `internal/ui/game.go` | 未着手。core の手動開始を実装済み、REV-028 の状態不変・誤り順試験を補強（画面は #50、#51）。探索の開始差し込み口と未接続時の無効表示を実装済み。戦闘開始・負傷表示の接続は #51 |
+| FR-BTL-10 | #46, #50, #51 | DES-BTL-02, DES-UI-07 | TC-FR-BTL-10-01、TC-FR-BTL-10-10〜13 | `internal/core/battle.go`, `internal/core/battle_test.go`, `internal/ui/game.go` | core の開始と誤りは実装済み。画面は #50 で押せない表示、#51 で接続する |
 | FR-MAT-03 | #46 | DES-BTL-02, DES-DEF-06 | TC-FR-MAT-03-01 | `internal/core/battle.go`, `internal/core/gather.go` | 一部実装済み（探索に勝ったときの報酬。IT03 P-03）。未着手（一部） |
 | FR-ECO-05 | #44, #48, #49, #50 | DES-DEF-07, DES-QST-01, DES-QST-02, DES-VAL-13 | TC-FR-MOD-04-32〜34、TC-FR-MOD-02-23〜24、TC-FR-ECO-05-01〜13、TC-FR-ECO-05-20〜24 | `internal/defs/defs.go`, `internal/defload/load.go`, `data/base/quests.toml`, `data/base/game.toml`, `internal/core/world.go`, `internal/core/quest.go`, `internal/ui/game.go` | 定義・検証・本体データ・依頼板・納品を実装済み（画面は #50）。定義と検証を実装済み（依頼板と納品は #48）。定義・検証・本体データ・依頼板・納品画面を実装済み。画面の手動確認待ち |
-| IF-06 | #50, #51 | DES-UI-06, DES-UI-07, DES-UI-10 | TC-IF-06-01〜07 | `internal/ui/game.go` | 未着手。工房・街・採取地の場面と共通表示を実装済み。戦闘画面と結果表示は #51、手動確認待ち |
+| IF-06 | #50, #51 | DES-UI-06, DES-UI-07, DES-UI-10 | TC-IF-06-01〜14 | `internal/ui/game.go` | 工房・街・採取地の場面と共通表示を実装済み。反復 2 の画面規則は手動確認待ち。戦闘画面と結果表示は #51 |
