@@ -8,13 +8,13 @@ speed_percent = 100
 id = "workshop"
 name = "錬金工房"
 levels = [
-  { money = 80, materials = [{ item = "bread", count = 2 }], effects = [{ kind = "golem_slots", value = 1 }] },
-  { money = 180, materials = [{ item = "lantern", count = 1 }], effects = [{ kind = "golem_slots", value = 1 }] },
+  { money = 60, materials = [{ item = "bread", count = 2 }], effects = [{ kind = "golem_slots", value = 1 }] },
+  { money = 140, materials = [{ item = "lantern", count = 1 }], effects = [{ kind = "golem_slots", value = 1 }] },
 ]
 
 [[facility]]
 id = "market"
 name = "街の市場"
 levels = [
-  { money = 100, materials = [{ item = "burger", count = 2 }], effects = [{ kind = "sell_rate", value = 10 }] },
+  { money = 70, materials = [{ item = "burger", count = 2 }], effects = [{ kind = "sell_rate", value = 10 }] },
 ]

@@ -63,6 +63,14 @@ id = "burger"
 name = "ハンバーガー"
 attributes = ["活力", "香り"]
 base_price = 55
+[item.use]
+target = "ally"
+range = 1
+stages = [
+  { min_quality = 1, effects = [{ kind = "heal", value = 30 }] },
+  { min_quality = 100, effects = [{ kind = "attack_up", value = 5 }] },
+  { min_quality = 150, effects = [{ kind = "speed_up", value = 3 }] },
+]
 
 [[item]]
 id = "deluxe_burger"
@@ -75,6 +83,13 @@ id = "potion"
 name = "回復薬"
 attributes = ["癒し", "清浄"]
 base_price = 28
+[item.use]
+target = "ally"
+range = 1
+stages = [
+  { min_quality = 1, effects = [{ kind = "heal", value = 50 }] },
+  { min_quality = 50, radius = 1 },
+]
 
 [[item]]
 id = "tonic"
@@ -93,3 +108,17 @@ id = "lantern"
 name = "ひかりランタン"
 attributes = ["発光", "道具"]
 base_price = 70
+
+[[item]]
+id = "bomb"
+name = "爆弾"
+attributes = ["鉱石", "発光"]
+base_price = 30
+[item.use]
+target = "enemy"
+range = 3
+stages = [
+  { min_quality = 1, radius = 0, effects = [{ kind = "damage", value = 40 }] },
+  { min_quality = 50, radius = 1 },
+  { min_quality = 100, effects = [{ kind = "damage", value = 20 }] },
+]

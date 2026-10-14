@@ -1,8 +1,12 @@
 [game]
 start_money = 100
 base_golem_slots = 1
+battle_width = 8
+battle_height = 6
+injury_seconds = 60
+party = [{ unit = "swordsman", x = 1, y = 2 }, { unit = "mage", x = 0, y = 3 }]
 shop = [
-  { item = "milk", quality = 80, price = 16 },
-  { item = "meat", quality = 80, price = 25 },
-  { item = "water", quality = 80, price = 5 },
+  { item = "milk", quality = 15, price = 16 },
+  { item = "meat", quality = 15, price = 25 },
+  { item = "water", quality = 15, price = 5 },
 ]
