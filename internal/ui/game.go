@@ -24,23 +24,28 @@ type button struct {
 
 // Game は一覧、選択中の入力、操作結果を保持する（DES-PKG-05、DES-IT01 4 章）。
 type Game struct {
-	world         *core.World
-	catalog       defs.Catalog
-	face          *text.GoXFace
-	buttons       []button
-	message       string
-	recipeID      string
-	selection     core.Selection
-	craftSlot     int
-	selectedStack core.ItemKey
-	hasStack      bool
-	inventoryPage int
-	candidatePage int
-	recipePage    int
-	selectedGolem int
-	slotItems     []string
-	quantity      int
-	timeScale     int
+	world              *core.World
+	catalog            defs.Catalog
+	face               *text.GoXFace
+	buttons            []button
+	message            string
+	recipeID           string
+	selection          core.Selection
+	craftSlot          int
+	selectedStack      core.ItemKey
+	hasStack           bool
+	inventoryPage      int
+	candidatePage      int
+	recipePage         int
+	gatherPage         int
+	golemPage          int
+	assignmentPage     int
+	assignmentRecipeID string
+	assignmentGatherID string
+	selectedGolem      int
+	slotItems          []string
+	quantity           int
+	timeScale          int
 }
 
 // NewGame は本体の目録と World を画面に結び付ける（DES-PKG-05）。
@@ -163,6 +168,46 @@ func (g *Game) itemName(id string) string {
 		return item.Name
 	}
 	return id
+}
+
+// recipeName は製品名と入力枠で同じ製品の別レシピを区別する（DES-UI-05）。
+func (g *Game) recipeName(id string) string {
+	recipe, ok := g.catalog.Recipe(id)
+	if !ok {
+		return id
+	}
+	parts := make([]string, 0, len(recipe.Inputs))
+	for _, slot := range recipe.Inputs {
+		parts = append(parts, fmt.Sprintf("%s×%d", g.slotName(slot), slot.Count))
+	}
+	return fmt.Sprintf("%s（%s）", g.itemName(recipe.Output), strings.Join(parts, "、"))
+}
+
+// pageLimit は一覧の最終ページを求める（DES-UI-05）。
+func pageLimit(count, rows int) int {
+	if count == 0 {
+		return 0
+	}
+	return (count - 1) / rows
+}
+
+// pageControls は 1 始まりのページ表示と前後の操作を描く（DES-UI-05）。
+func (g *Game) pageControls(dst *ebiten.Image, x, y, count, rows int, page *int) {
+	maxPage := pageLimit(count, rows)
+	if *page > maxPage {
+		*page = maxPage
+	}
+	g.button(dst, x, y, 45, 25, "前", false, func() {
+		if *page > 0 {
+			*page--
+		}
+	})
+	g.label(dst, x+54, y+5, fmt.Sprintf("%d/%d", *page+1, maxPage+1), muted)
+	g.button(dst, x+108, y, 45, 25, "次", false, func() {
+		if *page < maxPage {
+			*page++
+		}
+	})
 }
 
 // itemAttributes は定義データの属性を表示し、空なら属性なしとする（DES-ITM-01、DES-UI-02）。
@@ -372,14 +417,18 @@ func (g *Game) drawShop(dst *ebiten.Image) {
 	}
 }
 
-// drawGather は採取地と再使用までの時間を表示する（DES-PKG-05、UC-01）。
+// drawGather はプレイヤーの採取地をページ送りで表示する（DES-PKG-05、DES-UI-05、UC-01）。
 func (g *Game) drawGather(dst *ebiten.Image) {
 	const x, y, w = 405, 255, 385
 	g.box(dst, x, y, w, 155, "採取地")
-	for i, id := range keys(g.catalog.Gathers) {
+	ids := keys(g.catalog.Gathers)
+	const rows = 3
+	g.pageControls(dst, x+8, y+122, len(ids), rows, &g.gatherPage)
+	for i := g.gatherPage * rows; i < len(ids) && i < (g.gatherPage+1)*rows; i++ {
+		id := ids[i]
 		site := g.catalog.Gathers[id]
 		gatherID := id
-		g.button(dst, x+8, y+33+i*34, w-16, 30, fmt.Sprintf("%s （%d 回抽選）", site.Name, site.Rolls), false, func() {
+		g.button(dst, x+8, y+31+(i%rows)*29, w-16, 27, fmt.Sprintf("%s （%d 回抽選）", site.Name, site.Rolls), false, func() {
 			stacks, err := g.world.Gather(gatherID)
 			if err != nil {
 				g.result("", err)
@@ -435,22 +484,11 @@ func (g *Game) drawFacilities(dst *ebiten.Image) {
 	}
 }
 
-// selectRecipe は錬金と割り当てに使うレシピを選ぶ（DES-PKG-05、UC-03、UC-06）。
+// selectRecipe は錬金だけに使うレシピを選ぶ（DES-PKG-05、DES-UI-04、UC-03）。
 func (g *Game) selectRecipe(id string) {
 	recipe := g.catalog.Recipes[id]
 	g.recipeID = id
 	g.selection = core.Selection{Slots: make([][]core.Stack, len(recipe.Inputs))}
-	g.slotItems = make([]string, len(recipe.Inputs))
-	for i, slot := range recipe.Inputs {
-		if slot.Item != "" {
-			g.slotItems[i] = slot.Item
-		} else {
-			choices := g.choices(slot)
-			if len(choices) > 0 {
-				g.slotItems[i] = choices[0]
-			}
-		}
-	}
 	g.craftSlot = 0
 	g.candidatePage = 0
 	g.message = "レシピを選択しました。入力枠を選び、素材候補をクリックしてください"
@@ -471,8 +509,7 @@ func (g *Game) drawRecipes(dst *ebiten.Image) {
 	}
 	for i := g.recipePage * rows; i < len(ids) && i < (g.recipePage+1)*rows; i++ {
 		id := ids[i]
-		r := g.catalog.Recipes[id]
-		g.button(dst, x+8, y+32+(i%rows)*25, w-16, 23, fmt.Sprintf("%s → %s ×%d", id, g.itemName(r.Output), r.OutputCount), id == g.recipeID, func() { g.selectRecipe(id) })
+		g.button(dst, x+8, y+32+(i%rows)*25, w-16, 23, g.recipeName(id), id == g.recipeID, func() { g.selectRecipe(id) })
 	}
 	g.button(dst, x+8, y+347, 45, 27, "前", false, func() {
 		if g.recipePage > 0 {
@@ -563,7 +600,7 @@ func (g *Game) slotName(slot defs.InputSlot) string {
 	return "属性「" + slot.Attribute + "」"
 }
 
-// drawGolems は所有数、材料、状態、進捗を表示する（DES-PKG-05、UC-05、UC-08）。
+// drawGolems は所有数、材料、割り当て先と進捗をページ送りで表示する（DES-PKG-05、DES-UI-04、DES-UI-05、UC-05、UC-08）。
 func (g *Game) drawGolems(dst *ebiten.Image) {
 	const x, y, w = 1195, 70, 395
 	g.box(dst, x, y, w, 295, "ゴーレム")
@@ -574,23 +611,32 @@ func (g *Game) drawGolems(dst *ebiten.Image) {
 		g.label(dst, x+8, yy, "材料: "+materials(def.Materials, g.itemName), muted)
 		g.button(dst, x+8, yy+23, w-16, 28, "作成: "+def.Name, false, func() { g.result("ゴーレムを作成しました", g.world.BuildGolem(golemID)) })
 	}
-	for i, golem := range g.world.Golems {
-		if i >= 5 {
-			break
-		}
+	const rows = 4
+	g.pageControls(dst, x+8, y+262, len(g.world.Golems), rows, &g.golemPage)
+	for i := g.golemPage * rows; i < len(g.world.Golems) && i < (g.golemPage+1)*rows; i++ {
+		golem := g.world.Golems[i]
 		index := i
-		yy := y + 100 + i*34
+		yy := y + 100 + (i%rows)*38
 		state := "未割り当て"
 		if golem.State == core.GolemWaiting {
 			state = "素材待ち"
 		} else if golem.State == core.GolemWorking {
-			state = fmt.Sprintf("作業中 %d tick", golem.Progress)
+			state = "作業中"
 		}
-		recipe := ""
+		destination := ""
 		if golem.Assignment != nil {
-			recipe = " / " + golem.Assignment.RecipeID
+			if golem.Assignment.GatherID != "" {
+				destination = " / " + g.catalog.Gathers[golem.Assignment.GatherID].Name
+			} else {
+				destination = " / " + g.recipeName(golem.Assignment.RecipeID)
+			}
 		}
-		g.button(dst, x+8, yy, w-16, 30, fmt.Sprintf("%d: %s%s", i+1, state, recipe), i == g.selectedGolem, func() { g.selectedGolem = index })
+		duration, err := g.world.GolemDuration(i)
+		if err != nil {
+			g.message = "操作失敗: " + err.Error()
+		}
+		g.button(dst, x+8, yy, w-16, 35, fmt.Sprintf("%d: %s%s", i+1, state, destination), i == g.selectedGolem, func() { g.selectedGolem = index })
+		g.label(dst, x+14, yy+17, fmt.Sprintf("%d / %d tick", golem.Progress, duration), muted)
 	}
 }
 
@@ -608,38 +654,74 @@ func (g *Game) choices(slot defs.InputSlot) []string {
 	return out
 }
 
-// drawAssignment はレシピと枠ごとの種類をゴーレムに割り当てる（DES-GOL-03、DES-PKG-05、UC-06）。
+// selectAssignmentRecipe は錬金の選択を変えずに割り当て用のレシピを選ぶ（DES-UI-04）。
+func (g *Game) selectAssignmentRecipe(id string) {
+	recipe := g.catalog.Recipes[id]
+	g.assignmentRecipeID = id
+	g.assignmentGatherID = ""
+	g.slotItems = make([]string, len(recipe.Inputs))
+	for i, slot := range recipe.Inputs {
+		choices := g.choices(slot)
+		if len(choices) > 0 {
+			g.slotItems[i] = choices[0]
+		}
+	}
+}
+
+// drawAssignment は専用の一覧からレシピまたは採取地を割り当てる（DES-GOL-03、DES-UI-04、DES-UI-05、UC-06）。
 func (g *Game) drawAssignment(dst *ebiten.Image) {
 	const x, y, w = 1195, 375, 395
 	g.box(dst, x, y, w, 550, "ゴーレムの割り当て")
+	recipes := keys(g.catalog.Recipes)
+	gathers := keys(g.catalog.Gathers)
+	const rows = 6
+	g.pageControls(dst, x+8, y+214, len(recipes)+len(gathers), rows, &g.assignmentPage)
+	for i := g.assignmentPage * rows; i < len(recipes)+len(gathers) && i < (g.assignmentPage+1)*rows; i++ {
+		yy := y + 33 + (i%rows)*29
+		if i < len(recipes) {
+			id := recipes[i]
+			g.button(dst, x+8, yy, w-16, 27, "錬金: "+g.recipeName(id), id == g.assignmentRecipeID, func() { g.selectAssignmentRecipe(id) })
+		} else {
+			id := gathers[i-len(recipes)]
+			g.button(dst, x+8, yy, w-16, 27, "採取: "+g.catalog.Gathers[id].Name, id == g.assignmentGatherID, func() {
+				g.assignmentGatherID = id
+				g.assignmentRecipeID = ""
+				g.slotItems = nil
+			})
+		}
+	}
 	if g.selectedGolem < 0 || g.selectedGolem >= len(g.world.Golems) {
-		g.label(dst, x+8, y+36, "上のゴーレムを選んでください", muted)
+		g.label(dst, x+8, y+263, "上のゴーレムを選んでください", muted)
 		return
 	}
 	g.button(dst, x+188, y+425, 170, 32, "割り当てを外す", false, func() { g.result("割り当てを外しました", g.world.UnassignGolem(g.selectedGolem)) })
-	if g.recipeID == "" {
-		g.label(dst, x+8, y+36, "レシピを選んでください", muted)
+	if g.assignmentRecipeID == "" && g.assignmentGatherID == "" {
+		g.label(dst, x+8, y+263, "割り当て先を選んでください", muted)
 		return
 	}
-	recipe := g.catalog.Recipes[g.recipeID]
-	g.label(dst, x+8, y+36, fmt.Sprintf("%d 体目 → %s", g.selectedGolem+1, g.recipeID), white)
-	g.label(dst, x+8, y+59, "属性枠をクリックして種類を切り替え", muted)
-	for i, slot := range recipe.Inputs {
-		index := i
-		yy := y + 92 + i*53
-		g.label(dst, x+8, yy, fmt.Sprintf("枠%d %s ×%d", i+1, g.slotName(slot), slot.Count), muted)
-		g.button(dst, x+8, yy+21, w-16, 26, "使用: "+g.itemName(g.slotItems[i])+"  "+g.itemAttributes(g.slotItems[i]), false, func() {
-			options := g.choices(slot)
-			for j, id := range options {
-				if id == g.slotItems[index] {
-					g.slotItems[index] = options[(j+1)%len(options)]
-					break
+	if g.assignmentGatherID != "" {
+		g.label(dst, x+8, y+263, fmt.Sprintf("%d 体目 → %s", g.selectedGolem+1, g.catalog.Gathers[g.assignmentGatherID].Name), white)
+	} else {
+		recipe := g.catalog.Recipes[g.assignmentRecipeID]
+		g.label(dst, x+8, y+252, fmt.Sprintf("%d 体目 → %s", g.selectedGolem+1, g.recipeName(g.assignmentRecipeID)), white)
+		g.label(dst, x+8, y+272, "属性枠をクリックして種類を切り替え", muted)
+		for i, slot := range recipe.Inputs {
+			index := i
+			yy := y + 296 + i*40
+			g.label(dst, x+8, yy, fmt.Sprintf("枠%d %s ×%d", i+1, g.slotName(slot), slot.Count), muted)
+			g.button(dst, x+8, yy+16, w-16, 22, "使用: "+g.itemName(g.slotItems[i])+"  "+g.itemAttributes(g.slotItems[i]), false, func() {
+				options := g.choices(slot)
+				for j, id := range options {
+					if id == g.slotItems[index] {
+						g.slotItems[index] = options[(j+1)%len(options)]
+						break
+					}
 				}
-			}
-		})
+			})
+		}
 	}
 	g.button(dst, x+8, y+425, 170, 32, "仕事を割り当てる", false, func() {
-		assignment := core.Assignment{RecipeID: g.recipeID, SlotItems: append([]string(nil), g.slotItems...)}
+		assignment := core.Assignment{RecipeID: g.assignmentRecipeID, GatherID: g.assignmentGatherID, SlotItems: append([]string(nil), g.slotItems...)}
 		g.result("仕事を割り当てました", g.world.AssignGolem(g.selectedGolem, assignment))
 	})
 	g.label(dst, x+8, y+477, "時間は操作しなくても進みます", muted)

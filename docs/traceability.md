@@ -33,9 +33,9 @@
 | NFR-03 | #21 | DES-PKG-01 | TC-FR-MOD-04-10（手動） | `cmd/fushigi/error_windows.go`, `cmd/fushigi/error_other.go` | 実装済み（Windows 11 で MessageBox を確認） |
 | NFR-04 | #2 | DES-PKG-04 | TC-NFR-04-01〜03 | `internal/core/dependency_test.go`, `.github/workflows/ci.yml` | 実装済み |
 | NFR-06 | #4, #7, #29 | DES-TIME-01, DES-GOL-05, DES-GAT-03 | TC-NFR-06-01〜06 | `internal/core/world.go`, `internal/core/golem.go`, `internal/core/gather.go` | 実装済み（採取を含む自動生産） |
-| IF-01 | #9, #21, #24 | DES-PKG-05、DES-IT01 4 章、DES-TIME-01 | TC-IF-01-01〜10（手動） | `internal/ui/game.go`, `internal/ui/cheat.go`, `cmd/fushigi/main.go` | 実装済み。マウスで UC-01〜08 を操作できる。キーボードはテスト用のチート（F11、F12）だけ |
+| IF-01 | #9, #21, #24, #33 | DES-PKG-05、DES-IT01 4 章、DES-TIME-01、DES-UI-04、DES-UI-05 | TC-IF-01-01〜10、TC-IF-01-20〜26（手動） | `internal/ui/game.go`, `internal/ui/cheat.go`, `cmd/fushigi/main.go` | 実装済み（#33 の Windows 手動確認はレビュー担当が実施） |
 | IF-02 | #9, #31 | DES-PKG-05、DES-IT01 4 章、DES-WLD-02 | TC-IF-02-01（手動）、TC-IF-02-10〜21 | `internal/ui/game.go`, `internal/core/display_name.go`, `internal/core/craft.go`, `internal/core/golem.go`, `internal/core/gather.go`, `internal/core/economy.go`, `internal/core/inventory.go` | core の誤り文は実装済み。画面の表示は #32、#33 |
 | QA-02 | — | tools/tccheck | TC-QA-02-01〜04 | `tools/tccheck`、CI | 実装済み |
-| FR-GOL-04 | #29, #31, #33 | DES-GOL-07, DES-GOL-08, DES-GOL-09, DES-GAT-03, DES-UI-04 | TC-FR-GOL-04-01〜08、TC-FR-GOL-04-20〜25 | `internal/core/golem.go`, `internal/core/gather.go` | core 実装済み（画面は #33） |
+| FR-GOL-04 | #29, #31, #33 | DES-GOL-07, DES-GOL-08, DES-GOL-09, DES-GAT-03, DES-UI-04 | TC-FR-GOL-04-01〜08、TC-FR-GOL-04-20〜25、TC-FR-GOL-04-40〜43（手動） | `internal/core/golem.go`, `internal/core/gather.go`, `internal/ui/game.go` | 実装済み（#33 の Windows 手動確認はレビュー担当が実施） |
 | FR-ALC-08 | #30, #32 | DES-ALC-04, DES-UI-01, DES-UI-03 | TC-FR-ALC-08-01〜07、TC-FR-ALC-08-20〜28（手動） | `internal/core/craft.go`, `internal/core/golem.go`, `internal/ui/game.go` | 実装済み（手動確認は合格） |
 | FR-ITM-07 | #32 | DES-ITM-01, DES-UI-02 | TC-FR-ITM-07-01〜04（手動） | `internal/ui/game.go` | 実装済み（手動確認は合格） |
