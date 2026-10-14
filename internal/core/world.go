@@ -8,15 +8,18 @@ import (
 
 // World はゲームの状態とシード付き乱数を保持する（DES-IT01 3.1、DES-TIME-01）。
 type World struct {
-	catalog     defs.Catalog
-	rng         *rand.Rand
-	rngSource   *rand.PCG
-	Inventory   Inventory
-	Golems      []Golem
-	Money       int
-	Now         uint64
-	Facilities  map[string]int
-	gatherReady map[string]uint64
+	catalog      defs.Catalog
+	rng          *rand.Rand
+	rngSource    *rand.PCG
+	Inventory    Inventory
+	Battle       *Battle
+	LastBattle   *BattleReport
+	InjuredUntil uint64
+	Golems       []Golem
+	Money        int
+	Now          uint64
+	Facilities   map[string]int
+	gatherReady  map[string]uint64
 }
 
 // NewWorld は目録とシードから初期状態を作る（DES-IT01 3.1、DES-TIME-01）。
