@@ -21,7 +21,7 @@
 ### FR-GOL-04 ゴーレムの自動採取
 
 - #29（core の自動採取）: FR-GOL-04 の連番 01〜19
-- #31（`GolemDuration`）: FR-GOL-04 の連番 20〜29
+- #31（`GolemDuration`）: FR-GOL-04 の連番 20〜29（使用済み 20〜25）
 - #33（画面、手動）: FR-GOL-04 の連番 40〜49
 
 | ID | 対象 | 前提 | 入力・操作 | 期待結果 | 種別 |
@@ -38,6 +38,8 @@
 | TC-FR-GOL-04-21 | DES-GOL-09、DES-GOL-08 | 速度 100、再使用待ち 12 秒の採取地を割り当て済み | `GolemDuration(0)` | 720 tick を返し、状態は変わらない | 正常 |
 | TC-FR-GOL-04-22 | DES-GOL-09、DES-GOL-02 | 速度 100、所要 1 秒のレシピを割り当て済み | `GolemDuration(0)` | 60 tick を返し、状態は変わらない | 正常 |
 | TC-FR-GOL-04-23 | DES-GOL-09 | ゴーレム 1 体 | `GolemDuration(1)` | `ErrUnknownID` を返し、状態は変わらない | 異常 |
+| TC-FR-GOL-04-24 | DES-GOL-09、DES-GOL-02 | 速度 150、所要 1 秒のレシピを割り当て済み | `GolemDuration(0)` | 1 × 60 × 100 ÷ 150 = 40 tick を返し、状態は変わらない | 正常 |
+| TC-FR-GOL-04-25 | DES-GOL-09、DES-GOL-08 | 速度 150、再使用待ち 12 秒の採取地を割り当て済み | `GolemDuration(0)` | 12 × 60 × 100 ÷ 150 = 480 tick を返し、状態は変わらない | 正常 |
 
 ### FR-GOL-06 自動の採取も時間で進む
 
@@ -91,7 +93,7 @@
 
 ### IF-02 誤り文（DES-WLD-02）
 
-- #31（core の誤り文）: IF-02 の連番 10〜29
+- #31（core の誤り文）: IF-02 の連番 10〜29（使用済み 10〜21）
 - DES-WLD-02 は設計書 4 章で要求にひも付いていないので、画面の表示言語の要求 IF-02（内部 ID の英字を出さない）にひも付ける。トレーサビリティの IF-02 の行は #31 が追記する
 
 | ID | 対象 | 前提 | 入力・操作 | 期待結果 | 種別 |
@@ -105,6 +107,9 @@
 | TC-IF-02-16 | DES-WLD-02 | 薬草の表示名が「薬草」、在庫不足 | 薬草を使って錬金する | `ErrNotEnoughItems`、誤り文に「薬草」があり `herb` がない | 異常 |
 | TC-IF-02-17 | DES-WLD-02 | ゴーレム材料の表示名が「薬」、材料在庫なし | ゴーレムを作る | `ErrNotEnoughItems`、誤り文に「薬」があり `potion` がない | 異常 |
 | TC-IF-02-18 | DES-WLD-02 | 目録を持たない在庫、`herb` は在庫なし | `Inventory.Remove` する | `ErrNotEnoughItems`、誤り文に内部 ID の `herb` がない | 異常 |
+| TC-IF-02-19 | DES-WLD-02 | ゴーレム 1 体 | `UnassignGolem(1)` | `ErrUnknownID`、誤り文は「ゴーレム番号 2」と書く | 異常 |
+| TC-IF-02-20 | DES-WLD-02 | ゴーレム 1 体 | `GolemDuration(1)` | `ErrUnknownID`、誤り文は「ゴーレム番号 2」と書く | 異常 |
+| TC-IF-02-21 | DES-WLD-02 | 施設材料の表示名が「薬草」、材料在庫なし | `BuildFacility` する | `ErrNotEnoughItems`、誤り文に「薬草」があり `herb` がない | 異常 |
 
 ## 3. 手動確認の結果
 
