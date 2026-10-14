@@ -10,7 +10,7 @@
 | 企画 | 要求抽出記録（ヒアリング） | [01_concept/elicitation-notes.md](01_concept/elicitation-notes.md) | 追記中 |
 | 企画 | 技術選定 ADR | [adr/0001-tech-stack.md](adr/0001-tech-stack.md) | 承認 |
 | 要求 | 要求仕様書 (SRS) | [02_requirements/srs.md](02_requirements/srs.md) | v0.3 確定 |
-| 要求 | ユースケース記述・図 | [02_requirements/use-cases.md](02_requirements/use-cases.md) | v0.3（反復 3 の範囲を追加。承認待ち） |
+| 要求 | ユースケース記述・図 | [02_requirements/use-cases.md](02_requirements/use-cases.md) | v0.3 承認（反復 3 の範囲を追加） |
 | 反復 | 反復 1（プロトタイプ）計画書 | [iterations/it01/plan.md](iterations/it01/plan.md) | 承認 |
 | 反復 | 反復 1 振り返り | [iterations/it01/retrospective.md](iterations/it01/retrospective.md) | v1.0 確定 |
 | 反復 | 反復 2 計画書 | [iterations/it02/plan.md](iterations/it02/plan.md) | v1.0 確定 |
@@ -18,11 +18,12 @@
 | 反復 | 反復 3 計画書 | [iterations/it03/plan.md](iterations/it03/plan.md) | v1.0 確定 |
 | 設計 | 設計書（反復 1）: アーキテクチャ・クラス図・状態遷移図・シーケンス図 | [03_design/design-it01.md](03_design/design-it01.md) | v0.3 承認 |
 | 設計 | 設計書（反復 2）: 自動採取・錬金の素材選び・画面 | [03_design/design-it02.md](03_design/design-it02.md) | v0.2 承認 |
-| 設計 | 設計書（反復 3）: 品質の効果・戦闘・依頼・場面ごとの画面 | [03_design/design-it03.md](03_design/design-it03.md) | v0.1 承認待ち |
+| 設計 | 設計書（反復 3）: 品質の効果・戦闘・依頼・場面ごとの画面 | [03_design/design-it03.md](03_design/design-it03.md) | v0.2 承認 |
 | 設計 | 定義データ形式 ADR | [adr/0002-definition-data-format.md](adr/0002-definition-data-format.md) | 承認 |
 | 試験 | テスト仕様書（反復 1） | [04_test/test-spec-it01.md](04_test/test-spec-it01.md) | 雛形 |
 | 試験 | テスト仕様書（反復 2） | [04_test/test-spec-it02.md](04_test/test-spec-it02.md) | 反復 2 の範囲を記入済み |
-| 横断 | トレーサビリティマトリクス | [traceability.md](traceability.md) | 反復 1・2 の行を用意 |
+| 試験 | テスト仕様書（反復 3） | [04_test/test-spec-it03.md](04_test/test-spec-it03.md) | 雛形 |
+| 横断 | トレーサビリティマトリクス | [traceability.md](traceability.md) | 反復 1〜3 の行を用意 |
 | 横断 | レビュー記録 | [reviews/](reviews/) | 記録中 |
 
 ## エージェント向けのルール

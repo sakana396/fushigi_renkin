@@ -1,7 +1,7 @@
 # 設計書（反復 3: 品質が効く小さな戦闘と依頼、場面ごとの画面）
 
 - 文書 ID: DES-IT03
-- 版: 0.2（REV-024 の指摘を反映。開発者の承認待ち）
+- 版: 0.2（承認、REV-024）
 - 作成日: 2026-10-14
 - 対象: [反復 3 計画書](../iterations/it03/plan.md) の範囲
 - 入力: [SRS-001](../02_requirements/srs.md) v0.3、[ユースケース](../02_requirements/use-cases.md) v0.3、[設計書（反復 1）](design-it01.md) v0.3、[設計書（反復 2）](design-it02.md) v0.2
