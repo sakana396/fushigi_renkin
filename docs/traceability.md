@@ -1,7 +1,7 @@
 # トレーサビリティマトリクス
 
 - 文書 ID: TRC-001
-- 対象: 反復 1（IT01）〜反復 2（IT02）の範囲。反復ごとに行を追加する
+- 対象: 反復 1（IT01）〜反復 3（IT03）の範囲。反復ごとに行を追加する
 
 要求から設計・テスト・実装までの対応を表す。実装の担当者（エージェントを含む）は、自分が担当した要求の行だけを更新する。
 
@@ -39,3 +39,14 @@
 | FR-GOL-04 | #29, #31, #33 | DES-GOL-07, DES-GOL-08, DES-GOL-09, DES-GAT-03, DES-UI-04 | TC-FR-GOL-04-01〜08、TC-FR-GOL-04-20〜25、TC-FR-GOL-04-40〜45（手動） | `internal/core/golem.go`, `internal/core/gather.go`, `internal/ui/game.go` | 実装済み（手動確認は合格） |
 | FR-ALC-08 | #30, #32 | DES-ALC-04, DES-UI-01, DES-UI-03 | TC-FR-ALC-08-01〜07、TC-FR-ALC-08-20〜28（手動） | `internal/core/craft.go`, `internal/core/golem.go`, `internal/ui/game.go` | 実装済み（手動確認は合格） |
 | FR-ITM-07 | #32 | DES-ITM-01, DES-UI-02 | TC-FR-ITM-07-01〜04（手動） | `internal/ui/game.go` | 実装済み（手動確認は合格） |
+| FR-ITM-08 | #45, #50 | DES-QLT-05, DES-UI-09 |  |  | 未着手 |
+| FR-ITM-09 | #44, #45 | DES-DEF-05, DES-QLT-05, DES-VAL-09, DES-VAL-10 |  |  | 未着手 |
+| FR-BTL-01 | #46, #51 | DES-BTL-01, DES-BTL-02, DES-BTL-03, DES-UI-08 |  |  | 未着手 |
+| FR-BTL-02 | #44, #46 | DES-DEF-06, DES-VAL-11 |  |  | 未着手 |
+| FR-BTL-04 | #47, #51 | DES-BTL-02 |  |  | 未着手 |
+| FR-BTL-05 | #47 | DES-QLT-05 |  |  | 未着手 |
+| FR-BTL-07 | #46, #51 | DES-BTL-02, DES-BTL-04 |  |  | 未着手 |
+| FR-BTL-10 | #46, #50 | DES-BTL-02, DES-UI-07 |  |  | 未着手 |
+| FR-MAT-03 | #46, #49 | DES-BTL-02, DES-DEF-06 |  |  | 未着手（一部） |
+| FR-ECO-05 | #48, #49, #50 | DES-DEF-07, DES-QST-01, DES-QST-02, DES-VAL-13 |  |  | 未着手 |
+| IF-06 | #50, #51 | DES-UI-06, DES-UI-07, DES-UI-10 |  |  | 未着手 |
