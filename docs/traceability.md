@@ -28,7 +28,7 @@
 | FR-GOL-03 | #7 | DES-GOL-01, DES-GOL-03, DES-GOL-04 | TC-FR-GOL-03-01〜03 | `internal/core/golem.go` | 実装済み（反復 1 は在庫との受け渡し） |
 | FR-GOL-06 | #7, #29 | DES-TIME-01, DES-GOL-05, DES-GOL-08 | TC-FR-GOL-06-01〜07 | `internal/core/world.go`, `internal/core/golem.go` | 実装済み（採取も tick で進む） |
 | FR-MOD-01 | #3 | DES-PKG-03, DES-PKG-06 | TC-FR-MOD-01-01〜03 | `internal/defload/load.go` | 実装済み |
-| FR-MOD-02 | #3, #8, #44, #49 | DES-PKG-03, DES-PKG-06, DES-DEF-05〜07 | TC-FR-MOD-02-01〜05、TC-FR-MOD-02-10〜12 | `internal/defload/load.go`, `internal/defs/defs.go`, `data/base.go`, `data/base/*.toml` | 実装済み（反復 3 の本体データは #49） |
+| FR-MOD-02 | #3, #8, #44, #49 | DES-PKG-03, DES-PKG-06, DES-DEF-05〜07 | TC-FR-MOD-02-01〜05、TC-FR-MOD-02-10〜12、TC-FR-MOD-02-20〜27 | `internal/defload/load.go`, `internal/defs/defs.go`, `data/base.go`, `data/base/*.toml`, `data/base_it03_test.go` | 実装済み（反復 3 の本体データを追加） |
 | FR-MOD-04 | #3, #9, #21, #44 | DES-VAL-01〜13, DES-PKG-01 | TC-FR-MOD-04-01〜10、TC-FR-MOD-04-20〜47 | `internal/defload/load.go`, `cmd/fushigi/main.go`, `cmd/fushigi/error_windows.go`, `cmd/fushigi/error_other.go` | 実装済み（反復 3 の検証を追加） |
 | NFR-03 | #21 | DES-PKG-01 | TC-FR-MOD-04-10（手動） | `cmd/fushigi/error_windows.go`, `cmd/fushigi/error_other.go` | 実装済み（Windows 11 で MessageBox を確認） |
 | NFR-04 | #2 | DES-PKG-04 | TC-NFR-04-01〜03 | `internal/core/dependency_test.go`, `.github/workflows/ci.yml` | 実装済み |
@@ -39,14 +39,14 @@
 | FR-GOL-04 | #29, #31, #33 | DES-GOL-07, DES-GOL-08, DES-GOL-09, DES-GAT-03, DES-UI-04 | TC-FR-GOL-04-01〜08、TC-FR-GOL-04-20〜25、TC-FR-GOL-04-40〜45（手動） | `internal/core/golem.go`, `internal/core/gather.go`, `internal/ui/game.go` | 実装済み（手動確認は合格） |
 | FR-ALC-08 | #30, #32 | DES-ALC-04, DES-UI-01, DES-UI-03 | TC-FR-ALC-08-01〜07、TC-FR-ALC-08-20〜28（手動） | `internal/core/craft.go`, `internal/core/golem.go`, `internal/ui/game.go` | 実装済み（手動確認は合格） |
 | FR-ITM-07 | #32 | DES-ITM-01, DES-UI-02 | TC-FR-ITM-07-01〜04（手動） | `internal/ui/game.go` | 実装済み（手動確認は合格） |
-| FR-ITM-08 | #45, #47, #49, #50 | DES-QLT-05, DES-UI-09 |  |  | 未着手 |
-| FR-ITM-09 | #44, #45, #47, #49, #50 | DES-DEF-05, DES-QLT-05, DES-VAL-09, DES-VAL-10, DES-UI-09 | TC-FR-MOD-04-20〜25、TC-FR-MOD-04-39〜40、TC-FR-MOD-04-43 | `internal/defs/defs.go`, `internal/defload/load.go` | 定義と検証を実装済み（効果の計算は #45） |
-| FR-BTL-01 | #44, #46, #49, #51 | DES-BTL-01, DES-BTL-02, DES-BTL-03, DES-VAL-12, DES-UI-08 | TC-FR-MOD-04-29〜31、TC-FR-MOD-04-35〜37、TC-FR-MOD-04-41〜42、TC-FR-MOD-04-44〜47 | `internal/defs/defs.go`, `internal/defload/load.go` | 定義と検証を実装済み（戦闘本体は #46） |
-| FR-BTL-02 | #44, #46, #49 | DES-DEF-06, DES-VAL-11 | TC-FR-MOD-04-26〜28 | `internal/defs/defs.go`, `internal/defload/load.go` | 定義と検証を実装済み（戦闘は #46） |
+| FR-ITM-08 | #45, #47, #49, #50 | DES-QLT-05, DES-UI-09 | TC-FR-MOD-02-20、TC-FR-MOD-02-27 | `data/base/items.toml` | 使用効果の基本値を追加（効果の計算は #45） |
+| FR-ITM-09 | #44, #45, #47, #49, #50 | DES-DEF-05, DES-QLT-05, DES-VAL-09, DES-VAL-10, DES-UI-09 | TC-FR-MOD-04-20〜25、TC-FR-MOD-04-39〜40、TC-FR-MOD-04-43、TC-FR-MOD-02-20、TC-FR-MOD-02-27 | `internal/defs/defs.go`, `internal/defload/load.go`, `data/base/items.toml` | 定義・検証・本体データを実装済み（効果の計算は #45） |
+| FR-BTL-01 | #44, #46, #49, #51 | DES-BTL-01, DES-BTL-02, DES-BTL-03, DES-VAL-12, DES-UI-08 | TC-FR-MOD-04-29〜31、TC-FR-MOD-04-35〜37、TC-FR-MOD-04-41〜42、TC-FR-MOD-04-44〜47、TC-FR-MOD-02-21〜22 | `internal/defs/defs.go`, `internal/defload/load.go`, `data/base/game.toml`, `data/base/gathers.toml`, `data/base/units.toml` | 定義・検証・本体データを実装済み（戦闘本体は #46） |
+| FR-BTL-02 | #44, #46, #49 | DES-DEF-06, DES-VAL-11 | TC-FR-MOD-04-26〜28、TC-FR-MOD-02-21 | `internal/defs/defs.go`, `internal/defload/load.go`, `data/base/units.toml` | 定義・検証・本体データを実装済み（戦闘は #46） |
 | FR-BTL-04 | #47, #51 | DES-BTL-02 |  |  | 未着手 |
 | FR-BTL-05 | #45, #47 | DES-QLT-05 |  |  | 未着手 |
 | FR-BTL-07 | #46, #51 | DES-BTL-02, DES-BTL-04 |  |  | 未着手 |
 | FR-BTL-10 | #46, #50, #51 | DES-BTL-02, DES-UI-07 |  |  | 未着手 |
 | FR-MAT-03 | #46 | DES-BTL-02, DES-DEF-06 |  |  | 未着手（一部） |
-| FR-ECO-05 | #44, #48, #49, #50 | DES-DEF-07, DES-QST-01, DES-QST-02, DES-VAL-13 | TC-FR-MOD-04-32〜34 | `internal/defs/defs.go`, `internal/defload/load.go` | 定義と検証を実装済み（依頼板と納品は #48） |
+| FR-ECO-05 | #44, #48, #49, #50 | DES-DEF-07, DES-QST-01, DES-QST-02, DES-VAL-13 | TC-FR-MOD-04-32〜34、TC-FR-MOD-02-23〜24 | `internal/defs/defs.go`, `internal/defload/load.go`, `data/base/quests.toml`, `data/base/game.toml` | 定義・検証・本体データを実装済み（依頼板と納品は #48） |
 | IF-06 | #50, #51 | DES-UI-06, DES-UI-07, DES-UI-10 |  |  | 未着手 |
