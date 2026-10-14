@@ -46,17 +46,29 @@ type Game struct {
 	slotItems          []string
 	quantity           int
 	timeScale          int
+	scene              scene
+	startBattle        func(string) error
+	injuryRemaining    func() uint64
 }
+
+// scene は表示する場面を表す（DES-UI-06）。
+type scene int
+
+const (
+	workshopScene scene = iota
+	townScene
+	gatherScene
+)
 
 // NewGame は本体の目録と World を画面に結び付ける（DES-PKG-05）。
 func NewGame(world *core.World, catalog defs.Catalog) *Game {
-	return &Game{world: world, catalog: catalog, face: text.NewGoXFace(bitmapfont.Face), selectedGolem: -1, quantity: 1, timeScale: 1, message: "採取地をクリックして素材を集めてください"}
+	return &Game{world: world, catalog: catalog, face: text.NewGoXFace(bitmapfont.Face), selectedGolem: -1, quantity: 1, timeScale: 1, message: "上のタブから場面を選んでください"}
 }
 
 // Run は画面を開き、ゲームを起動する（DES-PKG-05）。
 func Run(world *core.World, catalog defs.Catalog) error {
 	ebiten.SetWindowSize(width, height)
-	ebiten.SetWindowTitle("ふしぎ錬金 - プロトタイプ")
+	ebiten.SetWindowTitle("ふしぎ錬金")
 	ebiten.SetTPS(60)
 	return ebiten.RunGame(NewGame(world, catalog))
 }
@@ -94,33 +106,73 @@ var (
 	muted       = color.RGBA{177, 193, 201, 255}
 )
 
-// Draw は在庫・採取地・店・レシピ・ゴーレム・施設と操作結果を描く（DES-PKG-05、DES-IT01 4 章）。
+// Draw は共通表示と選択した場面を描く（DES-UI-06、DES-UI-07）。
 func (g *Game) Draw(screen *ebiten.Image) {
 	screen.Fill(bg)
 	g.buttons = g.buttons[:0]
 	g.label(screen, 14, 10, fmt.Sprintf("ふしぎ錬金   お金: %d   経過: %d 秒   ゴーレム: %d/%d   時間 ×%d", g.world.Money, g.world.Now/60, len(g.world.Golems), g.world.GolemSlots(), g.timeScale), white)
 	g.label(screen, 1100, 10, "F12: チート（お金と素材）  F11: 時間 ×10", muted)
-	g.label(screen, 800, 10, fmt.Sprintf("売買数: %d", g.quantity), white)
-	g.button(screen, 920, 5, 35, 24, "－", false, func() {
-		if g.quantity > 1 {
-			g.quantity--
+	g.label(screen, 14, 35, "操作結果: "+g.message, white)
+	for i, title := range []string{"工房", "街", "採取地"} {
+		chosen := scene(i)
+		g.button(screen, 10+i*130, 55, 120, 30, title, g.scene == chosen, func() { g.scene = chosen })
+	}
+	switch g.scene {
+	case workshopScene:
+		g.drawInventory(screen, false)
+		g.drawCandidates(screen)
+		g.drawRecipes(screen)
+		g.drawCraft(screen)
+		g.drawGolems(screen)
+		g.drawAssignment(screen)
+	case townScene:
+		g.label(screen, 1195, 100, fmt.Sprintf("売買数: %d", g.quantity), white)
+		g.button(screen, 1295, 95, 35, 24, "－", false, func() {
+			if g.quantity > 1 {
+				g.quantity--
+			}
+		})
+		g.button(screen, 1335, 95, 35, 24, "＋", false, func() {
+			if g.quantity < 99 {
+				g.quantity++
+			}
+		})
+		g.drawInventory(screen, true)
+		g.drawShop(screen)
+		g.drawFacilities(screen)
+		g.drawQuests(screen)
+	case gatherScene:
+		g.drawGather(screen)
+	}
+}
+
+// drawQuests は依頼の条件・報酬と納品操作を表示する（DES-UI-07、DES-QST-02、UC-14）。
+func (g *Game) drawQuests(dst *ebiten.Image) {
+	const x, y, w = 1195, 130, 395
+	g.box(dst, x, y, w, 440, "依頼板")
+	for i, id := range g.world.Quests {
+		yy := y + 35 + i*125
+		if id == "" {
+			g.label(dst, x+8, yy, fmt.Sprintf("依頼 %d: 空き", i+1), muted)
+			continue
 		}
-	})
-	g.button(screen, 960, 5, 35, 24, "＋", false, func() {
-		if g.quantity < 99 {
-			g.quantity++
+		quest, ok := g.catalog.Quest(id)
+		if !ok {
+			g.label(dst, x+8, yy, fmt.Sprintf("依頼 %d: 内容を確認できません", i+1), muted)
+			continue
 		}
-	})
-	g.label(screen, 14, 35, g.message, white)
-	g.drawInventory(screen)
-	g.drawCandidates(screen)
-	g.drawShop(screen)
-	g.drawGather(screen)
-	g.drawFacilities(screen)
-	g.drawRecipes(screen)
-	g.drawCraft(screen)
-	g.drawGolems(screen)
-	g.drawAssignment(screen)
+		g.label(dst, x+8, yy, fmt.Sprintf("依頼 %d: %s Q%d 以上 ×%d", i+1, g.itemName(quest.Item), quest.MinQuality, quest.Count), white)
+		g.label(dst, x+8, yy+22, fmt.Sprintf("報酬: %d 円", quest.Reward), muted)
+		eligible := 0
+		for _, stack := range g.world.Inventory.Stacks() {
+			if stack.Key.ItemID == quest.Item && stack.Key.Quality >= quest.MinQuality {
+				eligible += stack.Count
+			}
+		}
+		g.label(dst, x+8, yy+43, fmt.Sprintf("納品できる在庫: %d/%d", eligible, quest.Count), muted)
+		index := i
+		g.button(dst, x+8, yy+66, 150, 28, "納品する", false, func() { g.result("納品しました", g.world.Deliver(index)) })
+	}
 }
 
 // label は日本語グリフを含む bitmapfont を text/v2 で描く（DES-PKG-05）。
@@ -219,6 +271,24 @@ func (g *Game) itemAttributes(id string) string {
 	return strings.Join(item.Attributes, "、")
 }
 
+// itemEffectText は品質を反映した使用効果を表示用に組み立てる（DES-UI-09、DES-QLT-05）。
+func (g *Game) itemEffectText(key core.ItemKey) string {
+	item, ok := g.catalog.Item(key.ItemID)
+	if !ok {
+		return ""
+	}
+	effect, usable := core.UseEffectOf(item, key.Quality)
+	if !usable {
+		return ""
+	}
+	parts := []string{fmt.Sprintf("範囲 %d", effect.Radius)}
+	for _, value := range effect.Effects {
+		name := map[string]string{"heal": "回復", "damage": "ダメージ", "attack_up": "攻撃 +", "speed_up": "素早さ +"}[value.Kind]
+		parts = append(parts, fmt.Sprintf("%s%d", name, value.Value))
+	}
+	return "使用効果: " + strings.Join(parts, "・")
+}
+
 // candidateRemaining は全入力枠の選択済み数を在庫数から差し引く（DES-UI-01）。
 func (g *Game) candidateRemaining(stack core.Stack) int {
 	remaining := stack.Count
@@ -245,12 +315,16 @@ func keys[T any](values map[string]T) []string {
 	return ids
 }
 
-// drawInventory は品質別の在庫と売却操作を表示する（DES-PKG-05、DES-UI-02、DES-UI-03、UC-04）。
-func (g *Game) drawInventory(dst *ebiten.Image) {
-	const x, y, w = 10, 70, 385
-	g.box(dst, x, y, w, 555, "在庫（クリックで売る物を選択）")
+// drawInventory は品質別の在庫と使用効果を示し、街では売却も扱う（DES-UI-02、DES-UI-03、DES-UI-09）。
+func (g *Game) drawInventory(dst *ebiten.Image, canSell bool) {
+	const x, y, w = 10, 95, 775
+	title := "在庫（クリックで売る物を選択）"
+	if !canSell {
+		title = "在庫（売る物の選択のみ）"
+	}
+	g.box(dst, x, y, w, 555, title)
 	stacks := g.world.Inventory.Stacks()
-	const rows = 17
+	const rows = 10
 	maxPage := 0
 	if len(stacks) > 0 {
 		maxPage = (len(stacks) - 1) / rows
@@ -260,12 +334,15 @@ func (g *Game) drawInventory(dst *ebiten.Image) {
 	}
 	for i := g.inventoryPage * rows; i < len(stacks) && i < (g.inventoryPage+1)*rows; i++ {
 		stack := stacks[i]
-		yy := y + 33 + (i%rows)*26
+		yy := y + 33 + (i%rows)*43
 		title := fmt.Sprintf("%s Q%d ×%d  %s", g.itemName(stack.Key.ItemID), stack.Key.Quality, stack.Count, g.itemAttributes(stack.Key.ItemID))
 		g.button(dst, x+8, yy, w-16, 24, title, g.hasStack && stack.Key == g.selectedStack, func() {
 			g.selectedStack = stack.Key
 			g.hasStack = true
 		})
+		if effect := g.itemEffectText(stack.Key); effect != "" {
+			g.label(dst, x+13, yy+25, effect, muted)
+		}
 	}
 	g.button(dst, x+8, y+480, 45, 25, "前", false, func() {
 		if g.inventoryPage > 0 {
@@ -278,7 +355,7 @@ func (g *Game) drawInventory(dst *ebiten.Image) {
 			g.inventoryPage++
 		}
 	})
-	if g.hasStack {
+	if canSell && g.hasStack {
 		g.label(dst, x+8, y+510, fmt.Sprintf("選択: %s Q%d / 売値 %d×%d", g.itemName(g.selectedStack.ItemID), g.selectedStack.Quality, g.world.SellPrice(g.selectedStack), g.quantity), white)
 		g.button(dst, x+8, y+529, 140, 22, "指定数を売る", false, func() {
 			money, err := g.world.Sell(g.selectedStack, g.quantity)
@@ -289,8 +366,8 @@ func (g *Game) drawInventory(dst *ebiten.Image) {
 
 // drawCandidates は選択した入力枠に合う在庫の残数を表示する（DES-ALC-04、DES-UI-01、DES-UI-02）。
 func (g *Game) drawCandidates(dst *ebiten.Image) {
-	const x, y, w = 10, 635, 385
-	g.box(dst, x, y, w, 290, "錬金の素材候補")
+	const x, y, w = 10, 655, 385
+	g.box(dst, x, y, w, 270, "錬金の素材候補")
 	recipe, ok := g.catalog.Recipe(g.recipeID)
 	if !ok || g.craftSlot < 0 || g.craftSlot >= len(recipe.Inputs) {
 		g.label(dst, x+8, y+36, "レシピと入力枠を選んでください", muted)
@@ -333,13 +410,13 @@ func (g *Game) drawCandidates(dst *ebiten.Image) {
 		}
 		g.button(dst, x+8, y+32+(i%rows)*26, w-16, 24, title, false, action)
 	}
-	g.button(dst, x+8, y+252, 45, 25, "前", false, func() {
+	g.button(dst, x+8, y+242, 45, 25, "前", false, func() {
 		if g.candidatePage > 0 {
 			g.candidatePage--
 		}
 	})
-	g.label(dst, x+62, y+257, fmt.Sprintf("%d / %d", g.candidatePage+1, maxPage+1), muted)
-	g.button(dst, x+139, y+252, 45, 25, "次", false, func() {
+	g.label(dst, x+62, y+247, fmt.Sprintf("%d / %d", g.candidatePage+1, maxPage+1), muted)
+	g.button(dst, x+139, y+242, 45, 25, "次", false, func() {
 		if g.candidatePage < maxPage {
 			g.candidatePage++
 		}
@@ -408,7 +485,7 @@ func contains(values []string, wanted string) bool {
 
 // drawShop は固定品質・価格の売り物を表示し、指定数を購入する（DES-PKG-05、UC-02）。
 func (g *Game) drawShop(dst *ebiten.Image) {
-	const x, y, w = 405, 70, 385
+	const x, y, w = 800, 95, 385
 	g.box(dst, x, y, w, 175, "店（クリックで指定数購入）")
 	for i, offer := range g.catalog.Game.Shop {
 		index := i
@@ -419,16 +496,18 @@ func (g *Game) drawShop(dst *ebiten.Image) {
 
 // drawGather はプレイヤーの採取地をページ送りで表示する（DES-PKG-05、DES-UI-05、UC-01）。
 func (g *Game) drawGather(dst *ebiten.Image) {
-	const x, y, w = 405, 255, 385
-	g.box(dst, x, y, w, 155, "採取地")
+	const x, y, w = 10, 95, 775
+	g.box(dst, x, y, w, 420, "採取地")
 	ids := keys(g.catalog.Gathers)
-	const rows = 3
-	g.pageControls(dst, x+8, y+122, len(ids), rows, &g.gatherPage)
+	const rows = 6
+	g.pageControls(dst, x+8, y+382, len(ids), rows, &g.gatherPage)
 	for i := g.gatherPage * rows; i < len(ids) && i < (g.gatherPage+1)*rows; i++ {
 		id := ids[i]
 		site := g.catalog.Gathers[id]
 		gatherID := id
-		g.button(dst, x+8, y+31+(i%rows)*29, w-16, 27, fmt.Sprintf("%s （%d 回抽選）", site.Name, site.Rolls), false, func() {
+		yy := y + 34 + (i%rows)*58
+		g.label(dst, x+8, yy, site.Name, white)
+		g.button(dst, x+250, yy-4, 170, 28, "採取", false, func() {
 			stacks, err := g.world.Gather(gatherID)
 			if err != nil {
 				g.result("", err)
@@ -440,6 +519,22 @@ func (g *Game) drawGather(dst *ebiten.Image) {
 			}
 			g.message = "採取: " + strings.Join(names, "、")
 		})
+		if site.Battle != nil {
+			var action func()
+			reason := ""
+			switch {
+			case g.startBattle == nil:
+				reason = "戦闘画面の接続待ち"
+			case g.injuryRemaining != nil && g.injuryRemaining() > 0:
+				reason = fmt.Sprintf("負傷中: 残り %d 秒", (g.injuryRemaining()+59)/60)
+			default:
+				action = func() { g.result("探索を始めました", g.startBattle(gatherID)) }
+			}
+			g.button(dst, x+430, yy-4, 170, 28, "探索する", false, action)
+			if reason != "" {
+				g.label(dst, x+605, yy+3, reason, muted)
+			}
+		}
 	}
 }
 
@@ -456,7 +551,7 @@ func materials(values []defs.ItemAmount, name func(string) string) string {
 
 // drawFacilities は次段階の費用・効果を表示して建設する（DES-PKG-05、UC-07）。
 func (g *Game) drawFacilities(dst *ebiten.Image) {
-	const x, y, w = 405, 420, 385
+	const x, y, w = 800, 280, 385
 	g.box(dst, x, y, w, 505, "施設（クリックで次の段階を建設）")
 	for i, id := range keys(g.catalog.Facilities) {
 		facility := g.catalog.Facilities[id]
