@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/sakana396/fushigi_renkin/data"
+	"github.com/sakana396/fushigi_renkin/internal/core"
 	"github.com/sakana396/fushigi_renkin/internal/defload"
 	"github.com/sakana396/fushigi_renkin/internal/defs"
 )
@@ -160,19 +161,76 @@ func TestBaseDataIT03(t *testing.T) {
 				t.Errorf("%s の素材とボーナス: %+v", tc.id, r)
 			}
 		}
+		// 素材の品質の範囲を、採取地の drops と店の品ぞろえから読み、PreviewCraft で実際の品質を求める。
+		bounds := func(item string) (int, int) {
+			lo, hi := 201, 0
+			for _, g := range c.Gathers {
+				for _, d := range g.Drops {
+					if d.Item == item {
+						lo, hi = min(lo, d.QualityMin), max(hi, d.QualityMax)
+					}
+				}
+			}
+			for _, o := range c.Game.Shop {
+				if o.Item == item {
+					lo, hi = min(lo, o.Quality), max(hi, o.Quality)
+				}
+			}
+			if hi == 0 {
+				t.Fatalf("%s を採取でも店でも手に入れられない", item)
+			}
+			return lo, hi
+		}
+		type part struct {
+			item  string
+			count int
+		}
+		preview := func(recipe string, slots [][]part, pick func(lo, hi int) int, fixed map[string]int) int {
+			t.Helper()
+			w := core.NewWorld(c, 1)
+			sel := core.Selection{}
+			for _, slot := range slots {
+				var stacks []core.Stack
+				for _, p := range slot {
+					q, ok := fixed[p.item]
+					if !ok {
+						q = pick(bounds(p.item))
+					}
+					key := core.ItemKey{ItemID: p.item, Quality: q}
+					if err := w.Inventory.Add(key, p.count); err != nil {
+						t.Fatal(err)
+					}
+					stacks = append(stacks, core.Stack{Key: key, Count: p.count})
+				}
+				sel.Slots = append(sel.Slots, stacks)
+			}
+			pv, err := w.PreviewCraft(recipe, sel)
+			if err != nil {
+				t.Fatalf("%s: %v", recipe, err)
+			}
+			return pv.Quality
+		}
+		low := func(lo, _ int) int { return lo }
+		high := func(_, hi int) int { return hi }
+		potion := [][]part{{{"herb", 2}}, {{"water", 1}}}
+		bread := [][]part{{{"wheat", 3}}, {{"water", 1}}}
+		bomb := [][]part{{{"ore", 2}}, {{"glow_moss", 1}}}
+		breadLow := preview("bread_whole_wheat", bread, low, nil)
+		breadHigh := preview("bread_whole_wheat", bread, high, nil)
+		burger := [][]part{{{"bread", 1}}, {{"meat", 2}}}
 		for _, tc := range []struct {
 			name string
 			got  int
 			want int
 		}{
-			{"回復薬の下限", (5*2+5)/3 + c.Recipes["potion_herb"].Bonuses[0].Add, 20},
-			{"回復薬の上限", (25*2+25)/3 + c.Recipes["potion_herb"].Bonuses[0].Add, 40},
-			{"パンの下限", (5*3+5)/4 + c.Recipes["bread_whole_wheat"].Bonuses[0].Add, 13},
-			{"パンの上限", (25*3+25)/4 + c.Recipes["bread_whole_wheat"].Bonuses[0].Add, 33},
-			{"ハンバーガーの下限", (13+15*2)/3 + c.Recipes["burger_double"].Bonuses[0].Add, 29},
-			{"ハンバーガーの上限", (33+15*2)/3 + c.Recipes["burger_double"].Bonuses[0].Add, 36},
-			{"爆弾の下限", (5*2+5)/3 + c.Recipes["bomb"].Bonuses[0].Add, 15},
-			{"爆弾の上限", (25*2+25)/3 + c.Recipes["bomb"].Bonuses[0].Add, 35},
+			{"回復薬の下限", preview("potion_herb", potion, low, nil), 20},
+			{"回復薬の上限", preview("potion_herb", potion, high, nil), 40},
+			{"パンの下限", breadLow, 13},
+			{"パンの上限", breadHigh, 33},
+			{"ハンバーガーの下限", preview("burger_double", burger, low, map[string]int{"bread": breadLow}), 29},
+			{"ハンバーガーの上限", preview("burger_double", burger, high, map[string]int{"bread": breadHigh}), 36},
+			{"爆弾の下限", preview("bomb", bomb, low, nil), 15},
+			{"爆弾の上限", preview("bomb", bomb, high, nil), 35},
 		} {
 			if tc.got != tc.want {
 				t.Errorf("%s: got=%d want=%d", tc.name, tc.got, tc.want)
