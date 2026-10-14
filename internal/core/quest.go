@@ -40,7 +40,10 @@ func (w *World) Deliver(index int) error {
 	if id == "" {
 		return fmt.Errorf("依頼番号 %d: %w", index+1, ErrNoQuest)
 	}
-	quest := w.catalog.Quests[id]
+	quest, ok := w.catalog.Quest(id)
+	if !ok {
+		return fmt.Errorf("依頼 ID %s: %w", id, ErrUnknownID)
+	}
 	trial := cloneInventory(w.Inventory)
 	remaining := quest.Count
 	for _, stack := range trial.Stacks() {

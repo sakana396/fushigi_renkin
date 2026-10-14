@@ -66,8 +66,8 @@ func TestQuestBoard(t *testing.T) {
 		})
 	}
 	t.Run("TC-FR-ECO-05-10 納品後の候補順と乱数位置", func(t *testing.T) {
-		w := NewWorld(questCatalog("q_d", "q_b", "q_a", "q_c"), 42)
-		rng := rand.New(rand.NewPCG(42, 1))
+		w := NewWorld(questCatalog("q_d", "q_b", "q_a", "q_c"), 7)
+		rng := rand.New(rand.NewPCG(7, 1))
 		ids := []string{"q_a", "q_b", "q_c", "q_d"}
 		var initial [3]string
 		for i := range initial {
@@ -78,6 +78,12 @@ func TestQuestBoard(t *testing.T) {
 		candidates := []string{initial[1], ids[0]}
 		sort.Strings(candidates)
 		want := candidates[rng.IntN(len(candidates))]
+		if want == initial[1] {
+			t.Fatalf("テストの前提違反: 補充 ID %s が納品前と同じ", want)
+		}
+		if w.Quests != initial {
+			t.Fatalf("初期依頼板 = %v、期待 = %v", w.Quests, initial)
+		}
 		addQuestItems(t, w, 20, 40)
 		if err := w.Deliver(1); err != nil || w.Quests[1] != want || w.Quests[0] != initial[0] || w.Quests[2] != initial[2] {
 			t.Fatalf("納品後の依頼板 = %v、期待する位置 1 = %s、誤り = %v", w.Quests, want, err)
@@ -117,14 +123,54 @@ func TestDeliver(t *testing.T) {
 			t.Fatalf("結果 = %v、在庫 = %v", err, w.Inventory.Stacks())
 		}
 	})
+	t.Run("TC-FR-ECO-05-11 別のアイテムは納品しない", func(t *testing.T) {
+		w := NewWorld(questCatalog("q_a"), 1)
+		addQuestItems(t, w, 20, 40)
+		if err := w.Inventory.Add(ItemKey{"potion", 200}, 3); err != nil {
+			t.Fatal(err)
+		}
+		if err := w.Deliver(0); err != nil {
+			t.Fatal(err)
+		}
+		if got := w.Inventory.Stacks(); !reflect.DeepEqual(got, []Stack{{ItemKey{"potion", 200}, 3}}) {
+			t.Fatalf("納品後の在庫 = %v", got)
+		}
+	})
+	max := int(^uint(0) >> 1)
+	for _, tc := range []struct {
+		name      string
+		money     int
+		wantError error
+	}{
+		{"TC-FR-ECO-05-07 ちょうど上限", max - 120, nil},
+		{"TC-FR-ECO-05-07 上限を 1 超える", max - 119, ErrInvalidCount},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			w := NewWorld(questCatalog("q_a"), 1)
+			w.Money = tc.money
+			addQuestItems(t, w, 20, 40)
+			beforeItems, beforeQuests := w.Inventory.Stacks(), w.Quests
+			err := w.Deliver(0)
+			if !errors.Is(err, tc.wantError) {
+				t.Fatalf("誤り = %v、期待 = %v", err, tc.wantError)
+			}
+			if tc.wantError != nil {
+				if !reflect.DeepEqual(w.Inventory.Stacks(), beforeItems) || w.Money != tc.money || w.Quests != beforeQuests {
+					t.Fatalf("失敗後に状態が変化: %v、%d、%v", w.Inventory.Stacks(), w.Money, w.Quests)
+				}
+			} else if w.Money != max || len(w.Inventory.Stacks()) != 0 {
+				t.Fatalf("納品後のお金 = %d、在庫 = %v", w.Money, w.Inventory.Stacks())
+			}
+		})
+	}
 	for _, tc := range []struct {
 		name  string
 		index int
 		setup func(*World)
 		want  error
 	}{
-		{"TC-FR-ECO-05-04 負の位置", -1, nil, ErrUnknownID},
-		{"TC-FR-ECO-05-04 大きすぎる位置", 3, nil, ErrUnknownID},
+		{"TC-FR-ECO-05-04 負の位置", -1, func(w *World) { addQuestItems(t, w, 20, 40) }, ErrUnknownID},
+		{"TC-FR-ECO-05-04 大きすぎる位置", 3, func(w *World) { addQuestItems(t, w, 20, 40) }, ErrUnknownID},
 		{"TC-FR-ECO-05-05 空の位置", 1, func(w *World) {
 			w.Quests[1] = ""
 			w.Money = int(^uint(0) >> 1)
@@ -132,11 +178,20 @@ func TestDeliver(t *testing.T) {
 		{"TC-FR-ECO-05-06 品質条件と個数が不足", 0, func(w *World) {
 			w.Money = int(^uint(0) >> 1)
 			addQuestItems(t, w, 15, 15, 20)
+			if err := w.Inventory.Add(ItemKey{"potion", 200}, 3); err != nil {
+				t.Fatal(err)
+			}
 		}, ErrNotEnoughItems},
-		{"TC-FR-ECO-05-07 お金のあふれ", 0, func(w *World) {
-			w.Money = int(^uint(0)>>1) - 119
+		{"TC-FR-ECO-05-12 別のアイテムを不足数に含めない", 0, func(w *World) {
+			addQuestItems(t, w, 15, 20)
+			if err := w.Inventory.Add(ItemKey{"potion", 200}, 3); err != nil {
+				t.Fatal(err)
+			}
+		}, ErrNotEnoughItems},
+		{"TC-FR-ECO-05-13 目録にない依頼 ID", 0, func(w *World) {
+			w.Quests[0] = "q_missing"
 			addQuestItems(t, w, 20, 40)
-		}, ErrInvalidCount},
+		}, ErrUnknownID},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			w := NewWorld(questCatalog("q_a", "q_b", "q_c", "q_d"), 19)
