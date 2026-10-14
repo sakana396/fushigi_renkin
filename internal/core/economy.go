@@ -8,7 +8,7 @@ import (
 // Buy は店の固定品質・固定価格の商品を買う（DES-ECO-02、DES-WLD-01）。
 func (w *World) Buy(offerIndex, count int) error {
 	if offerIndex < 0 || offerIndex >= len(w.catalog.Game.Shop) {
-		return fmt.Errorf("商品番号 %d: %w", offerIndex, ErrUnknownID)
+		return fmt.Errorf("商品番号 %d: %w", offerIndex+1, ErrUnknownID)
 	}
 	if count <= 0 {
 		return fmt.Errorf("購入数 %d: %w", count, ErrInvalidCount)
@@ -132,7 +132,7 @@ func (w *World) BuildFacility(facilityID string) error {
 			}
 		}
 		if remaining > 0 {
-			return fmt.Errorf("施設材料 %s: %w", material.Item, ErrNotEnoughItems)
+			return fmt.Errorf("施設材料 %s: %w", w.itemName(material.Item), ErrNotEnoughItems)
 		}
 	}
 	w.Inventory = trial
