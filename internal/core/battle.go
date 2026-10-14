@@ -144,6 +144,9 @@ func (w *World) BattleAttack(x, y int) error {
 		b.Units[target].HP = 0
 	}
 	b.Log = append(b.Log, fmt.Sprintf("%sは%sに%dのダメージ", u.Label, b.Units[target].Label, damage))
+	if b.Units[target].HP == 0 {
+		b.Log = append(b.Log, b.Units[target].Label+"は倒れた")
+	}
 	w.advanceBattle(true)
 	return nil
 }
@@ -233,7 +236,17 @@ func (w *World) advanceBattle(afterAction bool) {
 		if b.Units[b.Order[b.Turn]].Ally {
 			return
 		}
+		// 敵の攻撃で倒れた仲間も、攻撃の直後に表示名で記録する（DES-BTL-02）。
+		hp := make([]int, len(b.Units))
+		for i := range b.Units {
+			hp[i] = b.Units[i].HP
+		}
 		w.enemyAction(b.Order[b.Turn])
+		for i, u := range b.Units {
+			if hp[i] > 0 && u.HP == 0 {
+				b.Log = append(b.Log, u.Label+"は倒れた")
+			}
+		}
 		afterAction = true
 	}
 }

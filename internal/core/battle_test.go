@@ -67,7 +67,7 @@ func TestBattleFourRounds(t *testing.T) {
 		{"TC-FR-BTL-01-03 剣士の移動", func() error { return w.BattleMove(2, 2) }, []int{3, 1, 0, 2}, 2, [][3]int{{2, 2, 30}, {0, 3, 18}, {3, 2, 14}, {2, 3, 13}}, []string{"剣士は(2, 2)へ移動"}},
 		{"TC-FR-BTL-01-04 剣士の攻撃と敵二体", func() error { return w.BattleAttack(2, 3) }, []int{3, 1, 0, 2}, 1, [][3]int{{2, 2, 22}, {0, 3, 18}, {3, 2, 14}, {2, 3, 7}}, []string{"剣士はオオカミに6のダメージ", "スライムは剣士に3のダメージ", "オオカミは剣士に5のダメージ"}},
 		{"TC-FR-BTL-01-06 二巡目の術士", func() error { return w.BattleAttack(2, 3) }, []int{3, 1, 0, 2}, 2, [][3]int{{2, 2, 22}, {0, 3, 18}, {3, 2, 14}, {2, 3, 2}}, []string{"術士はオオカミに5のダメージ"}},
-		{"TC-FR-BTL-01-07 オオカミが倒れる", func() error { return w.BattleAttack(2, 3) }, []int{1, 0, 2}, 0, [][3]int{{2, 2, 19}, {0, 3, 18}, {3, 2, 14}, {2, 3, 0}}, []string{"剣士はオオカミに6のダメージ", "スライムは剣士に3のダメージ"}},
+		{"TC-FR-BTL-01-07 オオカミが倒れる", func() error { return w.BattleAttack(2, 3) }, []int{1, 0, 2}, 0, [][3]int{{2, 2, 19}, {0, 3, 18}, {3, 2, 14}, {2, 3, 0}}, []string{"剣士はオオカミに6のダメージ", "オオカミは倒れた", "スライムは剣士に3のダメージ"}},
 		{"TC-FR-BTL-01-08 倒れたマスへ移動", func() error { return w.BattleMove(2, 3) }, []int{1, 0, 2}, 0, [][3]int{{2, 2, 19}, {2, 3, 18}, {3, 2, 14}, {2, 3, 0}}, []string{"術士は(2, 3)へ移動"}},
 		{"TC-FR-BTL-01-09 三巡目の術士", func() error { return w.BattleAttack(3, 2) }, []int{1, 0, 2}, 1, [][3]int{{2, 2, 19}, {2, 3, 18}, {3, 2, 9}, {2, 3, 0}}, []string{"術士はスライムに5のダメージ"}},
 		{"TC-FR-BTL-01-10 三巡目の剣士", func() error { return w.BattleAttack(3, 2) }, []int{1, 0, 2}, 0, [][3]int{{2, 2, 16}, {2, 3, 18}, {3, 2, 3}, {2, 3, 0}}, []string{"剣士はスライムに6のダメージ", "スライムは剣士に3のダメージ"}},
@@ -108,7 +108,7 @@ func TestBattleFourRounds(t *testing.T) {
 		if w.Battle != nil || w.LastBattle == nil || !w.LastBattle.Won || w.LastBattle.GatherID != "field" || !reflect.DeepEqual(w.LastBattle.Rewards, []Stack{{Key: ItemKey{"herb", 40}, Count: 2}}) {
 			t.Fatalf("結果=%+v、戦闘=%+v", w.LastBattle, w.Battle)
 		}
-		if got := w.LastBattle.Log[len(w.LastBattle.Log)-2:]; !reflect.DeepEqual(got, []string{"術士はスライムに5のダメージ", "勝利"}) {
+		if got := w.LastBattle.Log[len(w.LastBattle.Log)-3:]; !reflect.DeepEqual(got, []string{"術士はスライムに5のダメージ", "スライムは倒れた", "勝利"}) {
 			t.Fatalf("最後の行動=%v", got)
 		}
 	})
@@ -206,7 +206,7 @@ func TestBattleOrderAndEnemy(t *testing.T) {
 		if err := w.BattleAttack(3, 2); err != nil {
 			t.Fatal(err)
 		}
-		if got := w.Battle.Log[len(w.Battle.Log)-1]; got != "術士はスライムに5のダメージ" || w.Battle.Turn != 2 {
+		if got := w.Battle.Log[len(w.Battle.Log)-1]; got != "スライムは倒れた" || w.Battle.Turn != 2 {
 			t.Fatalf("記録=%v 番=%d", w.Battle.Log, w.Battle.Turn)
 		}
 		logStart := len(w.Battle.Log)
@@ -393,7 +393,7 @@ func TestBattleLossAndRewards(t *testing.T) {
 		if err := w.StartBattle("field"); err != nil {
 			t.Fatal(err)
 		}
-		if w.Battle == nil || w.Battle.Units[0].HP != 0 || w.Battle.Units[1].HP != 18 || !reflect.DeepEqual(w.Battle.Log, []string{"オオカミは剣士に5のダメージ"}) {
+		if w.Battle == nil || w.Battle.Units[0].HP != 0 || w.Battle.Units[1].HP != 18 || !reflect.DeepEqual(w.Battle.Log, []string{"オオカミは剣士に5のダメージ", "剣士は倒れた"}) {
 			t.Fatalf("戦闘=%+v", w.Battle)
 		}
 	})
@@ -409,7 +409,7 @@ func TestBattleLossAndRewards(t *testing.T) {
 		if err := w.StartBattle("field"); err != nil {
 			t.Fatal(err)
 		}
-		if w.Battle != nil || w.LastBattle == nil || w.LastBattle.Won || w.InjuredUntil != 4600 || w.LastBattle.InjuredUntil != 4600 || len(w.LastBattle.Rewards) != 0 || !reflect.DeepEqual(w.LastBattle.Log, []string{"オオカミは剣士に5のダメージ", "敗北"}) {
+		if w.Battle != nil || w.LastBattle == nil || w.LastBattle.Won || w.InjuredUntil != 4600 || w.LastBattle.InjuredUntil != 4600 || len(w.LastBattle.Rewards) != 0 || !reflect.DeepEqual(w.LastBattle.Log, []string{"オオカミは剣士に5のダメージ", "剣士は倒れた", "敗北"}) {
 			t.Fatalf("結果=%+v 負傷=%d", w.LastBattle, w.InjuredUntil)
 		}
 		for _, now := range []uint64{1001, 4599} {

@@ -42,6 +42,7 @@ func (w *World) BattleUseItem(key ItemKey, x, y int) error {
 	if err := w.Inventory.Remove(key, 1); err != nil {
 		return err
 	}
+	b.Log = append(b.Log, fmt.Sprintf("%sは%s（品質%d）を使用", actor.Label, item.Name, key.Quality))
 	for i := range b.Units {
 		u := &b.Units[i]
 		if u.Ally != ally || u.HP <= 0 || battleDistance(x, y, u.X, u.Y) > effect.Radius {
@@ -51,23 +52,30 @@ func (w *World) BattleUseItem(key ItemKey, x, y int) error {
 			switch e.Kind {
 			case "heal":
 				maxHP := w.catalog.Units[u.DefID].HP
+				before := u.HP
 				u.HP += e.Value
 				if u.HP > maxHP {
 					u.HP = maxHP
 				}
+				b.Log = append(b.Log, fmt.Sprintf("%sの体力が%d回復", u.Label, u.HP-before))
 			case "damage":
 				u.HP -= e.Value
 				if u.HP < 0 {
 					u.HP = 0
 				}
+				b.Log = append(b.Log, fmt.Sprintf("%sに%dのダメージ", u.Label, e.Value))
+				if u.HP == 0 {
+					b.Log = append(b.Log, u.Label+"は倒れた")
+				}
 			case "attack_up":
 				u.AttackBonus += e.Value
+				b.Log = append(b.Log, fmt.Sprintf("%sの攻撃が%d上がった", u.Label, e.Value))
 			case "speed_up":
 				u.SpeedBonus += e.Value
+				b.Log = append(b.Log, fmt.Sprintf("%sの素早さが%d上がった", u.Label, e.Value))
 			}
 		}
 	}
-	b.Log = append(b.Log, fmt.Sprintf("%sは%s（品質%d）を使用", actor.Label, item.Name, key.Quality))
 	w.advanceBattle(true)
 	return nil
 }

@@ -2,6 +2,7 @@ package core
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -12,7 +13,9 @@ import (
 func itemBattle(t *testing.T) *World {
 	t.Helper()
 	c := battleCatalog()
-	c.Items["bomb"] = testBombUse()
+	bomb := testBombUse()
+	bomb.Name = "爆弾"
+	c.Items["bomb"] = bomb
 	burger := testBurgerUse()
 	burger.Name = "ハンバーガー"
 	c.Items["burger"] = burger
@@ -65,6 +68,13 @@ func TestBattleItemBombQuality(t *testing.T) {
 			}
 			if got := battle.Units[3].HP; got != want {
 				t.Fatalf("周囲のHP=%d、期待=%d", got, want)
+			}
+			wantLog := []string{fmt.Sprintf("術士は爆弾（品質%d）を使用", tc.quality), fmt.Sprintf("スライムに%dのダメージ", tc.damage)}
+			if tc.radius == 1 {
+				wantLog = append(wantLog, fmt.Sprintf("オオカミに%dのダメージ", tc.damage))
+			}
+			if !reflect.DeepEqual(battle.Log, wantLog) {
+				t.Fatalf("記録=%v、期待=%v", battle.Log, wantLog)
 			}
 			if w.Battle == nil || w.Battle.Turn != 1 {
 				t.Fatalf("番が進まない: %+v", w.Battle)
@@ -119,6 +129,16 @@ func TestBattleItemBurgerQuality(t *testing.T) {
 			u := w.Battle.Units[1]
 			if u.HP != tc.hp || u.AttackBonus != tc.attack || u.SpeedBonus != tc.speed {
 				t.Fatalf("効果=%+v", u)
+			}
+			wantLog := []string{fmt.Sprintf("術士はハンバーガー（品質%d）を使用", tc.quality), fmt.Sprintf("術士の体力が%d回復", tc.hp-5)}
+			if tc.attack > 0 {
+				wantLog = append(wantLog, fmt.Sprintf("術士の攻撃が%d上がった", tc.attack))
+			}
+			if tc.speed > 0 {
+				wantLog = append(wantLog, fmt.Sprintf("術士の素早さが%d上がった", tc.speed))
+			}
+			if !reflect.DeepEqual(w.Battle.Log, wantLog) {
+				t.Fatalf("記録=%v、期待=%v", w.Battle.Log, wantLog)
 			}
 			if w.Inventory.Count(key) != 0 || w.Battle.Turn != 1 {
 				t.Fatalf("在庫・番: %d %+v", w.Inventory.Count(key), w.Battle)
@@ -249,7 +269,7 @@ func TestBattleItemEffects(t *testing.T) {
 		if err := w.BattleUseItem(key, 1, 3); err != nil {
 			t.Fatal(err)
 		}
-		if w.Battle.Units[0].HP != 27 || !reflect.DeepEqual(w.Battle.Log[logStart:], []string{"剣士はハンバーガー（品質160）を使用", "スライムは剣士に3のダメージ"}) {
+		if w.Battle.Units[0].HP != 27 || !reflect.DeepEqual(w.Battle.Log[logStart:], []string{"剣士はハンバーガー（品質160）を使用", "剣士の体力が0回復", "剣士の攻撃が8上がった", "剣士の素早さが4上がった", "スライムは剣士に3のダメージ"}) {
 			t.Fatalf("敵の行動=%+v 記録=%v", w.Battle.Units[0], w.Battle.Log[logStart:])
 		}
 		if !reflect.DeepEqual(w.Battle.Order, []int{0, 1, 2, 3}) || w.Battle.Turn != 0 || w.Battle.Moved {
