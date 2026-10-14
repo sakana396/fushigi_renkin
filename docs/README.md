@@ -14,11 +14,12 @@
 | 反復 | 反復 1（プロトタイプ）計画書 | [iterations/it01/plan.md](iterations/it01/plan.md) | 承認 |
 | 反復 | 反復 1 振り返り | [iterations/it01/retrospective.md](iterations/it01/retrospective.md) | v1.0 確定 |
 | 反復 | 反復 2 計画書 | [iterations/it02/plan.md](iterations/it02/plan.md) | v1.0 確定 |
+| 反復 | 反復 2 振り返り | [iterations/it02/retrospective.md](iterations/it02/retrospective.md) | v0.1（開発者の確認待ち） |
 | 設計 | 設計書（反復 1）: アーキテクチャ・クラス図・状態遷移図・シーケンス図 | [03_design/design-it01.md](03_design/design-it01.md) | v0.3 承認 |
 | 設計 | 設計書（反復 2）: 自動採取・錬金の素材選び・画面 | [03_design/design-it02.md](03_design/design-it02.md) | v0.2 承認 |
 | 設計 | 定義データ形式 ADR | [adr/0002-definition-data-format.md](adr/0002-definition-data-format.md) | 承認 |
 | 試験 | テスト仕様書（反復 1） | [04_test/test-spec-it01.md](04_test/test-spec-it01.md) | 雛形 |
-| 試験 | テスト仕様書（反復 2） | [04_test/test-spec-it02.md](04_test/test-spec-it02.md) | 雛形 |
+| 試験 | テスト仕様書（反復 2） | [04_test/test-spec-it02.md](04_test/test-spec-it02.md) | 反復 2 の範囲を記入済み |
 | 横断 | トレーサビリティマトリクス | [traceability.md](traceability.md) | 反復 1・2 の行を用意 |
 | 横断 | レビュー記録 | [reviews/](reviews/) | 記録中 |
 
