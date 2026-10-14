@@ -46,7 +46,7 @@ func (i *Inventory) Remove(key ItemKey, n int) error {
 		return fmt.Errorf("取り出す個数 %d: %w", n, ErrInvalidCount)
 	}
 	if i.Count(key) < n {
-		return fmt.Errorf("%s 品質 %d を %d 個: %w", key.ItemID, key.Quality, n, ErrNotEnoughItems)
+		return fmt.Errorf("品質 %d を %d 個: %w", key.Quality, n, ErrNotEnoughItems)
 	}
 	i.stacks[key] -= n
 	if i.stacks[key] == 0 {

@@ -49,7 +49,7 @@ func (w *World) BuildGolem(golemID string) error {
 			return fmt.Errorf("材料 %q: %w", material.Item, ErrUnknownID)
 		}
 		if _, err := takeLowest(&trial, material.Item, material.Count); err != nil {
-			return err
+			return fmt.Errorf("材料 %s: %w", w.itemName(material.Item), err)
 		}
 	}
 	w.Inventory = trial
@@ -60,7 +60,7 @@ func (w *World) BuildGolem(golemID string) error {
 // AssignGolem はレシピまたは採取地を検査して割り当てる（DES-GOL-01、DES-GOL-03、DES-GOL-07、DES-WLD-01）。
 func (w *World) AssignGolem(index int, assignment Assignment) error {
 	if index < 0 || index >= len(w.Golems) {
-		return fmt.Errorf("ゴーレム番号 %d: %w", index, ErrUnknownID)
+		return fmt.Errorf("ゴーレム番号 %d: %w", index+1, ErrUnknownID)
 	}
 	if assignment.GatherID != "" {
 		if assignment.RecipeID != "" || len(assignment.SlotItems) != 0 {
@@ -93,7 +93,7 @@ func (w *World) AssignGolem(index int, assignment Assignment) error {
 			return fmt.Errorf("入力枠 %d の個数: %w", i+1, ErrInvalidCount)
 		}
 		if !slotAcceptsItem(slot, id, item) {
-			return fmt.Errorf("入力枠 %d の種類 %q: %w", i+1, id, ErrInvalidSelection)
+			return fmt.Errorf("入力枠 %d の種類 %q: %w", i+1, w.itemName(id), ErrInvalidSelection)
 		}
 	}
 	selected := Assignment{RecipeID: assignment.RecipeID, SlotItems: append([]string(nil), assignment.SlotItems...)}
@@ -107,13 +107,36 @@ func (w *World) AssignGolem(index int, assignment Assignment) error {
 // UnassignGolem は作業を中止し、取り出し済みの素材を戻さない（DES-GOL-01）。
 func (w *World) UnassignGolem(index int) error {
 	if index < 0 || index >= len(w.Golems) {
-		return fmt.Errorf("ゴーレム番号 %d: %w", index, ErrUnknownID)
+		return fmt.Errorf("ゴーレム番号 %d: %w", index+1, ErrUnknownID)
 	}
 	w.Golems[index].Assignment = nil
 	w.Golems[index].State = GolemUnassigned
 	w.Golems[index].Progress = 0
 	w.Golems[index].Holding = nil
 	return nil
+}
+
+// GolemDuration は割り当て先の所要 tick を返す（DES-GOL-09）。
+func (w *World) GolemDuration(index int) (int, error) {
+	if index < 0 || index >= len(w.Golems) {
+		return 0, fmt.Errorf("ゴーレム番号 %d: %w", index+1, ErrUnknownID)
+	}
+	g := w.Golems[index]
+	if g.Assignment == nil {
+		return 0, nil
+	}
+	if g.Assignment.GatherID != "" {
+		site, ok := w.catalog.Gather(g.Assignment.GatherID)
+		if !ok {
+			return 0, fmt.Errorf("採取地 %q: %w", g.Assignment.GatherID, ErrUnknownID)
+		}
+		return golemDuration(site.CooldownSeconds, w.golemSpeed(g.DefID)), nil
+	}
+	recipe, ok := w.catalog.Recipe(g.Assignment.RecipeID)
+	if !ok {
+		return 0, fmt.Errorf("レシピ %q: %w", g.Assignment.RecipeID, ErrUnknownID)
+	}
+	return golemDuration(recipe.Seconds, w.golemSpeed(g.DefID)), nil
 }
 
 // takeLowest は指定種類を品質の低い順に仮の在庫から取り出す（DES-GOL-04、DES-GOL-06）。
@@ -140,7 +163,7 @@ func takeLowest(inventory *Inventory, itemID string, count int) ([]Stack, error)
 			return taken, nil
 		}
 	}
-	return nil, fmt.Errorf("材料 %s: %w", itemID, ErrNotEnoughItems)
+	return nil, ErrNotEnoughItems
 }
 
 // golemDuration は秒数と速度から切り上げた所要 tick を求める（DES-GOL-02）。

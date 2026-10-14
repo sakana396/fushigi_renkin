@@ -76,7 +76,7 @@ func (w *World) planCraft(recipeID string, selection Selection) (craftPlan, erro
 				return craftPlan{}, fmt.Errorf("入力枠 %d の品質: %w", idx+1, ErrInvalidQuality)
 			}
 			if !slotAcceptsItem(slot, stack.Key.ItemID, item) {
-				return craftPlan{}, fmt.Errorf("入力枠 %d に %q は使えません: %w", idx+1, stack.Key.ItemID, ErrInvalidSelection)
+				return craftPlan{}, fmt.Errorf("入力枠 %d に %q は使えません: %w", idx+1, w.itemName(stack.Key.ItemID), ErrInvalidSelection)
 			}
 			if stack.Count > maxInt-consumed[stack.Key] {
 				return craftPlan{}, fmt.Errorf("入力枠 %d の合計個数: %w", idx+1, ErrInvalidCount)
@@ -91,7 +91,7 @@ func (w *World) planCraft(recipeID string, selection Selection) (craftPlan, erro
 	}
 	for key, count := range consumed {
 		if w.Inventory.Count(key) < count {
-			return craftPlan{}, fmt.Errorf("%s 品質 %d を %d 個: %w", key.ItemID, key.Quality, count, ErrNotEnoughItems)
+			return craftPlan{}, fmt.Errorf("%s 品質 %d を %d 個: %w", w.itemName(key.ItemID), key.Quality, count, ErrNotEnoughItems)
 		}
 	}
 	average, err := AverageQuality(selected)
