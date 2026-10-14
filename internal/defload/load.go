@@ -40,17 +40,39 @@ type document struct {
 	Gathers    []gatherDef   `toml:"gather"`
 	Golems     []golemDef    `toml:"golem"`
 	Facilities []facilityDef `toml:"facility"`
+	Units      []unitDef     `toml:"unit"`
+	Quests     []questDef    `toml:"quest"`
 }
 type gameDef struct {
-	StartMoney     int         `toml:"start_money"`
-	BaseGolemSlots int         `toml:"base_golem_slots"`
-	Shop           []shopOffer `toml:"shop"`
+	BattleConfigured bool        `toml:"-"`
+	StartMoney       int         `toml:"start_money"`
+	BaseGolemSlots   int         `toml:"base_golem_slots"`
+	Shop             []shopOffer `toml:"shop"`
+	Party            []placement `toml:"party"`
+	BattleWidth      int         `toml:"battle_width"`
+	BattleHeight     int         `toml:"battle_height"`
+	InjurySeconds    int         `toml:"injury_seconds"`
 }
 type itemDef struct {
 	ID         string   `toml:"id"`
 	Name       string   `toml:"name"`
 	Attributes []string `toml:"attributes"`
 	BasePrice  int      `toml:"base_price"`
+	Use        *useDef  `toml:"use"`
+}
+type useDef struct {
+	Target string     `toml:"target"`
+	Range  int        `toml:"range"`
+	Stages []useStage `toml:"stages"`
+}
+type useStage struct {
+	MinQuality int         `toml:"min_quality"`
+	Radius     int         `toml:"radius"`
+	Effects    []useEffect `toml:"effects"`
+}
+type useEffect struct {
+	Kind  string `toml:"kind"`
+	Value int    `toml:"value"`
 }
 type recipeDef struct {
 	ID          string      `toml:"id"`
@@ -71,11 +93,39 @@ type bonus struct {
 	Add       int    `toml:"add"`
 }
 type gatherDef struct {
-	ID              string `toml:"id"`
-	Name            string `toml:"name"`
-	Rolls           int    `toml:"rolls"`
-	CooldownSeconds int    `toml:"cooldown_seconds"`
-	Drops           []drop `toml:"drops"`
+	ID              string     `toml:"id"`
+	Name            string     `toml:"name"`
+	Rolls           int        `toml:"rolls"`
+	CooldownSeconds int        `toml:"cooldown_seconds"`
+	Drops           []drop     `toml:"drops"`
+	Battle          *battleDef `toml:"battle"`
+}
+type unitDef struct {
+	ID     string `toml:"id"`
+	Name   string `toml:"name"`
+	Role   string `toml:"role"`
+	HP     int    `toml:"hp"`
+	Attack int    `toml:"attack"`
+	Speed  int    `toml:"speed"`
+	Move   int    `toml:"move"`
+	Range  int    `toml:"range"`
+}
+type battleDef struct {
+	Enemies []placement `toml:"enemies"`
+	Rolls   int         `toml:"rolls"`
+	Drops   []drop      `toml:"drops"`
+}
+type placement struct {
+	Unit string `toml:"unit"`
+	X    int    `toml:"x"`
+	Y    int    `toml:"y"`
+}
+type questDef struct {
+	ID         string `toml:"id"`
+	Item       string `toml:"item"`
+	MinQuality int    `toml:"min_quality"`
+	Count      int    `toml:"count"`
+	Reward     int    `toml:"reward"`
 }
 type drop struct {
 	Item       string `toml:"item"`
@@ -119,7 +169,7 @@ type source[T any] struct {
 
 // Load は fs.FS 内の TOML をすべて読み、検証済みの目録を返す（DES-PKG-03、DES-VAL-01〜08）。
 func Load(fsys fs.FS) (defs.Catalog, error) {
-	c := defs.Catalog{Items: map[string]defs.ItemDef{}, Recipes: map[string]defs.RecipeDef{}, Gathers: map[string]defs.GatherDef{}, Golems: map[string]defs.GolemDef{}, Facilities: map[string]defs.FacilityDef{}}
+	c := defs.Catalog{Items: map[string]defs.ItemDef{}, Recipes: map[string]defs.RecipeDef{}, Gathers: map[string]defs.GatherDef{}, Golems: map[string]defs.GolemDef{}, Facilities: map[string]defs.FacilityDef{}, Units: map[string]defs.UnitDef{}, Quests: map[string]defs.QuestDef{}}
 	var errs Errors
 	var games []source[gameDef]
 	var items []source[itemDef]
@@ -127,6 +177,8 @@ func Load(fsys fs.FS) (defs.Catalog, error) {
 	var gathers []source[gatherDef]
 	var golems []source[golemDef]
 	var facilities []source[facilityDef]
+	var units []source[unitDef]
+	var quests []source[questDef]
 	var names []string
 	walkErr := fs.WalkDir(fsys, ".", func(name string, entry fs.DirEntry, err error) error {
 		if err != nil {
@@ -158,6 +210,7 @@ func Load(fsys fs.FS) (defs.Catalog, error) {
 			errs = append(errs, Diagnostic{name, key.String(), "未知のキー"})
 		}
 		if d.Game != nil {
+			d.Game.BattleConfigured = meta.IsDefined("game", "party") || meta.IsDefined("game", "battle_width") || meta.IsDefined("game", "battle_height") || meta.IsDefined("game", "injury_seconds")
 			games = append(games, source[gameDef]{name, *d.Game})
 		}
 		for _, v := range d.Items {
@@ -174,6 +227,12 @@ func Load(fsys fs.FS) (defs.Catalog, error) {
 		}
 		for _, v := range d.Facilities {
 			facilities = append(facilities, source[facilityDef]{name, v})
+		}
+		for _, v := range d.Units {
+			units = append(units, source[unitDef]{name, v})
+		}
+		for _, v := range d.Quests {
+			quests = append(quests, source[questDef]{name, v})
 		}
 	}
 	add := func(file, key, reason string) { errs = append(errs, Diagnostic{file, key, reason}) }
@@ -227,11 +286,111 @@ func Load(fsys fs.FS) (defs.Catalog, error) {
 			local[a] = true
 			attrs[a] = true
 		}
-		c.Items[v.ID] = defs.ItemDef{ID: v.ID, Name: v.Name, Attributes: v.Attributes, BasePrice: v.BasePrice}
+		item := defs.ItemDef{ID: v.ID, Name: v.Name, Attributes: v.Attributes, BasePrice: v.BasePrice}
+		if v.Use != nil {
+			u := v.Use
+			q := p + ".use"
+			if u.Target != "ally" && u.Target != "enemy" {
+				add(s.File, q+".target", "ally または enemy であること")
+			}
+			if u.Range < 0 || (u.Target == "enemy" && u.Range < 1) {
+				add(s.File, q+".range", "ally は 0 以上、enemy は 1 以上であること")
+			}
+			use := &defs.UseDef{Target: u.Target, Range: u.Range}
+			stageSeen := map[int]bool{}
+			baseFound := false
+			for i, st := range u.Stages {
+				r := fmt.Sprintf("%s.stages[%d]", q, i)
+				if st.MinQuality != 1 && st.MinQuality != 50 && st.MinQuality != 100 && st.MinQuality != 150 && st.MinQuality != 200 {
+					add(s.File, r+".min_quality", "1・50・100・150・200 のいずれかであること")
+				}
+				if stageSeen[st.MinQuality] {
+					add(s.File, r+".min_quality", "品質段階が重複")
+				}
+				stageSeen[st.MinQuality] = true
+				if st.MinQuality == 1 {
+					baseFound = true
+					if len(st.Effects) == 0 {
+						add(s.File, r+".effects", "基本の段階に効果が 1 個以上必要")
+					}
+				}
+				if st.Radius < 0 {
+					add(s.File, r+".radius", "0 以上であること")
+				}
+				stage := defs.UseStage{MinQuality: st.MinQuality, Radius: st.Radius}
+				for j, e := range st.Effects {
+					k := fmt.Sprintf("%s.effects[%d]", r, j)
+					if e.Kind != "heal" && e.Kind != "damage" && e.Kind != "attack_up" && e.Kind != "speed_up" {
+						add(s.File, k+".kind", "未知の効果: "+e.Kind)
+					}
+					positive(s.File, k+".value", e.Value)
+					stage.Effects = append(stage.Effects, defs.UseEffect{Kind: e.Kind, Value: e.Value})
+				}
+				use.Stages = append(use.Stages, stage)
+			}
+			if !baseFound {
+				add(s.File, q+".stages", "品質 1 の基本の段階が必要")
+			}
+			item.Use = use
+		}
+		c.Items[v.ID] = item
 	}
 	attributeRef := func(file, key, attr string) {
 		if !attrs[attr] {
 			add(file, key, "存在しない属性: "+attr)
+		}
+	}
+	for _, s := range units {
+		v := s.Value
+		p := "unit[id=" + v.ID + "]"
+		unique("unit", s.File, v.ID)
+		if v.Role != "front" && v.Role != "back" && v.Role != "enemy" {
+			add(s.File, p+".role", "front・back・enemy のいずれかであること")
+		}
+		for _, field := range []struct {
+			name  string
+			value int
+		}{{"hp", v.HP}, {"attack", v.Attack}, {"speed", v.Speed}, {"move", v.Move}, {"range", v.Range}} {
+			positive(s.File, p+"."+field.name, field.value)
+		}
+		c.Units[v.ID] = defs.UnitDef{ID: v.ID, Name: v.Name, Role: v.Role, HP: v.HP, Attack: v.Attack, Speed: v.Speed, Move: v.Move, Range: v.Range}
+	}
+	// 配置は仲間と敵の双方で同じ盤面を使う（DES-VAL-12）。
+	placements := func(file, p string, values []placement, wantRole string, width, height int, occupied map[[2]int]bool) []defs.Placement {
+		out := make([]defs.Placement, 0, len(values))
+		for i, v := range values {
+			q := fmt.Sprintf("%s[%d]", p, i)
+			u, ok := c.Units[v.Unit]
+			if !ok {
+				add(file, q+".unit", "存在しないユニット ID: "+v.Unit)
+			} else if wantRole == "enemy" && u.Role != "enemy" || wantRole == "party" && u.Role != "front" && u.Role != "back" {
+				add(file, q+".unit", "配置に使えない役割: "+u.Role)
+			}
+			if v.X < 0 || v.X >= width {
+				add(file, q+".x", "盤面の範囲外")
+			}
+			if v.Y < 0 || v.Y >= height {
+				add(file, q+".y", "盤面の範囲外")
+			}
+			xy := [2]int{v.X, v.Y}
+			if occupied[xy] {
+				add(file, q, "初期位置が重複")
+			}
+			occupied[xy] = true
+			out = append(out, defs.Placement{Unit: v.Unit, X: v.X, Y: v.Y})
+		}
+		return out
+	}
+	// 反復 1・2 の定義には戦闘設定がないため、戦闘の項目が現れたとき検証する。
+	battleConfigured := false
+	for _, s := range games {
+		if s.Value.BattleConfigured {
+			battleConfigured = true
+		}
+	}
+	for _, s := range gathers {
+		if s.Value.Battle != nil {
+			battleConfigured = true
 		}
 	}
 	for _, s := range games {
@@ -239,13 +398,23 @@ func Load(fsys fs.FS) (defs.Catalog, error) {
 		if len(games) > 1 {
 			unique("game", s.File, "game")
 		}
-		c.Game = defs.GameDef{StartMoney: v.StartMoney, BaseGolemSlots: v.BaseGolemSlots}
+		c.Game = defs.GameDef{StartMoney: v.StartMoney, BaseGolemSlots: v.BaseGolemSlots, BattleWidth: v.BattleWidth, BattleHeight: v.BattleHeight, InjurySeconds: v.InjurySeconds}
+		if battleConfigured {
+			positive(s.File, "game.battle_width", v.BattleWidth)
+			positive(s.File, "game.battle_height", v.BattleHeight)
+			positive(s.File, "game.injury_seconds", v.InjurySeconds)
+			nonEmpty(s.File, "game.party", len(v.Party))
+			c.Game.Party = placements(s.File, "game.party", v.Party, "party", v.BattleWidth, v.BattleHeight, map[[2]int]bool{})
+		}
 		for i, o := range v.Shop {
 			p := fmt.Sprintf("game.shop[%d]", i)
 			itemRef(s.File, p+".item", o.Item)
 			quality(s.File, p+".quality", o.Quality)
 			c.Game.Shop = append(c.Game.Shop, defs.ShopOffer{Item: o.Item, Quality: o.Quality, Price: o.Price})
 		}
+	}
+	if battleConfigured && len(games) == 0 {
+		add("<game>", "game", "戦闘には game の設定が必要")
 	}
 	for _, s := range recipes {
 		v := s.Value
@@ -278,6 +447,40 @@ func Load(fsys fs.FS) (defs.Catalog, error) {
 		}
 		c.Recipes[v.ID] = r
 	}
+	for _, s := range quests {
+		v := s.Value
+		p := "quest[id=" + v.ID + "]"
+		unique("quest", s.File, v.ID)
+		product := false
+		for _, r := range c.Recipes {
+			if r.Output == v.Item {
+				product = true
+				break
+			}
+		}
+		if !product {
+			add(s.File, p+".item", "レシピの出力ではないアイテム ID: "+v.Item)
+		}
+		quality(s.File, p+".min_quality", v.MinQuality)
+		positive(s.File, p+".count", v.Count)
+		positive(s.File, p+".reward", v.Reward)
+		c.Quests[v.ID] = defs.QuestDef{ID: v.ID, Item: v.Item, MinQuality: v.MinQuality, Count: v.Count, Reward: v.Reward}
+	}
+	validateDrops := func(file, p string, values []drop) []defs.Drop {
+		out := make([]defs.Drop, 0, len(values))
+		for i, d := range values {
+			q := fmt.Sprintf("%s[%d]", p, i)
+			itemRef(file, q+".item", d.Item)
+			positive(file, q+".weight", d.Weight)
+			quality(file, q+".quality_min", d.QualityMin)
+			quality(file, q+".quality_max", d.QualityMax)
+			if d.QualityMin > d.QualityMax {
+				add(file, q, "quality_min は quality_max 以下")
+			}
+			out = append(out, defs.Drop{Item: d.Item, Weight: d.Weight, QualityMin: d.QualityMin, QualityMax: d.QualityMax})
+		}
+		return out
+	}
 	for _, s := range gathers {
 		v := s.Value
 		p := "gather[id=" + v.ID + "]"
@@ -286,16 +489,18 @@ func Load(fsys fs.FS) (defs.Catalog, error) {
 		positive(s.File, p+".cooldown_seconds", v.CooldownSeconds)
 		nonEmpty(s.File, p+".drops", len(v.Drops))
 		g := defs.GatherDef{ID: v.ID, Name: v.Name, Rolls: v.Rolls, CooldownSeconds: v.CooldownSeconds}
-		for i, d := range v.Drops {
-			q := fmt.Sprintf("%s.drops[%d]", p, i)
-			itemRef(s.File, q+".item", d.Item)
-			positive(s.File, q+".weight", d.Weight)
-			quality(s.File, q+".quality_min", d.QualityMin)
-			quality(s.File, q+".quality_max", d.QualityMax)
-			if d.QualityMin > d.QualityMax {
-				add(s.File, q, "quality_min は quality_max 以下")
+		g.Drops = validateDrops(s.File, p+".drops", v.Drops)
+		if v.Battle != nil {
+			b := v.Battle
+			q := p + ".battle"
+			nonEmpty(s.File, q+".enemies", len(b.Enemies))
+			positive(s.File, q+".rolls", b.Rolls)
+			nonEmpty(s.File, q+".drops", len(b.Drops))
+			occupied := map[[2]int]bool{}
+			for _, member := range c.Game.Party {
+				occupied[[2]int{member.X, member.Y}] = true
 			}
-			g.Drops = append(g.Drops, defs.Drop{Item: d.Item, Weight: d.Weight, QualityMin: d.QualityMin, QualityMax: d.QualityMax})
+			g.Battle = &defs.BattleDef{Enemies: placements(s.File, q+".enemies", b.Enemies, "enemy", c.Game.BattleWidth, c.Game.BattleHeight, occupied), Rolls: b.Rolls, Drops: validateDrops(s.File, q+".drops", b.Drops)}
 		}
 		c.Gathers[v.ID] = g
 	}

@@ -7,6 +7,27 @@ type ItemDef struct {
 	Name       string
 	Attributes []string
 	BasePrice  int
+	Use        *UseDef
+}
+
+// UseDef は戦闘での使用条件と品質段階を定義する（DES-DEF-05）。
+type UseDef struct {
+	Target string
+	Range  int
+	Stages []UseStage
+}
+
+// UseStage は品質に応じて加わる効果を定義する（DES-DEF-05）。
+type UseStage struct {
+	MinQuality int
+	Radius     int
+	Effects    []UseEffect
+}
+
+// UseEffect は戦闘での効果の種類と値を表す（DES-DEF-05）。
+type UseEffect struct {
+	Kind  string
+	Value int
 }
 
 // RecipeDef は錬金の入出力と手作りボーナスを定義する（DES-IT01 2.1）。
@@ -40,6 +61,42 @@ type GatherDef struct {
 	Rolls           int
 	CooldownSeconds int
 	Drops           []Drop
+	Battle          *BattleDef
+}
+
+// UnitDef は仲間と敵に共通する能力を定義する（DES-DEF-06）。
+type UnitDef struct {
+	ID     string
+	Name   string
+	Role   string
+	HP     int
+	Attack int
+	Speed  int
+	Move   int
+	Range  int
+}
+
+// BattleDef は採取地で始められる戦闘と報酬を定義する（DES-DEF-06）。
+type BattleDef struct {
+	Enemies []Placement
+	Rolls   int
+	Drops   []Drop
+}
+
+// Placement はユニットの初期位置を定義する（DES-DEF-06）。
+type Placement struct {
+	Unit string
+	X    int
+	Y    int
+}
+
+// QuestDef は製品の納品条件と報酬を定義する（DES-DEF-07）。
+type QuestDef struct {
+	ID         string
+	Item       string
+	MinQuality int
+	Count      int
+	Reward     int
 }
 
 // Drop は採取で得られるアイテムの候補を定義する（DES-IT01 2.1）。
@@ -96,6 +153,10 @@ type GameDef struct {
 	StartMoney     int
 	BaseGolemSlots int
 	Shop           []ShopOffer
+	Party          []Placement
+	BattleWidth    int
+	BattleHeight   int
+	InjurySeconds  int
 }
 
 // Catalog は ID をキーにした定義の目録を保持する（DES-PKG-02、DES-IT01 2.1）。
@@ -106,6 +167,20 @@ type Catalog struct {
 	Gathers    map[string]GatherDef
 	Golems     map[string]GolemDef
 	Facilities map[string]FacilityDef
+	Units      map[string]UnitDef
+	Quests     map[string]QuestDef
+}
+
+// Unit は ID に対応するユニット定義と、見つかったかどうかを返す（DES-DEF-04、DES-DEF-06）。
+func (c Catalog) Unit(id string) (UnitDef, bool) {
+	d, ok := c.Units[id]
+	return d, ok
+}
+
+// Quest は ID に対応する依頼定義と、見つかったかどうかを返す（DES-DEF-04、DES-DEF-07）。
+func (c Catalog) Quest(id string) (QuestDef, bool) {
+	d, ok := c.Quests[id]
+	return d, ok
 }
 
 // Item は ID に対応するアイテム定義と、見つかったかどうかを返す（DES-PKG-02、DES-DEF-04）。
