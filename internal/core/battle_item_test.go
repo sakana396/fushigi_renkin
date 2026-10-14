@@ -13,13 +13,15 @@ func itemBattle(t *testing.T) *World {
 	t.Helper()
 	c := battleCatalog()
 	c.Items["bomb"] = testBombUse()
-	c.Items["burger"] = testBurgerUse()
+	burger := testBurgerUse()
+	burger.Name = "ハンバーガー"
+	c.Items["burger"] = burger
 	for _, id := range []string{"slime", "wolf"} {
 		u := c.Units[id]
 		u.Speed, u.Move, u.Attack = 1, 0, 0
 		c.Units[id] = u
 	}
-	c.Gathers["field"] = defs.GatherDef{ID: "field", Battle: &defs.BattleDef{Enemies: []defs.Placement{{Unit: "slime", X: 2, Y: 3}, {Unit: "wolf", X: 3, Y: 3}}}}
+	c.Gathers["field"] = defs.GatherDef{ID: "field", Battle: &defs.BattleDef{Enemies: []defs.Placement{{Unit: "slime", X: 2, Y: 3}, {Unit: "wolf", X: 3, Y: 3}}, Rolls: 2, Drops: []defs.Drop{{Item: "herb", Weight: 1, QualityMin: 40, QualityMax: 40}}}}
 	w := NewWorld(c, 1)
 	if err := w.StartBattle("field"); err != nil {
 		t.Fatal(err)
@@ -85,6 +87,10 @@ func TestBattleItemBombVictory(t *testing.T) {
 		if w.Battle != nil || w.LastBattle == nil || !w.LastBattle.Won || battle.Units[2].HP != 0 || battle.Units[3].HP != 0 || w.Inventory.Count(key) != 0 {
 			t.Fatalf("結果=%+v 戦闘=%+v", w.LastBattle, battle)
 		}
+		wantRewards := []Stack{{Key: ItemKey{"herb", 40}, Count: 2}}
+		if !reflect.DeepEqual(w.LastBattle.Rewards, wantRewards) || w.Inventory.Count(ItemKey{"herb", 40}) != 2 {
+			t.Fatalf("報酬=%v 在庫=%v", w.LastBattle.Rewards, w.Inventory.Stacks())
+		}
 		if got := w.LastBattle.Log[len(w.LastBattle.Log)-1]; got != "勝利" {
 			t.Fatalf("記録=%v", w.LastBattle.Log)
 		}
@@ -128,6 +134,7 @@ func TestBattleItemEffects(t *testing.T) {
 		w.Battle.Units[0].HP = 0
 		w.Battle.Units[0].X, w.Battle.Units[0].Y = 0, 2
 		w.Battle.Units[2].X, w.Battle.Units[2].Y = 0, 4 // 範囲内の敵
+		w.Battle.Units[2].HP = 10
 		burger := testBurgerUse()
 		burger.Use.Stages[0].Radius = 1
 		w.catalog.Items["burger"] = burger
@@ -136,7 +143,7 @@ func TestBattleItemEffects(t *testing.T) {
 		if err := w.BattleUseItem(key, 0, 3); err != nil {
 			t.Fatal(err)
 		}
-		if w.Battle.Units[1].HP != 18 || w.Battle.Units[0].HP != 0 || w.Battle.Units[0].AttackBonus != 0 || w.Battle.Units[2].HP != 14 {
+		if w.Battle.Units[1].HP != 18 || w.Battle.Units[0].HP != 0 || w.Battle.Units[0].AttackBonus != 0 || w.Battle.Units[2].HP != 10 {
 			t.Fatalf("効果=%+v", w.Battle.Units)
 		}
 	})
@@ -204,8 +211,64 @@ func TestBattleItemEffects(t *testing.T) {
 		if err := w.BattleUseItem(key, 2, 3); err != nil {
 			t.Fatal(err)
 		}
-		if w.Battle.Units[3].HP != 0 || w.Battle.Units[4].HP != 18 {
+		if w.Battle.Units[3].HP != 0 || w.Battle.Units[3].AttackBonus != 0 || w.Battle.Units[3].SpeedBonus != 0 || w.Battle.Units[4].HP != 18 {
 			t.Fatalf("対象外=%+v", w.Battle.Units)
+		}
+	})
+	t.Run("TC-FR-BTL-04-15 爆弾の射程ちょうど三マス", func(t *testing.T) {
+		w := itemBattle(t)
+		w.Battle.Units[2].X = 3
+		w.Battle.Units[3].X = 4
+		key := ItemKey{"bomb", 20}
+		if err := w.Inventory.Add(key, 1); err != nil {
+			t.Fatal(err)
+		}
+		if err := w.BattleUseItem(key, 3, 3); err != nil {
+			t.Fatal(err)
+		}
+		if w.Battle.Units[2].HP != 6 || w.Battle.Units[3].HP != 18 || w.Inventory.Count(key) != 0 || w.Battle.Turn != 1 {
+			t.Fatalf("射程境界の効果=%+v", w.Battle)
+		}
+	})
+	t.Run("TC-FR-BTL-04-16 移動後の使用と敵の番", func(t *testing.T) {
+		w := itemBattle(t)
+		slime := w.catalog.Units["slime"]
+		slime.Attack = 3
+		w.catalog.Units["slime"] = slime
+		if err := w.BattleWait(); err != nil {
+			t.Fatal(err)
+		}
+		if err := w.BattleMove(1, 3); err != nil {
+			t.Fatal(err)
+		}
+		key := ItemKey{"burger", 160}
+		if err := w.Inventory.Add(key, 1); err != nil {
+			t.Fatal(err)
+		}
+		logStart := len(w.Battle.Log)
+		if err := w.BattleUseItem(key, 1, 3); err != nil {
+			t.Fatal(err)
+		}
+		if w.Battle.Units[0].HP != 27 || !reflect.DeepEqual(w.Battle.Log[logStart:], []string{"剣士はハンバーガー（品質160）を使用", "スライムは剣士に3のダメージ"}) {
+			t.Fatalf("敵の行動=%+v 記録=%v", w.Battle.Units[0], w.Battle.Log[logStart:])
+		}
+		if !reflect.DeepEqual(w.Battle.Order, []int{0, 1, 2, 3}) || w.Battle.Turn != 0 || w.Battle.Moved {
+			t.Fatalf("次の巡=%+v", w.Battle)
+		}
+	})
+	t.Run("TC-FR-BTL-04-17 剣士の最大体力で回復を止める", func(t *testing.T) {
+		w := itemBattle(t)
+		w.Battle.Units[0].HP = 25
+		w.Battle.Units[1].Y = 2
+		key := ItemKey{"burger", 100}
+		if err := w.Inventory.Add(key, 1); err != nil {
+			t.Fatal(err)
+		}
+		if err := w.BattleUseItem(key, 1, 2); err != nil {
+			t.Fatal(err)
+		}
+		if w.Battle.Units[0].HP != 30 {
+			t.Fatalf("剣士のHP=%d", w.Battle.Units[0].HP)
 		}
 	})
 }
@@ -224,21 +287,25 @@ func TestBattleItemErrors(t *testing.T) {
 		want error
 		add  bool
 	}{
-		{"TC-FR-BTL-04-07 未定義の種類", ItemKey{"missing", 100}, -1, -1, ErrNotUsable, true},
-		{"TC-FR-BTL-04-08 使用定義がない種類", ItemKey{"herb", 100}, -1, -1, ErrNotUsable, true},
+		{"TC-FR-BTL-04-07 未定義の種類", ItemKey{"missing", 100}, -1, -1, ErrNotUsable, false},
+		{"TC-FR-BTL-04-08 使用定義がない種類", ItemKey{"herb", 100}, -1, -1, ErrNotUsable, false},
 		{"TC-FR-BTL-04-09 在庫不足が射程より先", ItemKey{"bomb", 100}, -1, -1, ErrNotEnoughItems, false},
 		{"TC-FR-BTL-04-10 盤面外", ItemKey{"bomb", 100}, -1, 3, ErrOutOfRange, true},
-		{"TC-FR-BTL-04-11 射程外", ItemKey{"bomb", 100}, 7, 5, ErrOutOfRange, true},
+		{"TC-FR-BTL-04-11 射程外", ItemKey{"bomb", 100}, 4, 3, ErrOutOfRange, true},
 		{"TC-FR-BTL-04-12 対象の陣営が違う", ItemKey{"bomb", 100}, 1, 2, ErrNoTarget, true},
 		{"TC-FR-BTL-04-13 対象が倒れている", ItemKey{"bomb", 100}, 2, 3, ErrNoTarget, true},
+		{"TC-FR-BTL-04-18 x座標が同じ空きマス", ItemKey{"bomb", 100}, 2, 2, ErrNoTarget, true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			w := itemBattle(t)
 			if tc.add {
 				_ = w.Inventory.Add(tc.key, 1)
 			}
-			if errors.Is(tc.want, ErrNoTarget) && tc.x == 2 {
+			if tc.x == 2 && tc.y == 3 && errors.Is(tc.want, ErrNoTarget) {
 				w.Battle.Units[2].HP = 0
+			}
+			if tc.x == 4 {
+				w.Battle.Units[3].X = 4
 			}
 			beforeBattle := copyBattle(w.Battle)
 			beforeInventory := w.Inventory.Stacks()
