@@ -36,40 +36,14 @@ func (w *World) gatherIntoInventory(site defs.GatherDef) ([]Stack, error) {
 	if site.Rolls <= 0 || site.CooldownSeconds < 0 || len(site.Drops) == 0 {
 		return nil, ErrInvalidCount
 	}
-	total := 0
-	max := int(^uint(0) >> 1)
-	for _, drop := range site.Drops {
-		if _, ok := w.catalog.Item(drop.Item); !ok {
-			return nil, fmt.Errorf("採取品 %s: %w", drop.Item, ErrUnknownID)
-		}
-		if drop.Weight <= 0 || total > max-drop.Weight {
-			return nil, ErrInvalidCount
-		}
-		if drop.QualityMin < 1 || drop.QualityMax > 200 || drop.QualityMin > drop.QualityMax {
-			return nil, ErrInvalidQuality
-		}
-		total += drop.Weight
-	}
 	rngState, err := w.rngSource.MarshalBinary()
 	if err != nil {
 		return nil, err
 	}
-	results := make(map[ItemKey]int)
-	for i := 0; i < site.Rolls; i++ {
-		draw := w.rng.IntN(total)
-		var selected int
-		for j, drop := range site.Drops {
-			if draw < drop.Weight {
-				selected = j
-				break
-			}
-			draw -= drop.Weight
-		}
-		drop := site.Drops[selected]
-		quality := drop.QualityMin + w.rng.IntN(drop.QualityMax-drop.QualityMin+1)
-		results[ItemKey{drop.Item, quality}]++
+	stacks, err := w.drawDrops(site.Rolls, site.Drops)
+	if err != nil {
+		return nil, err
 	}
-	stacks := gatherStacks(results)
 	trial := cloneInventory(w.Inventory)
 	for _, stack := range stacks {
 		if err := trial.Add(stack.Key, stack.Count); err != nil {
@@ -81,4 +55,41 @@ func (w *World) gatherIntoInventory(site defs.GatherDef) ([]Stack, error) {
 	}
 	w.Inventory = trial
 	return stacks, nil
+}
+
+// drawDrops は採取と戦闘報酬に共通の重み・品質抽選を行う（DES-GAT-01、DES-BTL-02）。
+func (w *World) drawDrops(rolls int, drops []defs.Drop) ([]Stack, error) {
+	if rolls <= 0 || len(drops) == 0 {
+		return nil, ErrInvalidCount
+	}
+	total := 0
+	max := int(^uint(0) >> 1)
+	for _, drop := range drops {
+		if _, ok := w.catalog.Item(drop.Item); !ok {
+			return nil, fmt.Errorf("採取品 %s: %w", drop.Item, ErrUnknownID)
+		}
+		if drop.Weight <= 0 || total > max-drop.Weight {
+			return nil, ErrInvalidCount
+		}
+		if drop.QualityMin < 1 || drop.QualityMax > 200 || drop.QualityMin > drop.QualityMax {
+			return nil, ErrInvalidQuality
+		}
+		total += drop.Weight
+	}
+	results := make(map[ItemKey]int)
+	for i := 0; i < rolls; i++ {
+		draw := w.rng.IntN(total)
+		var selected int
+		for j, drop := range drops {
+			if draw < drop.Weight {
+				selected = j
+				break
+			}
+			draw -= drop.Weight
+		}
+		drop := drops[selected]
+		quality := drop.QualityMin + w.rng.IntN(drop.QualityMax-drop.QualityMin+1)
+		results[ItemKey{drop.Item, quality}]++
+	}
+	return gatherStacks(results), nil
 }
