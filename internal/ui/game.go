@@ -282,7 +282,11 @@ func (g *Game) drawCandidates(dst *ebiten.Image) {
 		stack := candidates[i]
 		remaining := g.candidateRemaining(stack)
 		title := fmt.Sprintf("%s Q%d ×%d  %s", g.itemName(stack.Key.ItemID), stack.Key.Quality, remaining, g.itemAttributes(stack.Key.ItemID))
-		g.button(dst, x+8, y+32+(i%rows)*26, w-16, 24, title, false, func() { g.addCraftItem(stack.Key) })
+		var action func()
+		if remaining > 0 {
+			action = func() { g.addCraftItem(stack.Key) }
+		}
+		g.button(dst, x+8, y+32+(i%rows)*26, w-16, 24, title, false, action)
 	}
 	g.button(dst, x+8, y+252, 45, 25, "前", false, func() {
 		if g.candidatePage > 0 {
@@ -304,8 +308,19 @@ func (g *Game) addCraftItem(key core.ItemKey) {
 		return
 	}
 	slot := recipe.Inputs[g.craftSlot]
-	item, _ := g.catalog.Item(key.ItemID)
-	if slot.Item != "" && slot.Item != key.ItemID || slot.Attribute != "" && !contains(item.Attributes, slot.Attribute) {
+	candidates, err := g.world.SlotCandidates(g.recipeID, g.craftSlot)
+	if err != nil {
+		g.message = err.Error()
+		return
+	}
+	matched := false
+	for _, candidate := range candidates {
+		if candidate.Key == key {
+			matched = true
+			break
+		}
+	}
+	if !matched {
 		g.message = "入力枠の条件に合わない素材です"
 		return
 	}
@@ -333,6 +348,7 @@ func (g *Game) addCraftItem(key core.ItemKey) {
 	g.message = fmt.Sprintf("%s Q%d を入力枠 %d に追加", g.itemName(key.ItemID), key.Quality, g.craftSlot+1)
 	if total+1 == slot.Count && g.craftSlot+1 < len(recipe.Inputs) {
 		g.craftSlot++
+		g.candidatePage = 0
 	}
 }
 
@@ -527,12 +543,14 @@ func (g *Game) drawCraft(dst *ebiten.Image) {
 			g.message = fmt.Sprintf("完成: %s Q%d ×%d", g.itemName(output.Key.ItemID), output.Key.Quality, output.Count)
 			g.selection = core.Selection{Slots: make([][]core.Stack, len(recipe.Inputs))}
 			g.craftSlot = 0
+			g.candidatePage = 0
 		}
 	}
 	g.button(dst, x+8, y+407, 160, 32, "この素材で錬金", false, craftAction)
 	g.button(dst, x+179, y+407, 120, 32, "選択を取消", false, func() {
 		g.selection = core.Selection{Slots: make([][]core.Stack, len(recipe.Inputs))}
 		g.craftSlot = 0
+		g.candidatePage = 0
 		g.message = "素材の選択を取り消しました"
 	})
 }
