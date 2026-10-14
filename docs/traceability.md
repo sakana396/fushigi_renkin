@@ -48,5 +48,5 @@
 | FR-BTL-07 | #46, #51 | DES-BTL-02, DES-BTL-04 |  |  | 未着手 |
 | FR-BTL-10 | #46, #50, #51 | DES-BTL-02, DES-UI-07 |  |  | 未着手 |
 | FR-MAT-03 | #46 | DES-BTL-02, DES-DEF-06 |  |  | 未着手（一部） |
-| FR-ECO-05 | #44, #48, #49, #50 | DES-DEF-07, DES-QST-01, DES-QST-02, DES-VAL-13 | TC-FR-MOD-04-32〜34、TC-FR-MOD-02-23〜24、TC-FR-MOD-04-32〜34, TC-FR-ECO-05-01〜13 | `internal/defs/defs.go`, `internal/defload/load.go`, `data/base/quests.toml`, `data/base/game.toml`, `internal/core/world.go`, `internal/core/quest.go` | 定義・検証・本体データを実装済み（依頼板と納品は #48）。定義・検証・依頼板・納品を実装済み（画面は #50） |
+| FR-ECO-05 | #44, #48, #49, #50 | DES-DEF-07, DES-QST-01, DES-QST-02, DES-VAL-13 | TC-FR-MOD-04-32〜34、TC-FR-MOD-02-23〜24、TC-FR-ECO-05-01〜13 | `internal/defs/defs.go`, `internal/defload/load.go`, `data/base/quests.toml`, `data/base/game.toml`, `internal/core/world.go`, `internal/core/quest.go` | 定義・検証・本体データを実装済み（依頼板と納品は #48）。定義・検証・依頼板・納品を実装済み（画面は #50） |
 | IF-06 | #50, #51 | DES-UI-06, DES-UI-07, DES-UI-10 |  |  | 未着手 |
