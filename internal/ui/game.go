@@ -47,8 +47,10 @@ type Game struct {
 	quantity           int
 	timeScale          int
 	scene              scene
-	startBattle        func(string) error
-	injuryRemaining    func() uint64
+	battleAction       battleAction
+	battleItem         core.ItemKey
+	battleItemPage     int
+	battleLogPage      int
 }
 
 // scene は表示する場面を表す（DES-UI-06）。
@@ -58,6 +60,15 @@ const (
 	workshopScene scene = iota
 	townScene
 	gatherScene
+)
+
+// battleAction は盤面を押したときの操作を表す（DES-UI-08）。
+type battleAction int
+
+const (
+	moveAction battleAction = iota
+	attackAction
+	itemAction
 )
 
 // NewGame は本体の目録と World を画面に結び付ける（DES-PKG-05）。
@@ -115,7 +126,15 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	g.label(screen, 14, 35, "操作結果: "+g.message, white)
 	for i, title := range []string{"工房", "街", "採取地"} {
 		chosen := scene(i)
-		g.button(screen, 10+i*130, 55, 120, 30, title, g.scene == chosen, func() { g.scene = chosen })
+		var action func()
+		if g.world.Battle == nil {
+			action = func() { g.scene = chosen }
+		}
+		g.button(screen, 10+i*130, 55, 120, 30, title, g.scene == chosen && g.world.Battle == nil, action)
+	}
+	if g.world.Battle != nil {
+		g.drawBattle(screen)
+		return
 	}
 	switch g.scene {
 	case workshopScene:
@@ -143,6 +162,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		g.drawQuests(screen)
 	case gatherScene:
 		g.drawGather(screen)
+		g.drawBattleResult(screen)
 	}
 }
 
@@ -526,13 +546,18 @@ func (g *Game) drawGather(dst *ebiten.Image) {
 		if site.Battle != nil {
 			var action func()
 			reason := ""
-			switch {
-			case g.startBattle == nil:
-				reason = "戦闘画面の接続待ち"
-			case g.injuryRemaining != nil && g.injuryRemaining() > 0:
-				reason = fmt.Sprintf("負傷中: 残り %d 秒", (g.injuryRemaining()+59)/60)
-			default:
-				action = func() { g.result("探索を始めました", g.startBattle(gatherID)) }
+			if g.world.Now < g.world.InjuredUntil {
+				reason = fmt.Sprintf("負傷中: 残り %d 秒", (g.world.InjuredUntil-g.world.Now+59)/60)
+			} else {
+				action = func() {
+					err := g.world.StartBattle(gatherID)
+					g.result("探索を始めました", err)
+					if err == nil {
+						g.battleAction = moveAction
+						g.battleItemPage = 0
+						g.battleLogPage = 0
+					}
+				}
 			}
 			g.button(dst, x+430, yy-4, 170, 28, "探索する", false, action)
 			if reason != "" {
