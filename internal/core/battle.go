@@ -275,7 +275,7 @@ func (w *World) finishBattle() bool {
 				}
 			}
 			if accepted < stack.Count {
-				b.Log = append(b.Log, fmt.Sprintf("%sの報酬%d個を破棄", stack.Key.ItemID, stack.Count-accepted))
+				b.Log = append(b.Log, fmt.Sprintf("%s（品質%d）の報酬%d個を破棄", w.itemName(stack.Key.ItemID), stack.Key.Quality, stack.Count-accepted))
 			}
 		}
 		b.Log = append(b.Log, "勝利")

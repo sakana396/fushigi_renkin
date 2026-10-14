@@ -35,7 +35,7 @@ func (w *World) enemyAction(index int) {
 				}
 			}
 		}
-		if bestDistance < nearest {
+		if bestX != enemy.X || bestY != enemy.Y {
 			enemy.X, enemy.Y = bestX, bestY
 			b.Log = append(b.Log, fmt.Sprintf("%sは(%d, %d)へ移動", enemy.Label, bestX, bestY))
 		}

@@ -41,12 +41,12 @@
 | FR-ITM-07 | #32 | DES-ITM-01, DES-UI-02 | TC-FR-ITM-07-01〜04（手動） | `internal/ui/game.go` | 実装済み（手動確認は合格） |
 | FR-ITM-08 | #45, #47, #49, #50 | DES-QLT-05, DES-UI-09 | TC-FR-ITM-08-01〜10 | `internal/core/use_effect.go` | core の効果計算を実装済み（戦闘・表示は後続 Issue）。未着手 |
 | FR-ITM-09 | #44, #45, #47, #49, #50 | DES-DEF-05, DES-QLT-05, DES-VAL-09, DES-VAL-10, DES-UI-09 | TC-FR-MOD-04-20〜25、TC-FR-MOD-04-39〜40、TC-FR-MOD-04-43、TC-FR-ITM-09-01〜08 | `internal/defs/defs.go`, `internal/defload/load.go`, `internal/core/use_effect.go` | 定義・検証・core の効果計算を実装済み（戦闘・表示は後続 Issue）。定義と検証を実装済み（効果の計算は #45） |
-| FR-BTL-01 | #44, #46, #49, #51 | DES-BTL-01, DES-BTL-02, DES-BTL-03, DES-VAL-12, DES-UI-08 | TC-FR-MOD-04-29〜31、TC-FR-MOD-04-35〜37、TC-FR-MOD-04-41〜42、TC-FR-MOD-04-44〜47、TC-FR-BTL-01-01〜16 | `internal/defs/defs.go`, `internal/defload/load.go`, `internal/core/battle.go`, `internal/core/battle_enemy.go`, `internal/core/world.go` | 定義と検証を実装済み（戦闘本体は #46）。core の戦闘を実装済み（画面は #51） |
-| FR-BTL-02 | #44, #46, #49 | DES-DEF-06, DES-VAL-11 | TC-FR-MOD-04-26〜28、TC-FR-BTL-02-01〜02 | `internal/defs/defs.go`, `internal/defload/load.go`, `internal/core/battle.go` | 定義と検証を実装済み（戦闘は #46）。定義・検証・戦闘の役割を実装済み |
+| FR-BTL-01 | #44, #46, #49, #51 | DES-BTL-01, DES-BTL-02, DES-BTL-03, DES-VAL-12, DES-UI-08 | TC-FR-MOD-04-29〜31、TC-FR-MOD-04-35〜37、TC-FR-MOD-04-41〜42、TC-FR-MOD-04-44〜47、TC-FR-BTL-01-01〜24 | `internal/defs/defs.go`, `internal/defload/load.go`, `internal/core/battle.go`, `internal/core/battle_enemy.go`, `internal/core/world.go`, `internal/core/battle_test.go` | 定義と検証を実装済み（戦闘本体は #46）。core の戦闘を実装済み、REV-028 の試験を補強（画面は #51） |
+| FR-BTL-02 | #44, #46, #49 | DES-DEF-06, DES-VAL-11 | TC-FR-MOD-04-26〜28、TC-FR-BTL-02-01〜03 | `internal/defs/defs.go`, `internal/defload/load.go`, `internal/core/battle.go`, `internal/core/battle_test.go` | 定義と検証を実装済み（戦闘は #46）。定義・検証・戦闘の役割を実装済み、REV-028 の表示名試験を追加 |
 | FR-BTL-04 | #47, #51 | DES-BTL-02 |  |  | 未着手 |
 | FR-BTL-05 | #45, #47 | DES-QLT-05 | TC-FR-ITM-08-01〜10、TC-FR-ITM-09-01〜08 | `internal/core/use_effect.go` | core の効果計算を実装済み（戦闘中の適用は #47）。未着手 |
-| FR-BTL-07 | #46, #51 | DES-BTL-02, DES-BTL-04 | TC-FR-BTL-07-01〜02 | `internal/core/battle.go`, `internal/core/world.go` | 未着手。core の負傷を実装済み（画面は #51） |
-| FR-BTL-10 | #46, #50, #51 | DES-BTL-02, DES-UI-07 | TC-FR-BTL-10-01 | `internal/core/battle.go` | 未着手。core の手動開始を実装済み（画面は #50、#51） |
-| FR-MAT-03 | #46 | DES-BTL-02, DES-DEF-06 | TC-FR-MAT-03-01 | `internal/core/battle.go`, `internal/core/gather.go` | 未着手（一部）。戦闘報酬の一部を実装済み |
+| FR-BTL-07 | #46, #51 | DES-BTL-02, DES-BTL-04 | TC-FR-BTL-07-01〜03 | `internal/core/battle.go`, `internal/core/world.go`, `internal/core/battle_test.go` | 未着手。core の負傷を実装済み、REV-028 の HP 下限試験を追加（画面は #51） |
+| FR-BTL-10 | #46, #50, #51 | DES-BTL-02, DES-UI-07 | TC-FR-BTL-10-01 | `internal/core/battle.go`, `internal/core/battle_test.go` | core の手動開始を実装済み、REV-028 の状態不変・誤り順試験を補強（画面は #50、#51） |
+| FR-MAT-03 | #46 | DES-BTL-02, DES-DEF-06 | TC-FR-MAT-03-01 | `internal/core/battle.go`, `internal/core/gather.go`, `internal/core/battle_test.go` | 戦闘報酬の一部を実装済み、破棄の記録に表示名と品質を追加 |
 | FR-ECO-05 | #44, #48, #49, #50 | DES-DEF-07, DES-QST-01, DES-QST-02, DES-VAL-13 | TC-FR-MOD-04-32〜34 | `internal/defs/defs.go`, `internal/defload/load.go` | 定義と検証を実装済み（依頼板と納品は #48） |
 | IF-06 | #50, #51 | DES-UI-06, DES-UI-07, DES-UI-10 |  |  | 未着手 |
