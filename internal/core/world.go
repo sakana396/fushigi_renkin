@@ -8,17 +8,20 @@ import (
 
 // World はゲームの状態とシード付き乱数、依頼板を保持する（DES-IT01 3.1、DES-TIME-01、DES-QST-01）。
 type World struct {
-	catalog     defs.Catalog
-	rng         *rand.Rand
-	rngSource   *rand.PCG
-	questRNG    *rand.Rand
-	Inventory   Inventory
-	Quests      [3]string
-	Golems      []Golem
-	Money       int
-	Now         uint64
-	Facilities  map[string]int
-	gatherReady map[string]uint64
+	catalog      defs.Catalog
+	rng          *rand.Rand
+	rngSource    *rand.PCG
+	questRNG     *rand.Rand
+	Inventory    Inventory
+	Quests       [3]string
+	Battle       *Battle
+	LastBattle   *BattleReport
+	InjuredUntil uint64
+	Golems       []Golem
+	Money        int
+	Now          uint64
+	Facilities   map[string]int
+	gatherReady  map[string]uint64
 }
 
 // NewWorld は目録とシードから初期状態と依頼板を作る（DES-IT01 3.1、DES-TIME-01、DES-QST-01）。
