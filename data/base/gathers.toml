@@ -27,3 +27,50 @@ drops = [
 rolls = 2
 enemies = [{ unit = "slime", x = 6, y = 2 }, { unit = "wolf", x = 6, y = 4 }]
 drops = [{ item = "ore", weight = 3, quality_min = 40, quality_max = 90 }, { item = "glow_moss", weight = 1, quality_min = 40, quality_max = 90 }]
+
+[[gather]]
+id = "sunny_hill"
+name = "陽だまりの丘"
+rank = 2
+rolls = 3
+cooldown_seconds = 18
+drops = [
+  { item = "herb", weight = 3, quality_min = 20, quality_max = 50 },
+  { item = "glow_moss", weight = 2, quality_min = 20, quality_max = 50 },
+  { item = "water", weight = 2, quality_min = 20, quality_max = 50 },
+  { item = "ore", weight = 1, quality_min = 20, quality_max = 50 },
+]
+[gather.battle]
+rolls = 2
+enemies = [{ unit = "beetle", x = 6, y = 2 }, { unit = "slime", x = 6, y = 4 }]
+drops = [
+  { item = "herb", weight = 3, quality_min = 60, quality_max = 120 },
+  { item = "glow_moss", weight = 2, quality_min = 60, quality_max = 120 },
+  { item = "water", weight = 2, quality_min = 60, quality_max = 120 },
+  { item = "ore", weight = 1, quality_min = 60, quality_max = 120 },
+]
+
+[[gather]]
+id = "crystal_forest"
+name = "水晶の森"
+rank = 3
+rolls = 3
+cooldown_seconds = 22
+drops = [
+  { item = "wheat", weight = 2, quality_min = 40, quality_max = 80 },
+  { item = "water", weight = 2, quality_min = 40, quality_max = 80 },
+  { item = "herb", weight = 2, quality_min = 40, quality_max = 80 },
+  { item = "ore", weight = 2, quality_min = 40, quality_max = 80 },
+]
+[gather.battle]
+rolls = 3
+enemies = [{ unit = "stone_golem", x = 6, y = 2 }, { unit = "beetle", x = 6, y = 4 }]
+drops = [
+  { item = "wheat", weight = 2, quality_min = 90, quality_max = 160 },
+  { item = "water", weight = 2, quality_min = 90, quality_max = 160 },
+  { item = "milk", weight = 1, quality_min = 90, quality_max = 160 },
+  { item = "meat", weight = 1, quality_min = 90, quality_max = 160 },
+  { item = "herb", weight = 2, quality_min = 90, quality_max = 160 },
+  { item = "glow_moss", weight = 2, quality_min = 90, quality_max = 160 },
+  { item = "ore", weight = 2, quality_min = 90, quality_max = 160 },
+]
