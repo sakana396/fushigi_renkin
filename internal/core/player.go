@@ -270,6 +270,7 @@ func (w *World) LeaveGather() error {
 			}
 		}
 	}
+	// 検証済みの地図には gather 行きの出入り口があるため、ここには到達しない（DES-FLD-05）。
 	return ErrNotOnMap
 }
 

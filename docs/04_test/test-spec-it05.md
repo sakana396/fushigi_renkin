@@ -62,6 +62,12 @@
 | TC-FR-FLD-02-17 | FR-FLD-02、DES-FLD-03 | 工房、地図の外と未知の文字 | 左／下へ移動 | 通れず位置不変 | 異常 |
 | TC-FR-FLD-02-18 | FR-FLD-02、DES-FLD-03 | 工房の扉の行き先が目録にない | 扉へ向けて下 | 通れず位置不変 | 異常 |
 | TC-FR-FLD-02-19 | FR-FLD-02、DES-FLD-03 | 負の座標 | マス番号と地図外の通行判定 | -1 と -96 は列 -1、-97 は列 -2。地図外は通れない | 境界 |
+| TC-FR-FLD-02-20 | FR-FLD-02、DES-FLD-03 | 工房 (392,448)、下。壁との重なり 24 | MovePlayer(0,1) | 右へ 7 補正して (399,448)、下 | 境界 |
+| TC-FR-FLD-02-21 | FR-FLD-02、DES-FLD-03 | 工房 (410,445)、下。壁との重なり 6 | MovePlayer(0,1) | 右へ 6 補正して (416,445)、下。Y は 448 に寄せない | 境界 |
+| TC-FR-FLD-02-22 | FR-FLD-02、DES-FLD-03 | 工房 (544,210)、下。上側が壁に重なる | MovePlayer(1,0) | 下へ 7 補正して (544,217)、右 | 境界 |
+| TC-FR-FLD-02-23 | FR-FLD-02、DES-FLD-03 | 工房 (180,224)、上。右側が壁に重なる | MovePlayer(0,-1) | 左へ 7 補正して (173,224)、上 | 境界 |
+| TC-FR-FLD-02-24 | FR-FLD-02、DES-FLD-02 | 工房 (432,336)、上 | MovePlayer(1,1) | (437,341)、右。押した向きに上は含まれない | 正常 |
+| TC-FR-FLD-02-25 | FR-FLD-02、DES-FLD-03 | 工房 (240,230)、上 | MovePlayer(0,-1) | 錬金釜の手前 (240,224)、上 | 境界 |
 
 ### FR-FLD-03 出入り口から場面を移る
 
@@ -79,6 +85,10 @@
 | TC-FR-FLD-03-07 | FR-FLD-03、DES-FLD-01 | 地図のない目録 | 計算例 24: NewWorld、右 | Scene 空、ErrNotOnMap、状態不変 | 異常 |
 | TC-FR-FLD-03-08 | FR-FLD-03、DES-FLD-05 | 街 (336,193)、上 | 上へ移動 | 工房 (432,432)、上 | 正常 |
 | TC-FR-FLD-03-09 | FR-FLD-03、DES-FLD-02 | 不明な場面 | 右へ移動 | ErrNotOnMap、状態不変 | 異常 |
+| TC-FR-FLD-03-10 | FR-FLD-03、DES-FLD-05、DES-WLD-01 | 街 (336,336)、上、戦闘中 | LeaveGather | ErrNotInGather が先、状態不変 | 異常 |
+| TC-FR-FLD-03-11 | FR-FLD-03、DES-FLD-02 | gather (336,385)、下 | MovePlayer(0,0) | ErrNotOnMap、状態不変 | 異常 |
+| TC-FR-FLD-03-12 | FR-FLD-03、DES-FLD-05 | 小地図の街の工房行き出口 (2,1) は左向き。工房 (432,474)、下 | MovePlayer(0,1) | 街の到着マス (1,1) の中心 (144,144)、左 | 正常 |
+| TC-FR-FLD-03-13 | FR-FLD-03、DES-FLD-05 | 小地図の街の工房行き出口 (2,1) は右向き。工房 (432,474)、下 | MovePlayer(0,1) | 街の到着マス (3,1) の中心 (336,144)、右 | 正常 |
 
 ### FR-FLD-04 地図の定義データと検証
 
@@ -139,6 +149,13 @@
 | TC-IF-08-12 | IF-08、DES-FLD-01 | 定数 | SceneGather を比較 | defs.ExitGather と同じ値 | 正常 |
 | TC-IF-08-13 | IF-08、DES-TIME-02、NFR-06 | 工房の開始位置 | Tick 10 回、右へ 3 回 | Tick で位置不変・Now=10、移動で (453,336)・Now=10 | 正常 |
 | TC-IF-08-14 | IF-08、DES-TIME-02、NFR-06 | 同じ地図とシードの世界を 2 つ | 同じ移動列 | 主人公の最終状態が一致 | 正常 |
+| TC-IF-08-15 | IF-08、DES-FLD-02、DES-WLD-01 | 工房 (432,336)、下 | MovePlayer(0,2) | ErrInvalidDirection、状態不変 | 異常 |
+| TC-IF-08-16 | IF-08、DES-FLD-02、DES-WLD-01 | 工房 (432,336)、下 | MovePlayer(-2,0) | ErrInvalidDirection、状態不変 | 異常 |
+| TC-IF-08-17 | IF-08、DES-FLD-04 | 工房 (544,144)、右 | FacingFixture | workbench、true、状態不変 | 正常 |
+| TC-IF-08-18 | IF-08、DES-FLD-04 | 工房 (416,144)、左 | FacingFixture | shelf、true、状態不変 | 正常 |
+| TC-IF-08-19 | IF-08、DES-FLD-04 | 工房 (128,144)、左。前は壁 | FacingFixture | 空、false、状態不変 | 境界 |
+| TC-IF-08-20 | IF-08、DES-FLD-04 | 小地図の (3,1) に錬金釜、(3,2) に棚。主人公 (256,192)、右 | FacingFixture | 前の帯の重なりは両方 16×32。同面積なので y が小さい錬金釜、true | 境界 |
+| TC-IF-08-21 | IF-08、DES-FLD-04 | 工房 (529,144)、右。作業台との隙間 15 | FacingFixture | 前の帯が作業台に 1 単位重なり workbench、true | 境界 |
 
 ### IF-06 場面の行き来（反復 5 の追加分）
 
