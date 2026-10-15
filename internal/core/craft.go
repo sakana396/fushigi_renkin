@@ -56,6 +56,9 @@ func (w *World) planCraft(recipeID string, selection Selection) (craftPlan, erro
 	if !ok {
 		return craftPlan{}, fmt.Errorf("レシピ %q: %w", recipeID, ErrUnknownID)
 	}
+	if w.locked(recipe.Rank) {
+		return craftPlan{}, lockedError(w.itemName(recipe.Output), recipe.Rank)
+	}
 	if len(selection.Slots) != len(recipe.Inputs) {
 		return craftPlan{}, fmt.Errorf("入力枠の数: %w", ErrInvalidCount)
 	}
