@@ -42,7 +42,7 @@
 
 | 接頭辞 | 対象 | 例 |
 |---|---|---|
-| `FR-<区分>-` | 機能要求（区分: ALC, ITM, MAT, ECO, TWN, GOL, RD, BTL, PRG, GFT, CHR, SYS, MOD） | `FR-ALC-04` |
+| `FR-<区分>-` | 機能要求（区分: ALC, ITM, MAT, ECO, TWN, GOL, RD, BTL, PRG, GFT, CHR, FLD, SYS, MOD） | `FR-ALC-04` |
 | `NFR-` | 非機能要求 | `NFR-06` |
 | `IF-` | 外部インタフェース要求 | `IF-03` |
 | `CST-` | 制約 | `CST-02` |
