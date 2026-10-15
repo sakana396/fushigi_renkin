@@ -1,7 +1,7 @@
 # ユースケース
 
 - 文書 ID: UC-DOC-001
-- 版: 0.5（案。反復 5 の範囲を追加）
+- 版: 0.5（反復 5 の範囲を追加。承認、REV-044、E-98）
 - 作成日: 2026-10-14
 - 更新日: 2026-10-15
 - 対象: [反復 1 計画書](../iterations/it01/plan.md)、[反復 2 計画書](../iterations/it02/plan.md)、[反復 3 計画書](../iterations/it03/plan.md)、[反復 4 計画書](../iterations/it04/plan.md)、[反復 5 計画書](../iterations/it05/plan.md) の範囲。反復ごとに書き足す

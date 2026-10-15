@@ -4,13 +4,13 @@
 
 | 工程 | 成果物 | ファイル | 状態 |
 |---|---|---|---|
-| 計画 | プロジェクト計画書 | [00_plan/project-plan.md](00_plan/project-plan.md) | v0.4 案（2.2 に ADR-0003 の注記） |
+| 計画 | プロジェクト計画書 | [00_plan/project-plan.md](00_plan/project-plan.md) | v0.4 承認（2.2 に ADR-0003 の注記） |
 | 企画 | 企画書 | [01_concept/concept.md](01_concept/concept.md) | ドラフト |
 | 企画 | 企画案の比較（旧版） | [01_concept/concept-proposals.md](01_concept/concept-proposals.md) | 廃止（CON-002 に置き換え） |
 | 企画 | 要求抽出記録（ヒアリング） | [01_concept/elicitation-notes.md](01_concept/elicitation-notes.md) | 追記中 |
 | 企画 | 技術選定 ADR | [adr/0001-tech-stack.md](adr/0001-tech-stack.md) | 承認 |
 | 要求 | 要求仕様書 (SRS) | [02_requirements/srs.md](02_requirements/srs.md) | v0.5 確定 |
-| 要求 | ユースケース記述・図 | [02_requirements/use-cases.md](02_requirements/use-cases.md) | v0.5 案（反復 5 の範囲を追加） |
+| 要求 | ユースケース記述・図 | [02_requirements/use-cases.md](02_requirements/use-cases.md) | v0.5 承認（反復 5 の範囲を追加） |
 | 反復 | 反復 1（プロトタイプ）計画書 | [iterations/it01/plan.md](iterations/it01/plan.md) | 承認 |
 | 反復 | 反復 1 振り返り | [iterations/it01/retrospective.md](iterations/it01/retrospective.md) | v1.0 確定 |
 | 反復 | 反復 2 計画書 | [iterations/it02/plan.md](iterations/it02/plan.md) | v1.0 確定 |
@@ -24,9 +24,9 @@
 | 設計 | 設計書（反復 2）: 自動採取・錬金の素材選び・画面 | [03_design/design-it02.md](03_design/design-it02.md) | v0.2 承認 |
 | 設計 | 設計書（反復 3）: 品質の効果・戦闘・依頼・場面ごとの画面 | [03_design/design-it03.md](03_design/design-it03.md) | v0.2 承認 |
 | 設計 | 設計書（反復 4）: 工房のランクと解放・戦闘の出来事の表示 | [03_design/design-it04.md](03_design/design-it04.md) | v0.2 承認 |
-| 設計 | 設計書（反復 5）: 地図の定義・主人公の移動と当たり判定・地図の画面と窓 | [03_design/design-it05.md](03_design/design-it05.md) | v0.2 案 |
+| 設計 | 設計書（反復 5）: 地図の定義・主人公の移動と当たり判定・地図の画面と窓 | [03_design/design-it05.md](03_design/design-it05.md) | v0.2 承認 |
 | 設計 | 定義データ形式 ADR | [adr/0002-definition-data-format.md](adr/0002-definition-data-format.md) | 承認 |
-| 設計 | 画像素材の導入と置き場 ADR | [adr/0003-image-assets.md](adr/0003-image-assets.md) | 案 |
+| 設計 | 画像素材の導入と置き場 ADR | [adr/0003-image-assets.md](adr/0003-image-assets.md) | 承認 |
 | 試験 | テスト仕様書（反復 1） | [04_test/test-spec-it01.md](04_test/test-spec-it01.md) | 雛形 |
 | 試験 | テスト仕様書（反復 2） | [04_test/test-spec-it02.md](04_test/test-spec-it02.md) | 反復 2 の範囲を記入済み |
 | 試験 | テスト仕様書（反復 3） | [04_test/test-spec-it03.md](04_test/test-spec-it03.md) | 雛形 |

@@ -1,6 +1,6 @@
 # ADR-0003: 画像素材の導入と置き場
 
-- 状態: 提案（案。人の承認を待つ）
+- 状態: 承認（2026-10-16、E-98）
 - 日付: 2026-10-15
 - 関連: [IT05-PLAN](../iterations/it05/plan.md) P-04・P-13、[SRS-001](../02_requirements/srs.md) CST-04・IF-08、[DES-IT05](../03_design/design-it05.md) DES-UI-14
 - 変えるもの: [ADR-0001](0001-tech-stack.md) の「影響」の 3 つ目（図形と文字を中心にする）。注記を書いた

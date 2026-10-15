@@ -1,7 +1,7 @@
 # 設計書（反復 5: 主人公を操作して、工房と街を歩く）
 
 - 文書 ID: DES-IT05
-- 版: 0.2（案。REV-044 の指摘を反映）
+- 版: 0.2（REV-044 の指摘を反映。承認、E-98）
 - 作成日: 2026-10-15
 - 対象: [反復 5 計画書](../iterations/it05/plan.md) の範囲
 - 入力: [SRS-001](../02_requirements/srs.md) v0.5、[ユースケース](../02_requirements/use-cases.md) v0.5（案）、設計書（反復 1〜4）、[ADR-0003](../adr/0003-image-assets.md)（案）

@@ -5,8 +5,8 @@
 - 作成: Claude Code（下書きは別のエージェント）
 - レビュー: spec-reviewer（仕様適合レビュー）
 - 承認: **要**（`docs/02_requirements/use-cases.md`、`docs/03_design/design-it05.md`、`docs/adr/0003-image-assets.md`、ADR-0001 と PLAN-001 の注記を変更している。AGENTS.md「自動マージの条件」3）
-- 開発者の承認: （未）
-- 結果: 指摘を修正した。開発者の承認を待つ
+- 開発者の承認: 開発者が「承認」と答えた（E-98）。Q-1〜Q-5 を含む
+- 結果: 指摘を修正して承認。開発者の承認（E-98）を得た
 
 ## 検証
 
