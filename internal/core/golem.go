@@ -66,8 +66,12 @@ func (w *World) AssignGolem(index int, assignment Assignment) error {
 		if assignment.RecipeID != "" || len(assignment.SlotItems) != 0 {
 			return fmt.Errorf("採取とレシピの同時割り当て: %w", ErrInvalidSelection)
 		}
-		if _, ok := w.catalog.Gather(assignment.GatherID); !ok {
+		site, ok := w.catalog.Gather(assignment.GatherID)
+		if !ok {
 			return fmt.Errorf("採取地 %q: %w", assignment.GatherID, ErrUnknownID)
+		}
+		if w.locked(site.Rank) {
+			return lockedError(site.Name, site.Rank)
 		}
 		selected := Assignment{GatherID: assignment.GatherID}
 		w.Golems[index].Assignment = &selected
@@ -79,6 +83,9 @@ func (w *World) AssignGolem(index int, assignment Assignment) error {
 	recipe, ok := w.catalog.Recipe(assignment.RecipeID)
 	if !ok {
 		return fmt.Errorf("レシピ %q: %w", assignment.RecipeID, ErrUnknownID)
+	}
+	if w.locked(recipe.Rank) {
+		return lockedError(w.itemName(recipe.Output), recipe.Rank)
 	}
 	if len(assignment.SlotItems) != len(recipe.Inputs) {
 		return fmt.Errorf("入力枠の数: %w", ErrInvalidCount)

@@ -57,6 +57,9 @@ func (w *World) StartBattle(gatherID string) error {
 	if !ok {
 		return fmt.Errorf("採取地 %s: %w", gatherID, ErrUnknownID)
 	}
+	if w.locked(site.Rank) {
+		return lockedError(site.Name, site.Rank)
+	}
 	if site.Battle == nil {
 		return ErrNoBattle
 	}

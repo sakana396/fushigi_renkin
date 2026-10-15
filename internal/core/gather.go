@@ -12,6 +12,9 @@ func (w *World) Gather(gatherID string) ([]Stack, error) {
 	if !ok {
 		return nil, fmt.Errorf("採取地 %s: %w", gatherID, ErrUnknownID)
 	}
+	if w.locked(site.Rank) {
+		return nil, lockedError(site.Name, site.Rank)
+	}
 	if ready, used := w.gatherReady[gatherID]; used && w.Now < ready {
 		remaining := ready - w.Now
 		return nil, fmt.Errorf("採取地 %s は残り %d 秒: %w", w.gatherName(gatherID), 1+(remaining-1)/60, ErrGatherCooldown)
