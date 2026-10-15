@@ -2,6 +2,7 @@ package defload
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"unicode/utf8"
 
@@ -9,8 +10,8 @@ import (
 )
 
 type mapStart struct {
-	X int `toml:"x"`
-	Y int `toml:"y"`
+	X *int `toml:"x"`
+	Y *int `toml:"y"`
 }
 type mapExit struct {
 	Mark string `toml:"mark"`
@@ -37,6 +38,14 @@ func validateMaps(c *defs.Catalog, maps []source[mapDef], add func(string, strin
 	if len(maps) == 0 {
 		return
 	}
+	maps = append([]source[mapDef](nil), maps...)
+	sort.SliceStable(maps, func(i, j int) bool {
+		if maps[i].Value.ID != maps[j].Value.ID {
+			return maps[i].Value.ID < maps[j].Value.ID
+		}
+		return maps[i].File < maps[j].File
+	})
+	ids := []string{defs.MapTown, defs.MapWorkshop}
 	sources := make(map[string]*mapSource)
 	for _, s := range maps {
 		v := s.Value
@@ -78,12 +87,13 @@ func validateMaps(c *defs.Catalog, maps []source[mapDef], add func(string, strin
 		if bad {
 			continue
 		}
-		if v.Start == nil {
+		if v.Start == nil || v.Start.X == nil || v.Start.Y == nil {
 			report(p+".start", "開始位置が書かれていない")
 		} else {
-			m.StartX, m.StartY = v.Start.X, v.Start.Y
-			ch := m.Cell(m.StartX, m.StartY)
-			if defs.TileInfo(ch).Kind != defs.CellFloor {
+			m.StartX, m.StartY = *v.Start.X, *v.Start.Y
+			if m.StartX < 0 || m.StartX >= m.Width() || m.StartY < 0 || m.StartY >= m.Height() {
+				report(p+".start", fmt.Sprintf("開始位置 (%d, %d) が地図の外", m.StartX, m.StartY))
+			} else if ch := m.Cell(m.StartX, m.StartY); defs.TileInfo(ch).Kind != defs.CellFloor {
 				report(p+".start", fmt.Sprintf("開始位置 (%d, %d) が床ではない（%q）", m.StartX, m.StartY, string(ch)))
 			}
 		}
@@ -155,7 +165,11 @@ func validateMaps(c *defs.Catalog, maps []source[mapDef], add func(string, strin
 			}
 			m.Exits = append(m.Exits, defs.ExitDef{Mark: mark, To: e.To, Dir: dir, Look: e.Look, X: xy[0], Y: xy[1]})
 		}
-		for mark, count := range counts {
+		for mark := byte('1'); mark <= '9'; mark++ {
+			count := counts[mark]
+			if count == 0 {
+				continue
+			}
 			if count != 1 {
 				xy := coords[mark]
 				report(fmt.Sprintf("%s.rows[%d][%d]", p, xy[1], xy[0]), fmt.Sprintf("出入り口 %q が %d マスある", string(mark), count))
@@ -185,17 +199,17 @@ func validateMaps(c *defs.Catalog, maps []source[mapDef], add func(string, strin
 			src.exitsValid = !bad
 		}
 	}
-	for _, id := range []string{defs.MapWorkshop, defs.MapTown} {
+	for _, id := range ids {
 		if _, ok := sources[id]; !ok {
 			add(maps[0].File, "map[id="+id+"]", "地図がない")
 		}
 	}
-	for _, s := range maps {
-		src := sources[s.Value.ID]
-		if src == nil || src.file != s.File || !src.valid {
+	for _, id := range ids {
+		src := sources[id]
+		if src == nil || !src.valid {
 			continue
 		}
-		p := "map[id=" + s.Value.ID + "]"
+		p := "map[id=" + id + "]"
 		for i, e := range src.value.Exits {
 			if e.To == defs.ExitGather {
 				continue
@@ -212,7 +226,7 @@ func validateMaps(c *defs.Catalog, maps []source[mapDef], add func(string, strin
 			}
 			n := 0
 			for _, back := range other.value.Exits {
-				if back.To == s.Value.ID {
+				if back.To == id {
 					n++
 				}
 			}
@@ -222,7 +236,11 @@ func validateMaps(c *defs.Catalog, maps []source[mapDef], add func(string, strin
 			}
 		}
 	}
-	for _, src := range sources {
+	for _, id := range ids {
+		src := sources[id]
+		if src == nil {
+			continue
+		}
 		if src.valid && src.exitsValid {
 			validateMapReachability(src, add)
 		}
