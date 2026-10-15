@@ -13,8 +13,68 @@ import (
 
 const battleX, battleY, cellSize = 20, 140, 85
 
+const battleEventFrames = 30
+
+// startBattleEvents は操作後に増えた出来事の先頭から再生する（DES-UI-12）。
+func (g *Game) startBattleEvents(start int) {
+	var events []core.BattleEvent
+	if g.world.Battle != nil {
+		events = g.world.Battle.Events
+	} else if g.world.LastBattle != nil {
+		events = g.world.LastBattle.Events
+	}
+	if start >= len(events) {
+		if g.world.Battle == nil {
+			g.endBattleEvents()
+		}
+		return
+	}
+	g.battleEvents = events
+	g.battleEventIndex = start
+	g.battleEventFrames = 0
+	g.battleLogPage = pageLimit(start, 8)
+}
+
+// advanceBattleEvents は時間倍率に関係なく 30 更新ごとに次の出来事を見せる（DES-UI-12）。
+func (g *Game) advanceBattleEvents() {
+	g.battleEventFrames++
+	if g.battleEventFrames < battleEventFrames {
+		return
+	}
+	g.battleEventFrames = 0
+	g.battleEventIndex++
+	if g.battleEventIndex == len(g.battleEvents) {
+		g.endBattleEvents()
+		return
+	}
+	g.battleLogPage = pageLimit(g.battleEventIndex, 8)
+}
+
+// endBattleEvents は再生または飛ばしを終え、勝敗を採取地に示す（DES-UI-12、DES-UI-10）。
+func (g *Game) endBattleEvents() {
+	g.battleEvents = nil
+	g.battleEventIndex = 0
+	g.battleEventFrames = 0
+	if g.world.Battle == nil && g.world.LastBattle != nil {
+		g.battleLogPage = pageLimit(len(g.world.LastBattle.Log), 8)
+		if g.world.LastBattle.Won {
+			g.message = "勝利しました"
+		} else {
+			g.message = "敗北しました"
+		}
+		g.scene = gatherScene
+		g.battleItem = core.ItemKey{}
+	} else if g.world.Battle != nil {
+		g.battleLogPage = pageLimit(len(g.world.Battle.Log), 8)
+	}
+}
+
 // drawBattle は盤面、能力、操作、使用品と記録を表示する（DES-UI-08、DES-UI-09）。
 func (g *Game) drawBattle(dst *ebiten.Image) {
+	if len(g.battleEvents) > 0 {
+		g.drawBattleEvent(dst)
+		return
+	}
 	b := g.world.Battle
 	if b == nil || len(b.Order) == 0 {
 		return
@@ -68,10 +128,15 @@ func (g *Game) drawBattle(dst *ebiten.Image) {
 	}
 	g.label(dst, 725, 160, fmt.Sprintf("移動力 %d / 攻撃射程 %d / 移動: %s", def.Move, def.Range, moved), muted)
 	g.button(dst, 725, 205, 110, 32, "移動", g.battleAction == moveAction, func() { g.battleAction = moveAction })
-	g.button(dst, 845, 205, 110, 32, "攻撃", g.battleAction == attackAction, func() { g.battleAction = attackAction })
+	var attack func()
+	if len(g.world.AttackTargets()) > 0 {
+		attack = func() { g.battleAction = attackAction }
+	}
+	g.button(dst, 845, 205, 110, 32, "攻撃", g.battleAction == attackAction, attack)
 	g.button(dst, 965, 205, 110, 32, "アイテム", g.battleAction == itemAction, func() { g.battleAction = itemAction })
 	g.button(dst, 1085, 205, 110, 32, "待機", false, func() {
-		g.finishBattleAction("待機しました", g.world.BattleWait(), true)
+		start := len(g.world.Battle.Events)
+		g.finishBattleAction("待機しました", g.world.BattleWait(), true, start)
 	})
 	guide := "移動先のマスを押してください"
 	switch g.battleAction {
@@ -81,8 +146,72 @@ func (g *Game) drawBattle(dst *ebiten.Image) {
 		guide = "アイテムを使うマスを押してください"
 	}
 	g.label(dst, 725, 255, guide, muted)
+	if len(g.world.AttackTargets()) == 0 {
+		if b.Moved {
+			g.label(dst, 725, 274, "届く敵がいません。待機で番を終えます", muted)
+		} else {
+			g.label(dst, 725, 274, "届く敵がいません。移動するか、待機で番を終えます", muted)
+		}
+	}
+	if g.battleError != "" {
+		g.label(dst, 725, 291, "操作失敗: "+g.battleError, battleErrorColor)
+	}
 	g.drawBattleItems(dst)
 	g.drawBattleLog(dst, b.Log, 715, 645, 875, 275)
+}
+
+// drawBattleEvent は出来事直後の盤面、行動マスと表示済みの記録を描く（DES-UI-12）。
+func (g *Game) drawBattleEvent(dst *ebiten.Image) {
+	e := g.battleEvents[g.battleEventIndex]
+	var gatherID string
+	if g.world.Battle != nil {
+		gatherID = g.world.Battle.GatherID
+	} else if g.world.LastBattle != nil {
+		gatherID = g.world.LastBattle.GatherID
+	}
+	site, _ := g.catalog.Gather(gatherID)
+	g.label(dst, battleX, 105, "戦闘: "+site.Name, white)
+	for y := 0; y < g.catalog.Game.BattleHeight; y++ {
+		for x := 0; x < g.catalog.Game.BattleWidth; x++ {
+			px, py := battleX+x*cellSize, battleY+y*cellSize
+			ink := panelColor
+			if e.Kind != "start" && e.Kind != "win" && e.Kind != "lose" && e.Kind != "reward_lost" && ((x == e.FromX && y == e.FromY && e.Actor >= 0) || (e.Kind != "fall" && x == e.ToX && y == e.ToY && (e.Target >= 0 || e.Kind == "move" || e.Kind == "use")) || (e.Kind == "fall" && e.Target >= 0 && e.Target < len(e.Units) && x == e.Units[e.Target].X && y == e.Units[e.Target].Y)) {
+				ink = eventCellColor
+			}
+			vector.DrawFilledRect(dst, float32(px), float32(py), cellSize-3, cellSize-3, ink, false)
+		}
+	}
+	for i, u := range e.Units {
+		if u.HP <= 0 {
+			continue
+		}
+		px, py := battleX+u.X*cellSize, battleY+u.Y*cellSize
+		ink := color.RGBA{71, 110, 152, 255}
+		if !u.Ally {
+			ink = color.RGBA{145, 78, 73, 255}
+		}
+		if i == e.Actor || i == e.Target {
+			ink = eventUnitColor
+		}
+		vector.DrawFilledRect(dst, float32(px+8), float32(py+8), cellSize-19, cellSize-19, ink, false)
+		initial, _ := utf8.DecodeRuneInString(u.Label)
+		g.label(dst, px+12, py+12, fmt.Sprintf("%c HP%d", initial, u.HP), white)
+		g.label(dst, px+8, py+40, u.Label, white)
+	}
+	g.box(dst, 715, 100, 875, 195, "戦闘の出来事")
+	line := e.Text
+	if e.Kind == "start" {
+		line = "戦闘開始：最初の配置"
+	}
+	g.label(dst, 725, 135, line, white)
+	g.label(dst, 725, 165, fmt.Sprintf("出来事 %d/%d　クリックで残りを飛ばす", g.battleEventIndex+1, len(g.battleEvents)), muted)
+	log := make([]string, 0, g.battleEventIndex)
+	for _, shown := range g.battleEvents[:g.battleEventIndex+1] {
+		if shown.Kind != "start" {
+			log = append(log, shown.Text)
+		}
+	}
+	g.drawBattleLog(dst, log, 715, 645, 875, 275)
 }
 
 // battleReachable は選択した操作の届くマスを判定する（DES-UI-08）。
@@ -127,6 +256,7 @@ func (g *Game) battleTarget(x, y int, ally bool) bool {
 
 // battleCell は盤面のクリックを選択中の core 操作につなぐ（DES-UI-08）。
 func (g *Game) battleCell(x, y int) {
+	start := len(g.world.Battle.Events)
 	var err error
 	success := ""
 	turnEnded := false
@@ -139,17 +269,23 @@ func (g *Game) battleCell(x, y int) {
 	case itemAction:
 		if g.battleItem.ItemID == "" {
 			g.message = "操作失敗: アイテムを選んでください"
+			g.battleError = "アイテムを選んでください"
 			return
 		}
 		err, success = g.world.BattleUseItem(g.battleItem, x, y), g.itemName(g.battleItem.ItemID)+"を使いました"
 		turnEnded = true
 	}
-	g.finishBattleAction(success, err, turnEnded)
+	g.finishBattleAction(success, err, turnEnded, start)
 }
 
-// finishBattleAction は戦闘が終われば結果を保存したまま採取地へ戻す（DES-UI-10）。
-func (g *Game) finishBattleAction(success string, err error, turnEnded bool) {
+// finishBattleAction は成功で増えた出来事を再生し、失敗理由を戦闘画面に示す（DES-UI-12、DES-UI-13）。
+func (g *Game) finishBattleAction(success string, err error, turnEnded bool, start int) {
 	g.result(success, err)
+	if err != nil {
+		g.battleError = err.Error()
+		return
+	}
+	g.battleError = ""
 	if err == nil {
 		if g.world.Battle != nil {
 			g.battleLogPage = pageLimit(len(g.world.Battle.Log), 8)
@@ -159,19 +295,9 @@ func (g *Game) finishBattleAction(success string, err error, turnEnded bool) {
 			} else if g.battleItem.ItemID != "" && g.world.Inventory.Count(g.battleItem) == 0 {
 				g.battleItem = core.ItemKey{}
 			}
-		} else if g.world.LastBattle != nil {
-			g.battleLogPage = pageLimit(len(g.world.LastBattle.Log), 8)
-			if g.world.LastBattle.Won {
-				g.message = "勝利しました"
-			} else {
-				g.message = "敗北しました"
-			}
 		}
 	}
-	if err == nil && g.world.Battle == nil {
-		g.scene = gatherScene
-		g.battleItem = core.ItemKey{}
-	}
+	g.startBattleEvents(start)
 }
 
 // drawBattleItems は在庫にある戦闘用アイテムと品質別効果を並べる（DES-UI-08、DES-UI-09）。
@@ -193,7 +319,13 @@ func (g *Game) drawBattleItems(dst *ebiten.Image) {
 		key := stack.Key
 		item, _ := g.catalog.Item(key.ItemID)
 		title := fmt.Sprintf("%s Q%d ×%d  射程 %d  %s", item.Name, key.Quality, stack.Count, item.Use.Range, g.itemEffectText(key))
-		g.button(dst, x+8, y+33+(i%rows)*29, w-16, 27, title, g.battleAction == itemAction && g.battleItem == key, func() { g.battleItem, g.battleAction = key, itemAction })
+		var selectItem func()
+		if len(g.world.UseTargets(key)) > 0 {
+			selectItem = func() { g.battleItem, g.battleAction = key, itemAction }
+		} else {
+			title += "　狙える相手がいません"
+		}
+		g.button(dst, x+8, y+33+(i%rows)*29, w-16, 27, title, g.battleAction == itemAction && g.battleItem == key, selectItem)
 	}
 	if len(items) == 0 {
 		g.label(dst, x+8, y+40, "使えるアイテムはありません", muted)
@@ -254,6 +386,12 @@ func (g *Game) drawBattleResult(dst *ebiten.Image) {
 
 // targetColor は攻撃・アイテムで狙えるマスの色（DES-UI-08）。
 var targetColor = color.RGBA{214, 178, 64, 255}
+
+var (
+	battleErrorColor = color.RGBA{255, 110, 105, 255}
+	eventCellColor   = color.RGBA{214, 178, 64, 255}
+	eventUnitColor   = color.RGBA{235, 181, 53, 255}
+)
 
 // battleUnitAt は生きているユニットがそのマスにいるかを返す（DES-UI-08）。
 func (g *Game) battleUnitAt(x, y int) bool {

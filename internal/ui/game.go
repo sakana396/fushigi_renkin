@@ -51,6 +51,10 @@ type Game struct {
 	battleItem         core.ItemKey
 	battleItemPage     int
 	battleLogPage      int
+	battleEvents       []core.BattleEvent
+	battleEventIndex   int
+	battleEventFrames  int
+	battleError        string
 }
 
 // scene は表示する場面を表す（DES-UI-06）。
@@ -87,7 +91,13 @@ func Run(world *core.World, catalog defs.Catalog) error {
 // Update はクリックとチートのキーを処理し、1 回の更新につき時間の倍率の分だけ tick を進める（DES-PKG-05、DES-TIME-01）。
 func (g *Game) Update() error {
 	g.handleCheatKeys()
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+	if len(g.battleEvents) > 0 {
+		if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+			g.endBattleEvents()
+		} else {
+			g.advanceBattleEvents()
+		}
+	} else if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 		x, y := ebiten.CursorPosition()
 		for i := len(g.buttons) - 1; i >= 0; i-- {
 			b := g.buttons[i]
@@ -140,12 +150,12 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	for i, title := range []string{"工房", "街", "採取地"} {
 		chosen := scene(i)
 		var action func()
-		if g.world.Battle == nil {
+		if g.world.Battle == nil && len(g.battleEvents) == 0 {
 			action = func() { g.scene = chosen }
 		}
-		g.button(screen, 10+i*130, tabY, 120, 25, title, g.scene == chosen && g.world.Battle == nil, action)
+		g.button(screen, 10+i*130, tabY, 120, 25, title, g.scene == chosen && g.world.Battle == nil && len(g.battleEvents) == 0, action)
 	}
-	if g.world.Battle != nil {
+	if g.world.Battle != nil || len(g.battleEvents) > 0 {
 		g.drawBattle(screen)
 		return
 	}
@@ -640,8 +650,11 @@ func (g *Game) drawGather(dst *ebiten.Image) {
 					g.result("探索を始めました", err)
 					if err == nil {
 						g.battleAction = moveAction
+						g.battleItem = core.ItemKey{}
 						g.battleItemPage = 0
 						g.battleLogPage = 0
+						g.battleError = ""
+						g.startBattleEvents(0)
 					}
 				}
 			}
