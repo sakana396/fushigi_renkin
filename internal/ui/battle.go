@@ -64,6 +64,8 @@ func (g *Game) endBattleEvents() {
 		}
 		g.scene = gatherScene
 		g.battleItem = core.ItemKey{}
+	} else if g.world.Battle != nil {
+		g.battleLogPage = pageLimit(len(g.world.Battle.Log), 8)
 	}
 }
 
@@ -173,7 +175,7 @@ func (g *Game) drawBattleEvent(dst *ebiten.Image) {
 		for x := 0; x < g.catalog.Game.BattleWidth; x++ {
 			px, py := battleX+x*cellSize, battleY+y*cellSize
 			ink := panelColor
-			if e.Kind != "start" && e.Kind != "win" && e.Kind != "lose" && e.Kind != "reward_lost" && ((x == e.FromX && y == e.FromY && e.Actor >= 0) || (x == e.ToX && y == e.ToY && (e.Target >= 0 || e.Kind == "move" || e.Kind == "use")) || (e.Kind == "fall" && e.Target >= 0 && e.Target < len(e.Units) && x == e.Units[e.Target].X && y == e.Units[e.Target].Y)) {
+			if e.Kind != "start" && e.Kind != "win" && e.Kind != "lose" && e.Kind != "reward_lost" && ((x == e.FromX && y == e.FromY && e.Actor >= 0) || (e.Kind != "fall" && x == e.ToX && y == e.ToY && (e.Target >= 0 || e.Kind == "move" || e.Kind == "use")) || (e.Kind == "fall" && e.Target >= 0 && e.Target < len(e.Units) && x == e.Units[e.Target].X && y == e.Units[e.Target].Y)) {
 				ink = eventCellColor
 			}
 			vector.DrawFilledRect(dst, float32(px), float32(py), cellSize-3, cellSize-3, ink, false)
