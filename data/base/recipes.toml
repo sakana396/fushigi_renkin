@@ -57,7 +57,6 @@ bonuses = [{ attribute = "活力", min_count = 2, add = 15 }]
 
 [[recipe]]
 id = "potion_herb"
-rank = 2
 output = "potion"
 output_count = 1
 seconds = 4
@@ -84,7 +83,6 @@ bonuses = [{ attribute = "癒し", min_count = 1, add = 10 }]
 
 [[recipe]]
 id = "glow_crystal"
-rank = 2
 output = "glow_crystal"
 output_count = 1
 seconds = 6

@@ -41,7 +41,7 @@ reputation = 1
 item = "cheese"
 min_quality = 20
 count = 2
-reward = 45
+reward = 80
 
 [[quest]]
 id = "q_tonic"
@@ -69,3 +69,12 @@ item = "deluxe_burger"
 min_quality = 150
 count = 1
 reward = 250
+
+[[quest]]
+id = "q_potion_master"
+rank = 4
+reputation = 0
+item = "potion"
+min_quality = 150
+count = 2
+reward = 180

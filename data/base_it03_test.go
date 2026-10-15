@@ -190,7 +190,9 @@ func TestBaseDataIT03(t *testing.T) {
 		}
 		preview := func(recipe string, slots [][]part, pick func(lo, hi int) int, fixed map[string]int) int {
 			t.Helper()
-			w := core.NewWorld(c, 1)
+			unlocked := c
+			unlocked.Game.RankReputation = nil
+			w := core.NewWorld(unlocked, 1)
 			sel := core.Selection{}
 			for _, slot := range slots {
 				var stacks []core.Stack
