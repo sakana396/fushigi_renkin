@@ -42,7 +42,8 @@ func (w *World) BattleUseItem(key ItemKey, x, y int) error {
 	if err := w.Inventory.Remove(key, 1); err != nil {
 		return err
 	}
-	b.Log = append(b.Log, fmt.Sprintf("%sは%s（品質%d）を使用", actor.Label, item.Name, key.Quality))
+	actorIndex := b.Order[b.Turn]
+	b.addEvent(BattleEvent{Kind: "use", Actor: actorIndex, Target: -1, FromX: actor.X, FromY: actor.Y, ToX: x, ToY: y}, fmt.Sprintf("%sは%s（品質%d）を使用", actor.Label, item.Name, key.Quality))
 	for i := range b.Units {
 		u := &b.Units[i]
 		if u.Ally != ally || u.HP <= 0 || battleDistance(x, y, u.X, u.Y) > effect.Radius {
@@ -59,23 +60,23 @@ func (w *World) BattleUseItem(key ItemKey, x, y int) error {
 				}
 				// 体力が満タンで回復しなかったときは記録しない（DES-UI-08 の記録を読みやすくする）。
 				if u.HP > before {
-					b.Log = append(b.Log, fmt.Sprintf("%sの体力が%d回復", u.Label, u.HP-before))
+					b.addEvent(BattleEvent{Kind: "heal", Actor: actorIndex, Target: i, FromX: actor.X, FromY: actor.Y, ToX: u.X, ToY: u.Y, Amount: u.HP - before}, fmt.Sprintf("%sの体力が%d回復", u.Label, u.HP-before))
 				}
 			case "damage":
 				u.HP -= e.Value
 				if u.HP < 0 {
 					u.HP = 0
 				}
-				b.Log = append(b.Log, fmt.Sprintf("%sに%dのダメージ", u.Label, e.Value))
+				b.addEvent(BattleEvent{Kind: "damage", Actor: actorIndex, Target: i, FromX: actor.X, FromY: actor.Y, ToX: u.X, ToY: u.Y, Amount: e.Value}, fmt.Sprintf("%sに%dのダメージ", u.Label, e.Value))
 				if u.HP == 0 {
-					b.Log = append(b.Log, u.Label+"は倒れた")
+					b.addEvent(BattleEvent{Kind: "fall", Actor: -1, Target: i}, u.Label+"は倒れた")
 				}
 			case "attack_up":
 				u.AttackBonus += e.Value
-				b.Log = append(b.Log, fmt.Sprintf("%sの攻撃が%d上がった", u.Label, e.Value))
+				b.addEvent(BattleEvent{Kind: "attack_up", Actor: actorIndex, Target: i, FromX: actor.X, FromY: actor.Y, ToX: u.X, ToY: u.Y, Amount: e.Value}, fmt.Sprintf("%sの攻撃が%d上がった", u.Label, e.Value))
 			case "speed_up":
 				u.SpeedBonus += e.Value
-				b.Log = append(b.Log, fmt.Sprintf("%sの素早さが%d上がった", u.Label, e.Value))
+				b.addEvent(BattleEvent{Kind: "speed_up", Actor: actorIndex, Target: i, FromX: actor.X, FromY: actor.Y, ToX: u.X, ToY: u.Y, Amount: e.Value}, fmt.Sprintf("%sの素早さが%d上がった", u.Label, e.Value))
 			}
 		}
 	}

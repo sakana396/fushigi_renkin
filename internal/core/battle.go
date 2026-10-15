@@ -28,6 +28,7 @@ type Battle struct {
 	Turn     int
 	Moved    bool
 	Log      []string
+	Events   []BattleEvent
 }
 
 // BattleUnit は盤面上の仲間または敵を表す（DES-BTL-01）。
@@ -49,6 +50,8 @@ type BattleReport struct {
 	Rewards      []Stack
 	InjuredUntil uint64
 	Log          []string
+	Events       []BattleEvent
+	Units        []BattleUnit
 }
 
 // StartBattle は採取地の探索を始め、最初の仲間の番まで敵を動かす（DES-BTL-01、DES-BTL-02）。
@@ -89,6 +92,7 @@ func (w *World) StartBattle(gatherID string) error {
 		appendUnit(p, false)
 	}
 	w.Battle, w.LastBattle = b, nil
+	b.addEvent(BattleEvent{Kind: "start", Actor: -1, Target: -1}, "")
 	w.sortBattleOrder()
 	w.advanceBattle(false)
 	return nil
@@ -102,7 +106,9 @@ func (w *World) BattleMove(x, y int) error {
 	if w.Battle.Moved {
 		return ErrAlreadyMoved
 	}
-	u := &w.Battle.Units[w.Battle.Order[w.Battle.Turn]]
+	b := w.Battle
+	index := b.Order[b.Turn]
+	u := &b.Units[index]
 	def, _ := w.catalog.Unit(u.DefID)
 	if !w.inBattleBounds(x, y) || battleDistance(u.X, u.Y, x, y) > def.Move {
 		return ErrOutOfRange
@@ -110,9 +116,10 @@ func (w *World) BattleMove(x, y int) error {
 	if w.Battle.occupied(x, y) {
 		return ErrCellOccupied
 	}
+	fromX, fromY := u.X, u.Y
 	u.X, u.Y = x, y
 	w.Battle.Moved = true
-	w.Battle.Log = append(w.Battle.Log, fmt.Sprintf("%sは(%d, %d)へ移動", u.Label, x, y))
+	b.addEvent(BattleEvent{Kind: "move", Actor: index, Target: -1, FromX: fromX, FromY: fromY, ToX: x, ToY: y}, fmt.Sprintf("%sは(%d, %d)へ移動", u.Label, x, y))
 	return nil
 }
 
@@ -143,9 +150,9 @@ func (w *World) BattleAttack(x, y int) error {
 	if b.Units[target].HP < 0 {
 		b.Units[target].HP = 0
 	}
-	b.Log = append(b.Log, fmt.Sprintf("%sは%sに%dのダメージ", u.Label, b.Units[target].Label, damage))
+	b.addEvent(BattleEvent{Kind: "attack", Actor: b.Order[b.Turn], Target: target, FromX: u.X, FromY: u.Y, ToX: x, ToY: y, Amount: damage}, fmt.Sprintf("%sは%sに%dのダメージ", u.Label, b.Units[target].Label, damage))
 	if b.Units[target].HP == 0 {
-		b.Log = append(b.Log, b.Units[target].Label+"は倒れた")
+		b.addEvent(BattleEvent{Kind: "fall", Actor: -1, Target: target}, b.Units[target].Label+"は倒れた")
 	}
 	w.advanceBattle(true)
 	return nil
@@ -156,8 +163,10 @@ func (w *World) BattleWait() error {
 	if w.Battle == nil {
 		return ErrNotInBattle
 	}
-	u := w.Battle.Units[w.Battle.Order[w.Battle.Turn]]
-	w.Battle.Log = append(w.Battle.Log, fmt.Sprintf("%sは待機", u.Label))
+	b := w.Battle
+	index := b.Order[b.Turn]
+	u := b.Units[index]
+	b.addEvent(BattleEvent{Kind: "wait", Actor: index, Target: -1, FromX: u.X, FromY: u.Y, ToX: u.X, ToY: u.Y}, fmt.Sprintf("%sは待機", u.Label))
 	w.advanceBattle(true)
 	return nil
 }
@@ -244,7 +253,7 @@ func (w *World) advanceBattle(afterAction bool) {
 		w.enemyAction(b.Order[b.Turn])
 		for i, u := range b.Units {
 			if hp[i] > 0 && u.HP == 0 {
-				b.Log = append(b.Log, u.Label+"は倒れた")
+				b.addEvent(BattleEvent{Kind: "fall", Actor: -1, Target: i}, u.Label+"は倒れた")
 			}
 		}
 		afterAction = true
@@ -272,7 +281,7 @@ func (w *World) finishBattle() bool {
 		site, _ := w.catalog.Gather(b.GatherID)
 		stacks, err := w.drawDrops(site.Battle.Rolls, site.Battle.Drops)
 		if err != nil {
-			b.Log = append(b.Log, fmt.Sprintf("報酬の抽選に失敗: %v", err))
+			b.addEvent(BattleEvent{Kind: "reward_lost", Actor: -1, Target: -1}, fmt.Sprintf("報酬の抽選に失敗: %v", err))
 		}
 		for _, stack := range stacks {
 			room := int(^uint(0)>>1) - w.Inventory.Count(stack.Key)
@@ -288,16 +297,18 @@ func (w *World) finishBattle() bool {
 				}
 			}
 			if accepted < stack.Count {
-				b.Log = append(b.Log, fmt.Sprintf("%s（品質%d）の報酬%d個を破棄", w.itemName(stack.Key.ItemID), stack.Key.Quality, stack.Count-accepted))
+				b.addEvent(BattleEvent{Kind: "reward_lost", Actor: -1, Target: -1, Amount: stack.Count - accepted}, fmt.Sprintf("%s（品質%d）の報酬%d個を破棄", w.itemName(stack.Key.ItemID), stack.Key.Quality, stack.Count-accepted))
 			}
 		}
-		b.Log = append(b.Log, "勝利")
+		b.addEvent(BattleEvent{Kind: "win", Actor: -1, Target: -1}, "勝利")
 	} else {
 		w.InjuredUntil = w.Now + uint64(w.catalog.Game.InjurySeconds)*60
 		report.InjuredUntil = w.InjuredUntil
-		b.Log = append(b.Log, "敗北")
+		b.addEvent(BattleEvent{Kind: "lose", Actor: -1, Target: -1}, "敗北")
 	}
 	report.Log = append([]string(nil), b.Log...)
+	report.Events = append([]BattleEvent(nil), b.Events...)
+	report.Units = append([]BattleUnit(nil), b.Units...)
 	w.LastBattle, w.Battle = report, nil
 	return true
 }
