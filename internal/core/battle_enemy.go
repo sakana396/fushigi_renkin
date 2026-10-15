@@ -36,8 +36,9 @@ func (w *World) enemyAction(index int) {
 			}
 		}
 		if bestX != enemy.X || bestY != enemy.Y {
+			fromX, fromY := enemy.X, enemy.Y
 			enemy.X, enemy.Y = bestX, bestY
-			b.Log = append(b.Log, fmt.Sprintf("%sは(%d, %d)へ移動", enemy.Label, bestX, bestY))
+			b.addEvent(BattleEvent{Kind: "move", Actor: index, Target: -1, FromX: fromX, FromY: fromY, ToX: bestX, ToY: bestY}, fmt.Sprintf("%sは(%d, %d)へ移動", enemy.Label, bestX, bestY))
 		}
 	}
 	if battleDistance(enemy.X, enemy.Y, ally.X, ally.Y) <= def.Range {
@@ -45,6 +46,6 @@ func (w *World) enemyAction(index int) {
 		if ally.HP < 0 {
 			ally.HP = 0
 		}
-		b.Log = append(b.Log, fmt.Sprintf("%sは%sに%dのダメージ", enemy.Label, ally.Label, def.Attack))
+		b.addEvent(BattleEvent{Kind: "attack", Actor: index, Target: target, FromX: enemy.X, FromY: enemy.Y, ToX: ally.X, ToY: ally.Y, Amount: def.Attack}, fmt.Sprintf("%sは%sに%dのダメージ", enemy.Label, ally.Label, def.Attack))
 	}
 }
