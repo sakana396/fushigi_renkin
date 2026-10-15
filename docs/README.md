@@ -16,6 +16,7 @@
 | 反復 | 反復 2 計画書 | [iterations/it02/plan.md](iterations/it02/plan.md) | v1.0 確定 |
 | 反復 | 反復 2 振り返り | [iterations/it02/retrospective.md](iterations/it02/retrospective.md) | v1.0 確定 |
 | 反復 | 反復 3 計画書 | [iterations/it03/plan.md](iterations/it03/plan.md) | v1.0 確定 |
+| 反復 | 反復 3 振り返り | [iterations/it03/retrospective.md](iterations/it03/retrospective.md) | v0.1（開発者の確認待ち） |
 | 設計 | 設計書（反復 1）: アーキテクチャ・クラス図・状態遷移図・シーケンス図 | [03_design/design-it01.md](03_design/design-it01.md) | v0.3 承認 |
 | 設計 | 設計書（反復 2）: 自動採取・錬金の素材選び・画面 | [03_design/design-it02.md](03_design/design-it02.md) | v0.2 承認 |
 | 設計 | 設計書（反復 3）: 品質の効果・戦闘・依頼・場面ごとの画面 | [03_design/design-it03.md](03_design/design-it03.md) | v0.2 承認 |
