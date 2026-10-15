@@ -48,6 +48,7 @@ bonuses = [{ attribute = "活力", min_count = 2, add = 15 }]
 
 [[recipe]]
 id = "deluxe_burger"
+rank = 4
 output = "deluxe_burger"
 output_count = 1
 seconds = 9
@@ -56,6 +57,7 @@ bonuses = [{ attribute = "活力", min_count = 2, add = 15 }]
 
 [[recipe]]
 id = "potion_herb"
+rank = 2
 output = "potion"
 output_count = 1
 seconds = 4
@@ -64,6 +66,7 @@ bonuses = [{ attribute = "癒し", min_count = 2, add = 15 }]
 
 [[recipe]]
 id = "potion_moss"
+rank = 2
 output = "potion"
 output_count = 1
 seconds = 5
@@ -72,6 +75,7 @@ bonuses = [{ attribute = "草", min_count = 2, add = 12 }]
 
 [[recipe]]
 id = "tonic"
+rank = 3
 output = "tonic"
 output_count = 1
 seconds = 6
@@ -80,6 +84,7 @@ bonuses = [{ attribute = "癒し", min_count = 1, add = 10 }]
 
 [[recipe]]
 id = "glow_crystal"
+rank = 2
 output = "glow_crystal"
 output_count = 1
 seconds = 6
@@ -88,6 +93,7 @@ bonuses = [{ attribute = "発光", min_count = 1, add = 12 }]
 
 [[recipe]]
 id = "lantern"
+rank = 3
 output = "lantern"
 output_count = 1
 seconds = 8
@@ -96,6 +102,7 @@ bonuses = [{ attribute = "発光", min_count = 1, add = 10 }]
 
 [[recipe]]
 id = "bomb"
+rank = 2
 output = "bomb"
 output_count = 1
 seconds = 5

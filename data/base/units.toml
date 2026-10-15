@@ -37,3 +37,23 @@ attack = 5
 speed = 8
 move = 3
 range = 1
+
+[[unit]]
+id = "beetle"
+name = "甲殻虫"
+role = "enemy"
+hp = 16
+attack = 4
+speed = 3
+move = 1
+range = 1
+
+[[unit]]
+id = "stone_golem"
+name = "石ゴーレム"
+role = "enemy"
+hp = 20
+attack = 5
+speed = 2
+move = 1
+range = 1

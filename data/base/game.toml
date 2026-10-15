@@ -1,6 +1,7 @@
 [game]
 start_money = 100
 base_golem_slots = 1
+rank_reputation = [3, 8, 15]
 battle_width = 8
 battle_height = 6
 injury_seconds = 60

@@ -1,5 +1,7 @@
 [[quest]]
 id = "q_burger"
+rank = 1
+reputation = 2
 item = "burger"
 min_quality = 20
 count = 2
@@ -7,21 +9,63 @@ reward = 120
 
 [[quest]]
 id = "q_potion"
+rank = 2
+reputation = 3
 item = "potion"
-min_quality = 20
+min_quality = 50
 count = 2
 reward = 70
 
 [[quest]]
 id = "q_bomb"
+rank = 2
+reputation = 3
 item = "bomb"
-min_quality = 20
+min_quality = 50
 count = 2
 reward = 80
 
 [[quest]]
 id = "q_bread"
+rank = 1
+reputation = 1
 item = "bread"
 min_quality = 20
 count = 3
 reward = 65
+
+[[quest]]
+id = "q_cheese"
+rank = 1
+reputation = 1
+item = "cheese"
+min_quality = 20
+count = 2
+reward = 45
+
+[[quest]]
+id = "q_tonic"
+rank = 3
+reputation = 4
+item = "tonic"
+min_quality = 100
+count = 2
+reward = 160
+
+[[quest]]
+id = "q_lantern"
+rank = 3
+reputation = 4
+item = "lantern"
+min_quality = 100
+count = 1
+reward = 130
+
+[[quest]]
+id = "q_deluxe"
+rank = 4
+reputation = 0
+item = "deluxe_burger"
+min_quality = 150
+count = 1
+reward = 250

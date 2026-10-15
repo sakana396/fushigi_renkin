@@ -83,10 +83,10 @@ func TestBaseDataIT03(t *testing.T) {
 	})
 	t.Run("TC-FR-MOD-02-23 依頼は製品だけで報酬が売値を超える", func(t *testing.T) {
 		want := []defs.QuestDef{
-			{ID: "q_burger", Rank: 1, Item: "burger", MinQuality: 20, Count: 2, Reward: 120},
-			{ID: "q_potion", Rank: 1, Item: "potion", MinQuality: 20, Count: 2, Reward: 70},
-			{ID: "q_bomb", Rank: 1, Item: "bomb", MinQuality: 20, Count: 2, Reward: 80},
-			{ID: "q_bread", Rank: 1, Item: "bread", MinQuality: 20, Count: 3, Reward: 65},
+			{ID: "q_burger", Rank: 1, Reputation: 2, Item: "burger", MinQuality: 20, Count: 2, Reward: 120},
+			{ID: "q_potion", Rank: 2, Reputation: 3, Item: "potion", MinQuality: 50, Count: 2, Reward: 70},
+			{ID: "q_bomb", Rank: 2, Reputation: 3, Item: "bomb", MinQuality: 50, Count: 2, Reward: 80},
+			{ID: "q_bread", Rank: 1, Reputation: 1, Item: "bread", MinQuality: 20, Count: 3, Reward: 65},
 		}
 		products := map[string]bool{}
 		for _, r := range c.Recipes {
@@ -165,6 +165,9 @@ func TestBaseDataIT03(t *testing.T) {
 		bounds := func(item string) (int, int) {
 			lo, hi := 201, 0
 			for _, g := range c.Gathers {
+				if g.Rank != 1 {
+					continue
+				}
 				for _, d := range g.Drops {
 					if d.Item == item {
 						lo, hi = min(lo, d.QualityMin), max(hi, d.QualityMax)
