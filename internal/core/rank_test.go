@@ -63,13 +63,14 @@ func TestRankBoundaries(t *testing.T) {
 
 func TestRankUnlocked(t *testing.T) {
 	c := rankCatalog()
-	c.Recipes = map[string]defs.RecipeDef{"z": {ID: "z", Rank: 2}, "a": {ID: "a", Rank: 2}, "first": {ID: "first", Rank: 1}}
-	c.Gathers = map[string]defs.GatherDef{"forest": {ID: "forest", Rank: 2}, "mountain": {ID: "mountain", Rank: 3}}
-	c.Quests = map[string]defs.QuestDef{"q2": {ID: "q2", Rank: 2}, "q1": {ID: "q1", Rank: 1}}
+	c.Recipes = map[string]defs.RecipeDef{"c": {ID: "c", Rank: 2}, "a": {ID: "a", Rank: 2}, "b": {ID: "b", Rank: 2}, "first": {ID: "first", Rank: 1}}
+	c.Gathers = map[string]defs.GatherDef{"c": {ID: "c", Rank: 2}, "a": {ID: "a", Rank: 2}, "b": {ID: "b", Rank: 2}, "mountain": {ID: "mountain", Rank: 3}}
+	c.Quests = map[string]defs.QuestDef{"c": {ID: "c", Rank: 2}, "a": {ID: "a", Rank: 2}, "b": {ID: "b", Rank: 2}, "q1": {ID: "q1", Rank: 1}}
 	w := NewWorld(c, 1)
 	t.Run("TC-FR-PRG-04-06 新しく解放する ID の順", func(t *testing.T) {
 		got := w.Unlocked(2)
-		if !reflect.DeepEqual(got.Recipes, []string{"a", "z"}) || !reflect.DeepEqual(got.Gathers, []string{"forest"}) || !reflect.DeepEqual(got.Quests, []string{"q2"}) {
+		want := []string{"a", "b", "c"}
+		if !reflect.DeepEqual(got.Recipes, want) || !reflect.DeepEqual(got.Gathers, want) || !reflect.DeepEqual(got.Quests, want) {
 			t.Fatalf("Unlocked(2) = %+v", got)
 		}
 	})
@@ -158,7 +159,25 @@ func TestRankCheckOrderAndUnlock(t *testing.T) {
 			t.Fatal(err)
 		}
 	})
+	t.Run("TC-FR-ALC-07-07 未解放レシピの入力候補", func(t *testing.T) {
+		w.Reputation = 0
+		stock := []Stack{craftStack("herb", 40, 2), craftStack("water", 31, 1)}
+		for _, stack := range stock {
+			if err := w.Inventory.Add(stack.Key, stack.Count); err != nil {
+				t.Fatal(err)
+			}
+		}
+		before := w.Inventory.Stacks()
+		got, err := w.SlotCandidates("potion", 0)
+		if err != nil || !reflect.DeepEqual(got, []Stack{stock[0]}) {
+			t.Fatalf("候補 = %v、誤り = %v", got, err)
+		}
+		if !reflect.DeepEqual(w.Inventory.Stacks(), before) {
+			t.Fatal("候補照会で在庫が変化")
+		}
+	})
 	t.Run("TC-FR-PRG-04-13 ランク到達で採取地を使用", func(t *testing.T) {
+		w.Reputation = 3
 		if _, err := w.Gather("forest"); err != nil {
 			t.Fatal(err)
 		}
@@ -209,6 +228,9 @@ func TestRankReputationOverflow(t *testing.T) {
 			if tc.money == 0 && !strings.Contains(err.Error(), "評判") {
 				t.Fatalf("評判の誤り文 = %v", err)
 			}
+			if tc.money != 0 && strings.Contains(err.Error(), "評判") {
+				t.Fatalf("お金より評判を先に検査した: %v", err)
+			}
 		})
 	}
 }
@@ -257,4 +279,34 @@ func TestRankQuestAndReputation(t *testing.T) {
 			t.Fatalf("依頼板 = %v、期待先頭 = %s", w.Quests, want)
 		}
 	})
+}
+
+func TestRankSingleAndNoRankUp(t *testing.T) {
+	for _, tc := range []struct {
+		name               string
+		before, reputation int
+		wantRank           int
+		wantUps            []int
+	}{
+		{"TC-FR-ECO-05-36 評判 0 から 1 はランク据え置き", 0, 1, 1, nil},
+		{"TC-FR-ECO-05-37 評判 2 から 3 で一段上昇", 2, 3, 2, []int{2}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			c := questCatalog("q")
+			c.Game.RankReputation = []int{3, 8, 15}
+			q := c.Quests["q"]
+			q.Reputation = 1
+			c.Quests["q"] = q
+			w := NewWorld(c, 1)
+			w.Reputation = tc.before
+			addQuestItems(t, w, 20, 20)
+			if err := w.Deliver(0); err != nil {
+				t.Fatal(err)
+			}
+			ups := w.TakeRankUps()
+			if w.Reputation != tc.reputation || w.Rank() != tc.wantRank || !reflect.DeepEqual(ups, tc.wantUps) || len(w.TakeRankUps()) != 0 {
+				t.Fatalf("評判 = %d、ランク = %d、知らせ = %v", w.Reputation, w.Rank(), ups)
+			}
+		})
+	}
 }
