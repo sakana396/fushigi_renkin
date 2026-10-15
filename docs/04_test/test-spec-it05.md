@@ -43,6 +43,25 @@
 
 | ID | 対象 | 前提 | 入力・操作 | 期待結果 | 種別 |
 |---|---|---|---|---|---|
+| TC-FR-FLD-02-01 | FR-FLD-02、DES-FLD-01 | 目録に例の地図 | 計算例 1: NewWorld | 工房 (432,336)、下 | 正常 |
+| TC-FR-FLD-02-02 | FR-FLD-02、DES-FLD-02 | 工房 (432,336)、下 | 計算例 2: 右 | 工房 (439,336)、右 | 正常 |
+| TC-FR-FLD-02-03 | FR-FLD-02、DES-FLD-02 | 工房 (432,336)、下 | 計算例 3: 右下 | 工房 (437,341)、下 | 正常 |
+| TC-FR-FLD-02-04 | FR-FLD-02、DES-FLD-02 | 工房 (432,336)、下 | 計算例 4: 左上 | 工房 (427,331)、左 | 正常 |
+| TC-FR-FLD-02-05 | FR-FLD-02、DES-FLD-02 | 工房 (432,336)、下 | 計算例 5: 無入力 | 状態不変、誤りなし | 境界 |
+| TC-FR-FLD-02-06 | FR-FLD-02、DES-FLD-03 | 工房 (636,336)、右 | 計算例 6: 右 | 壁の手前 (640,336)、右 | 境界 |
+| TC-FR-FLD-02-07 | FR-FLD-02、DES-FLD-03 | 工房 (640,336)、右 | 計算例 7: 右 | 状態不変、誤りなし | 境界 |
+| TC-FR-FLD-02-08 | FR-FLD-02、DES-FLD-02〜03 | 工房 (640,336)、右 | 計算例 8: 右下 | 工房 (640,341)、右 | 正常 |
+| TC-FR-FLD-02-09 | FR-FLD-02、DES-FLD-03 | 工房 (240,336)、下 | 計算例 9: 上を 17 回 | 工房 (240,224)、上 | 境界 |
+| TC-FR-FLD-02-10 | FR-FLD-02、DES-FLD-03 | 工房 (391,432)、下 | 計算例 16: 下を 3 回 | 角の補正なしで (391,448)、下 | 境界 |
+| TC-FR-FLD-02-11 | FR-FLD-02、DES-FLD-03 | 工房 (410,448)、下 | 計算例 25: 下 | 角を右へ 6 ずらし (416,448)、下 | 境界 |
+| TC-FR-FLD-02-12 | FR-FLD-02、DES-FLD-03 | 工房 (416,448)、下 | 計算例 26: 下 | 扉に入り (416,455)、下 | 正常 |
+| TC-FR-FLD-02-13 | FR-FLD-02、DES-FLD-03 | 工房 (396,448)、下 | 計算例 27: 下 | 角を右へ 7 ずらし (403,448)、下 | 境界 |
+| TC-FR-FLD-02-14 | FR-FLD-02、DES-FLD-03 | 工房 (468,448)、下 | 計算例 28: 下 | 角を左へ 7 ずらし (461,448)、下 | 境界 |
+| TC-FR-FLD-02-15 | FR-FLD-02、DES-FLD-03 | 工房 (300,448)、下 | 計算例 29: 下 | 両列が壁なので (300,448)、下 | 境界 |
+| TC-FR-FLD-02-16 | FR-FLD-02、DES-FLD-02〜03 | 工房 (410,448)、下 | 計算例 30: 右下 | 斜めは補正せず (415,448)、下 | 境界 |
+| TC-FR-FLD-02-17 | FR-FLD-02、DES-FLD-03 | 工房、地図の外と未知の文字 | 左／下へ移動 | 通れず位置不変 | 異常 |
+| TC-FR-FLD-02-18 | FR-FLD-02、DES-FLD-03 | 工房の扉の行き先が目録にない | 扉へ向けて下 | 通れず位置不変 | 異常 |
+| TC-FR-FLD-02-19 | FR-FLD-02、DES-FLD-03 | 負の座標 | マス番号と地図外の通行判定 | -1 と -96 は列 -1、-97 は列 -2。地図外は通れない | 境界 |
 
 ### FR-FLD-03 出入り口から場面を移る
 
@@ -51,6 +70,15 @@
 
 | ID | 対象 | 前提 | 入力・操作 | 期待結果 | 種別 |
 |---|---|---|---|---|---|
+| TC-FR-FLD-03-01 | FR-FLD-03、DES-FLD-05 | 工房 (432,432)、上 | 計算例 17: 下を 7 回 | 街 (336,240)、下、誤りなし | 正常 |
+| TC-FR-FLD-03-02 | FR-FLD-03、DES-FLD-05 | 街 (336,336)、上 | 計算例 18: 下を 7 回 | gather (336,385)、下、誤りなし | 正常 |
+| TC-FR-FLD-03-03 | FR-FLD-03、DES-FLD-05 | gather (336,385)、下 | 計算例 19: 下 | ErrNotOnMap、状態不変 | 異常 |
+| TC-FR-FLD-03-04 | FR-FLD-03、DES-FLD-05 | gather (336,385)、下 | 計算例 20: LeaveGather | 街 (336,336)、上、誤りなし | 正常 |
+| TC-FR-FLD-03-05 | FR-FLD-03、DES-FLD-05 | gather (336,385)、下、戦闘中 | 計算例 21: LeaveGather | ErrInBattle、状態不変 | 異常 |
+| TC-FR-FLD-03-06 | FR-FLD-03、DES-FLD-05 | 街 (336,336)、上 | 計算例 22: LeaveGather | ErrNotInGather、状態不変 | 異常 |
+| TC-FR-FLD-03-07 | FR-FLD-03、DES-FLD-01 | 地図のない目録 | 計算例 24: NewWorld、右 | Scene 空、ErrNotOnMap、状態不変 | 異常 |
+| TC-FR-FLD-03-08 | FR-FLD-03、DES-FLD-05 | 街 (336,193)、上 | 上へ移動 | 工房 (432,432)、上 | 正常 |
+| TC-FR-FLD-03-09 | FR-FLD-03、DES-FLD-02 | 不明な場面 | 右へ移動 | ErrNotOnMap、状態不変 | 異常 |
 
 ### FR-FLD-04 地図の定義データと検証
 
@@ -97,6 +125,20 @@
 
 | ID | 対象 | 前提 | 入力・操作 | 期待結果 | 種別 |
 |---|---|---|---|---|---|
+| TC-IF-08-01 | IF-08、DES-FLD-04 | 工房 (240,224)、上 | 計算例 10: FacingFixture | cauldron、true、状態不変 | 正常 |
+| TC-IF-08-02 | IF-08、DES-FLD-04 | 工房 (288,224)、上 | 計算例 11: FacingFixture | 同面積は x が小さい cauldron、true | 境界 |
+| TC-IF-08-03 | IF-08、DES-FLD-04 | 工房 (290,224)、上 | 計算例 12: FacingFixture | 面積が大きい shelf、true | 境界 |
+| TC-IF-08-04 | IF-08、DES-FLD-04 | 工房 (240,224)、下 | 計算例 13: FacingFixture | 空、false | 正常 |
+| TC-IF-08-05 | IF-08、DES-FLD-04 | 工房 (240,240)、上 | 計算例 14: FacingFixture | 隙間 16 では空、false | 境界 |
+| TC-IF-08-06 | IF-08、DES-FLD-04 | 工房 (240,239)、上 | 計算例 15: FacingFixture | 隙間 15 では cauldron、true | 境界 |
+| TC-IF-08-07 | IF-08、DES-FLD-02、DES-WLD-01 | 工房 (432,336)、下 | 計算例 23: MovePlayer(2,0) | ErrInvalidDirection、状態不変 | 異常 |
+| TC-IF-08-08 | IF-08、DES-FLD-02、DES-WLD-01 | 工房 (432,336)、下、戦闘中 | 計算例 31: 右へ移動 | ErrInBattle、状態不変 | 異常 |
+| TC-IF-08-09 | IF-08、DES-FLD-02、DES-WLD-01 | 地図なし、戦闘中 | MovePlayer(2,0) | ErrInvalidDirection が最初、状態不変 | 異常 |
+| TC-IF-08-10 | IF-08、DES-FLD-02、DES-WLD-01 | 地図なし、戦闘中 | MovePlayer(0,0) | ErrInBattle が地図の誤りより先、状態不変 | 異常 |
+| TC-IF-08-11 | IF-08、DES-FLD-04 | gather にいる | FacingFixture | 空、false、状態不変 | 異常 |
+| TC-IF-08-12 | IF-08、DES-FLD-01 | 定数 | SceneGather を比較 | defs.ExitGather と同じ値 | 正常 |
+| TC-IF-08-13 | IF-08、DES-TIME-02、NFR-06 | 工房の開始位置 | Tick 10 回、右へ 3 回 | Tick で位置不変・Now=10、移動で (453,336)・Now=10 | 正常 |
+| TC-IF-08-14 | IF-08、DES-TIME-02、NFR-06 | 同じ地図とシードの世界を 2 つ | 同じ移動列 | 主人公の最終状態が一致 | 正常 |
 
 ### IF-06 場面の行き来（反復 5 の追加分）
 
