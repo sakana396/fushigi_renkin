@@ -102,6 +102,7 @@ func (g *Game) Update() error {
 	for i := 0; i < g.timeScale; i++ {
 		g.world.Tick()
 	}
+	g.showRankUps()
 	return nil
 }
 
@@ -123,14 +124,26 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	g.buttons = g.buttons[:0]
 	g.label(screen, 14, 10, fmt.Sprintf("ふしぎ錬金   お金: %d   経過: %d 秒   ゴーレム: %d/%d   時間 ×%d", g.world.Money, g.world.Now/60, len(g.world.Golems), g.world.GolemSlots(), g.timeScale), white)
 	g.label(screen, 1100, 10, "F12: チート（お金と素材）  F11: 時間 ×10", muted)
-	g.label(screen, 14, 35, "操作結果: "+g.message, white)
+	for i, line := range strings.Split(g.message, "／") {
+		prefix := ""
+		if i == 0 {
+			prefix = "操作結果: "
+		}
+		g.label(screen, 14, 35+i*14, prefix+line, white)
+	}
+	if g.scene == workshopScene && g.world.Battle == nil {
+		g.label(screen, 700, 10, g.rankText(), white)
+	}
+	// タブは操作結果の行数に合わせて下げる。本体データでは 1 回の納品で 1 段しか上がらず 2 行までに収まる。
+	// MOD の閾値で 3 段以上上がると、タブが下の一覧の上端に重なることがある。
+	tabY := 41 + len(strings.Split(g.message, "／"))*14
 	for i, title := range []string{"工房", "街", "採取地"} {
 		chosen := scene(i)
 		var action func()
 		if g.world.Battle == nil {
 			action = func() { g.scene = chosen }
 		}
-		g.button(screen, 10+i*130, 55, 120, 30, title, g.scene == chosen && g.world.Battle == nil, action)
+		g.button(screen, 10+i*130, tabY, 120, 25, title, g.scene == chosen && g.world.Battle == nil, action)
 	}
 	if g.world.Battle != nil {
 		g.drawBattle(screen)
@@ -170,8 +183,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 func (g *Game) drawQuests(dst *ebiten.Image) {
 	const x, y, w = 1195, 130, 395
 	g.box(dst, x, y, w, 440, "依頼板")
+	g.label(dst, x+8, y+28, g.rankText(), white)
 	for i, id := range g.world.Quests {
-		yy := y + 35 + i*125
+		yy := y + 52 + i*125
 		if id == "" {
 			g.label(dst, x+8, yy, fmt.Sprintf("依頼 %d: 空き", i+1), muted)
 			continue
@@ -191,8 +205,80 @@ func (g *Game) drawQuests(dst *ebiten.Image) {
 		}
 		g.label(dst, x+8, yy+43, fmt.Sprintf("納品できる在庫: %d/%d", eligible, quest.Count), muted)
 		index := i
-		g.button(dst, x+8, yy+66, 150, 28, "納品する", false, func() { g.result("納品しました", g.world.Deliver(index)) })
+		g.button(dst, x+8, yy+66, 150, 28, "納品する", false, func() {
+			g.result("納品しました", g.world.Deliver(index))
+			g.showRankUps()
+		})
 	}
+}
+
+// rankText は現在のランクと次のランクに必要な評判を表示する（DES-UI-11）。
+func (g *Game) rankText() string {
+	if next, ok := g.world.NextRankReputation(); ok {
+		return fmt.Sprintf("ランク %d / 評判 %d / %d", g.world.Rank(), g.world.Reputation, next)
+	}
+	return fmt.Sprintf("ランク %d（最高）/ 評判 %d", g.world.Rank(), g.world.Reputation)
+}
+
+// showRankUps は未読の上昇と解放された定義の表示名を操作結果に並べる（DES-UI-11）。
+func (g *Game) showRankUps() {
+	var notices []string
+	for _, rank := range g.world.TakeRankUps() {
+		unlocked := g.world.Unlocked(rank)
+		var parts []string
+		var names []string
+		for _, id := range unlocked.Recipes {
+			names = append(names, g.recipeName(id))
+		}
+		if len(names) > 0 {
+			parts = append(parts, "作れるようになった物: "+strings.Join(names, "、"))
+		}
+		names = nil
+		for _, id := range unlocked.Gathers {
+			names = append(names, g.catalog.Gathers[id].Name)
+		}
+		if len(names) > 0 {
+			parts = append(parts, "行けるようになった採取地: "+strings.Join(names, "、"))
+		}
+		names = nil
+		for _, id := range unlocked.Quests {
+			quest := g.catalog.Quests[id]
+			names = append(names, fmt.Sprintf("%s Q%d 以上", g.itemName(quest.Item), quest.MinQuality))
+		}
+		if len(names) > 0 {
+			parts = append(parts, "新しい依頼が出るようになった: "+strings.Join(names, "、"))
+		}
+		notice := fmt.Sprintf("工房ランク %d", rank)
+		if len(parts) > 0 {
+			notice += ": " + strings.Join(parts, "・")
+		}
+		notices = append(notices, notice)
+	}
+	if len(notices) > 0 {
+		g.message = strings.Join(notices, "／")
+	}
+}
+
+// availableRecipes は現在のランクで解放済みのレシピを ID 順に返す（DES-UI-11）。
+func (g *Game) availableRecipes() []string {
+	var ids []string
+	for _, id := range keys(g.catalog.Recipes) {
+		if g.catalog.Recipes[id].Rank <= g.world.Rank() {
+			ids = append(ids, id)
+		}
+	}
+	return ids
+}
+
+// availableGathers は現在のランクで解放済みの採取地を ID 順に返す（DES-UI-11）。
+func (g *Game) availableGathers() []string {
+	var ids []string
+	for _, id := range keys(g.catalog.Gathers) {
+		if g.catalog.Gathers[id].Rank <= g.world.Rank() {
+			ids = append(ids, id)
+		}
+	}
+	return ids
 }
 
 // label は日本語グリフを含む bitmapfont を text/v2 で描く（DES-PKG-05）。
@@ -522,7 +608,7 @@ func (g *Game) drawShop(dst *ebiten.Image) {
 func (g *Game) drawGather(dst *ebiten.Image) {
 	const x, y, w = 10, 95, 775
 	g.box(dst, x, y, w, 420, "採取地")
-	ids := keys(g.catalog.Gathers)
+	ids := g.availableGathers()
 	const rows = 6
 	g.pageControls(dst, x+8, y+382, len(ids), rows, &g.gatherPage)
 	for i := g.gatherPage * rows; i < len(ids) && i < (g.gatherPage+1)*rows; i++ {
@@ -618,11 +704,11 @@ func (g *Game) selectRecipe(id string) {
 	g.message = "レシピを選択しました。入力枠を選び、素材候補をクリックしてください"
 }
 
-// drawRecipes はすべてのレシピへページ送りでアクセスできる一覧を描く（DES-PKG-05、UC-03）。
+// drawRecipes は解放済みのレシピをページ送りで表示する（DES-PKG-05、DES-UI-11、UC-03）。
 func (g *Game) drawRecipes(dst *ebiten.Image) {
 	const x, y, w = 800, 70, 385
 	g.box(dst, x, y, w, 385, "レシピ（クリックで選択）")
-	ids := keys(g.catalog.Recipes)
+	ids := g.availableRecipes()
 	const rows = 12
 	maxPage := 0
 	if len(ids) > 0 {
@@ -796,8 +882,8 @@ func (g *Game) selectAssignmentRecipe(id string) {
 func (g *Game) drawAssignment(dst *ebiten.Image) {
 	const x, y, w = 1195, 375, 395
 	g.box(dst, x, y, w, 550, "ゴーレムの割り当て")
-	recipes := keys(g.catalog.Recipes)
-	gathers := keys(g.catalog.Gathers)
+	recipes := g.availableRecipes()
+	gathers := g.availableGathers()
 	const rows = 6
 	g.pageControls(dst, x+8, y+214, len(recipes)+len(gathers), rows, &g.assignmentPage)
 	for i := g.assignmentPage * rows; i < len(recipes)+len(gathers) && i < (g.assignmentPage+1)*rows; i++ {
