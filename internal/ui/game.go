@@ -134,10 +134,9 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	if g.scene == workshopScene && g.world.Battle == nil {
 		g.label(screen, 700, 10, g.rankText(), white)
 	}
-	tabY := 55
-	if strings.Contains(g.message, "／") {
-		tabY = 65
-	}
+	// タブは操作結果の行数に合わせて下げる。本体データでは 1 回の納品で 1 段しか上がらず 2 行までに収まる。
+	// MOD の閾値で 3 段以上上がると、タブが下の一覧の上端に重なることがある。
+	tabY := 41 + len(strings.Split(g.message, "／"))*14
 	for i, title := range []string{"工房", "街", "採取地"} {
 		chosen := scene(i)
 		var action func()
@@ -229,7 +228,7 @@ func (g *Game) showRankUps() {
 		var parts []string
 		var names []string
 		for _, id := range unlocked.Recipes {
-			names = append(names, g.itemName(g.catalog.Recipes[id].Output))
+			names = append(names, g.recipeName(id))
 		}
 		if len(names) > 0 {
 			parts = append(parts, "作れるようになった物: "+strings.Join(names, "、"))
@@ -244,7 +243,7 @@ func (g *Game) showRankUps() {
 		names = nil
 		for _, id := range unlocked.Quests {
 			quest := g.catalog.Quests[id]
-			names = append(names, g.itemName(quest.Item))
+			names = append(names, fmt.Sprintf("%s Q%d 以上", g.itemName(quest.Item), quest.MinQuality))
 		}
 		if len(names) > 0 {
 			parts = append(parts, "新しい依頼が出るようになった: "+strings.Join(names, "、"))
