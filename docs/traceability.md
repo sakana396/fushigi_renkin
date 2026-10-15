@@ -52,4 +52,4 @@
 | IF-06 | #50, #51 | DES-UI-06, DES-UI-07, DES-UI-10 | TC-IF-06-01〜14、TC-IF-06-20〜24 | `internal/ui/game.go`, `internal/ui/battle.go` | 工房・街・採取地・戦闘と結果画面を実装済み。#51 の画面は手動確認待ち |
 | FR-PRG-04 | #67, #68, #70, #71 | DES-DEF-08, DES-PRG-01, DES-PRG-02, DES-QST-03, DES-VAL-14〜16, DES-UI-11 |  |  | 未着手 |
 | FR-ALC-07 | #67, #68, #70, #71 | DES-PRG-02, DES-UI-11, DES-VAL-16 |  |  | 未着手 |
-| IF-07 | #69, #72 | DES-BTL-05, DES-BTL-06, DES-UI-12, DES-UI-13 | TC-IF-07-01〜09 | `internal/core/battle.go`, `internal/core/battle_enemy.go`, `internal/core/battle_item.go`, `internal/core/battle_event.go`, `internal/core/battle_event_test.go` | 未着手。core の出来事と対象判定を実装済み。画面は #72 で対応 |
+| IF-07 | #69, #72 | DES-BTL-05, DES-BTL-06, DES-UI-12, DES-UI-13 | TC-IF-07-01〜09 | `internal/core/battle.go`, `internal/core/battle_enemy.go`, `internal/core/battle_item.go`, `internal/core/battle_event.go`, `internal/core/battle_event_test.go` | #69 の core の出来事・対象判定と境界・写し・報酬のテストは実装済み。画面は #72 で対応 |
