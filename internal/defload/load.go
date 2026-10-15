@@ -45,6 +45,7 @@ type document struct {
 }
 type gameDef struct {
 	BattleConfigured bool        `toml:"-"`
+	RankReputation   []int       `toml:"rank_reputation"`
 	StartMoney       int         `toml:"start_money"`
 	BaseGolemSlots   int         `toml:"base_golem_slots"`
 	Shop             []shopOffer `toml:"shop"`
@@ -76,6 +77,7 @@ type useEffect struct {
 }
 type recipeDef struct {
 	ID          string      `toml:"id"`
+	Rank        *int        `toml:"rank"`
 	Output      string      `toml:"output"`
 	OutputCount int         `toml:"output_count"`
 	Inputs      []inputSlot `toml:"inputs"`
@@ -94,6 +96,7 @@ type bonus struct {
 }
 type gatherDef struct {
 	ID              string     `toml:"id"`
+	Rank            *int       `toml:"rank"`
 	Name            string     `toml:"name"`
 	Rolls           int        `toml:"rolls"`
 	CooldownSeconds int        `toml:"cooldown_seconds"`
@@ -122,6 +125,8 @@ type placement struct {
 }
 type questDef struct {
 	ID         string `toml:"id"`
+	Rank       *int   `toml:"rank"`
+	Reputation int    `toml:"reputation"`
 	Item       string `toml:"item"`
 	MinQuality int    `toml:"min_quality"`
 	Count      int    `toml:"count"`
@@ -167,7 +172,7 @@ type source[T any] struct {
 	Value T
 }
 
-// Load は fs.FS 内の TOML をすべて読み、検証済みの目録を返す（DES-PKG-03、DES-VAL-01〜13）。
+// Load は fs.FS 内の TOML をすべて読み、検証済みの目録を返す（DES-PKG-03、DES-VAL-01〜16）。
 func Load(fsys fs.FS) (defs.Catalog, error) {
 	c := defs.Catalog{Items: map[string]defs.ItemDef{}, Recipes: map[string]defs.RecipeDef{}, Gathers: map[string]defs.GatherDef{}, Golems: map[string]defs.GolemDef{}, Facilities: map[string]defs.FacilityDef{}, Units: map[string]defs.UnitDef{}, Quests: map[string]defs.QuestDef{}}
 	var errs Errors
@@ -240,6 +245,16 @@ func Load(fsys fs.FS) (defs.Catalog, error) {
 		if n < 1 {
 			add(file, key, "1 以上であること")
 		}
+	}
+	// 省略された rank は 1 とし、明示された値だけを範囲検査する（DES-DEF-08、DES-VAL-14）。
+	rank := func(file, key string, value *int, max int) int {
+		if value == nil {
+			return 1
+		}
+		if *value < 1 || *value > max {
+			add(file, key, fmt.Sprintf("1〜%d であること", max))
+		}
+		return *value
 	}
 	quality := func(file, key string, n int) {
 		if n < 1 || n > 200 {
@@ -398,7 +413,12 @@ func Load(fsys fs.FS) (defs.Catalog, error) {
 		if len(games) > 1 {
 			unique("game", s.File, "game")
 		}
-		c.Game = defs.GameDef{StartMoney: v.StartMoney, BaseGolemSlots: v.BaseGolemSlots, BattleWidth: v.BattleWidth, BattleHeight: v.BattleHeight, InjurySeconds: v.InjurySeconds}
+		c.Game = defs.GameDef{StartMoney: v.StartMoney, RankReputation: v.RankReputation, BaseGolemSlots: v.BaseGolemSlots, BattleWidth: v.BattleWidth, BattleHeight: v.BattleHeight, InjurySeconds: v.InjurySeconds}
+		for i, n := range v.RankReputation {
+			if n < 1 || i > 0 && n <= v.RankReputation[i-1] {
+				add(s.File, fmt.Sprintf("game.rank_reputation[%d]", i), "1 以上で狭義に増えること")
+			}
+		}
 		if battleConfigured {
 			positive(s.File, "game.battle_width", v.BattleWidth)
 			positive(s.File, "game.battle_height", v.BattleHeight)
@@ -429,7 +449,7 @@ func Load(fsys fs.FS) (defs.Catalog, error) {
 		positive(s.File, p+".output_count", v.OutputCount)
 		positive(s.File, p+".seconds", v.Seconds)
 		nonEmpty(s.File, p+".inputs", len(v.Inputs))
-		r := defs.RecipeDef{ID: v.ID, Output: v.Output, OutputCount: v.OutputCount, Seconds: v.Seconds}
+		r := defs.RecipeDef{ID: v.ID, Rank: rank(s.File, p+".rank", v.Rank, len(c.Game.RankReputation)+1), Output: v.Output, OutputCount: v.OutputCount, Seconds: v.Seconds}
 		for i, in := range v.Inputs {
 			q := fmt.Sprintf("%s.inputs[%d]", p, i)
 			if (in.Item == "") == (in.Attribute == "") {
@@ -469,7 +489,10 @@ func Load(fsys fs.FS) (defs.Catalog, error) {
 		quality(s.File, p+".min_quality", v.MinQuality)
 		positive(s.File, p+".count", v.Count)
 		positive(s.File, p+".reward", v.Reward)
-		c.Quests[v.ID] = defs.QuestDef{ID: v.ID, Item: v.Item, MinQuality: v.MinQuality, Count: v.Count, Reward: v.Reward}
+		if v.Reputation < 0 {
+			add(s.File, p+".reputation", "0 以上であること")
+		}
+		c.Quests[v.ID] = defs.QuestDef{ID: v.ID, Rank: rank(s.File, p+".rank", v.Rank, len(c.Game.RankReputation)+1), Reputation: v.Reputation, Item: v.Item, MinQuality: v.MinQuality, Count: v.Count, Reward: v.Reward}
 	}
 	validateDrops := func(file, p string, values []drop) []defs.Drop {
 		out := make([]defs.Drop, 0, len(values))
@@ -493,7 +516,7 @@ func Load(fsys fs.FS) (defs.Catalog, error) {
 		positive(s.File, p+".rolls", v.Rolls)
 		positive(s.File, p+".cooldown_seconds", v.CooldownSeconds)
 		nonEmpty(s.File, p+".drops", len(v.Drops))
-		g := defs.GatherDef{ID: v.ID, Name: v.Name, Rolls: v.Rolls, CooldownSeconds: v.CooldownSeconds}
+		g := defs.GatherDef{ID: v.ID, Rank: rank(s.File, p+".rank", v.Rank, len(c.Game.RankReputation)+1), Name: v.Name, Rolls: v.Rolls, CooldownSeconds: v.CooldownSeconds}
 		g.Drops = validateDrops(s.File, p+".drops", v.Drops)
 		if v.Battle != nil {
 			b := v.Battle
@@ -548,8 +571,111 @@ func Load(fsys fs.FS) (defs.Catalog, error) {
 		}
 		c.Facilities[v.ID] = f
 	}
+	validateProgression(c, recipes, quests, add)
 	if len(errs) > 0 {
 		return defs.Catalog{}, errs
 	}
 	return c, nil
+}
+
+// validateProgression はランクごとに入手可能な物を閉包として求め、進行不能な定義を検出する（DES-VAL-15、DES-VAL-16）。
+func validateProgression(c defs.Catalog, recipes []source[recipeDef], quests []source[questDef], add func(string, string, string)) {
+	if len(c.Game.RankReputation) == 0 {
+		return
+	}
+	rankOne := 0
+	positiveQuest := make([]bool, len(c.Game.RankReputation)+1)
+	for _, q := range c.Quests {
+		if q.Rank == 1 {
+			rankOne++
+		}
+		if q.Rank >= 1 && q.Rank < len(positiveQuest) && q.Reputation >= 1 {
+			positiveQuest[q.Rank] = true
+		}
+	}
+	if rankOne < 3 {
+		add(questFile(quests), "quest", "ランク 1 の依頼は 3 件以上必要")
+	}
+	for r := 1; r <= len(c.Game.RankReputation); r++ {
+		if !positiveQuest[r] {
+			add(questFile(quests), "quest", fmt.Sprintf("ランク %d に評判を得られる依頼がありません", r))
+		}
+	}
+	for r := 1; r <= len(c.Game.RankReputation)+1; r++ {
+		available := map[string]bool{}
+		for _, offer := range c.Game.Shop {
+			available[offer.Item] = true
+		}
+		for _, g := range c.Gathers {
+			if g.Rank > r {
+				continue
+			}
+			for _, d := range g.Drops {
+				available[d.Item] = true
+			}
+			if g.Battle != nil {
+				for _, d := range g.Battle.Drops {
+					available[d.Item] = true
+				}
+			}
+		}
+		for changed := true; changed; {
+			changed = false
+			for _, recipe := range c.Recipes {
+				if recipe.Rank > r || available[recipe.Output] || !inputsAvailable(recipe.Inputs, available, c.Items) {
+					continue
+				}
+				available[recipe.Output] = true
+				changed = true
+			}
+		}
+		for _, s := range recipes {
+			v := c.Recipes[s.Value.ID]
+			if v.Rank == r && !available[v.Output] {
+				add(s.File, "recipe[id="+v.ID+"].inputs", fmt.Sprintf("ランク %d で材料が手に入りません", r))
+			}
+		}
+		for _, s := range quests {
+			v := c.Quests[s.Value.ID]
+			if v.Rank == r && !available[v.Item] {
+				add(s.File, "quest[id="+v.ID+"].item", fmt.Sprintf("ランク %d で手に入りません", r))
+			}
+		}
+	}
+}
+
+// inputsAvailable は各入力枠に合う物が集合にあるかを調べる（DES-VAL-16）。
+func inputsAvailable(inputs []defs.InputSlot, available map[string]bool, items map[string]defs.ItemDef) bool {
+	for _, input := range inputs {
+		if input.Item != "" {
+			if !available[input.Item] {
+				return false
+			}
+			continue
+		}
+		found := false
+		for id := range available {
+			for _, attr := range items[id].Attributes {
+				if attr == input.Attribute {
+					found = true
+					break
+				}
+			}
+			if found {
+				break
+			}
+		}
+		if !found {
+			return false
+		}
+	}
+	return true
+}
+
+// questFile は依頼の集合に関する誤りのファイル名を返す（DES-PKG-03、DES-VAL-15）。
+func questFile(quests []source[questDef]) string {
+	if len(quests) == 0 {
+		return "<definitions>"
+	}
+	return quests[0].File
 }
