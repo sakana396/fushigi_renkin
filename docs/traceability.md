@@ -58,5 +58,5 @@
 | FR-FLD-03 | #85, #86, #89 | DES-DEF-09, DES-FLD-05, DES-VAL-22, DES-UI-18, DES-UI-21 |  |  | 未着手 |
 | FR-FLD-04 | #85, #87 | DES-DEF-09, DES-VAL-17〜24, DES-DAT-03, DES-FLD-06 | TC-FR-FLD-04-01〜30 | `internal/defload/maps.go`, `internal/defload/maps_test.go` | #85 の検証を実装済み。#87 待ち |
 | IF-08 | #86, #89 | DES-FLD-02, DES-FLD-04, DES-UI-17〜19 |  |  | 未着手 |
-| CST-04 | #88 | ADR-0003, DES-UI-14 |  |  | 未着手 |
-| NFR-08 | #85 | DES-VAL-24 | TC-NFR-08-01 | `internal/defload/maps_test.go` | 地図読み込みのファジングを実装済み |
+| CST-04 | #88 | ADR-0003, DES-UI-14 | TC-CST-04-01〜07 | `internal/ui/assets/` | 実装済み |
+| NFR-08 | #85 | DES-VAL-24 | TC-NFR-08-01 | `internal/defload/maps_test.go` | 一部実装済み（反復 5 は地図の読み込みのファジング） |
