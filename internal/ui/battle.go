@@ -62,7 +62,6 @@ func (g *Game) endBattleEvents() {
 		} else {
 			g.message = "敗北しました"
 		}
-		g.scene = gatherScene
 		g.battleItem = core.ItemKey{}
 	} else if g.world.Battle != nil {
 		g.battleLogPage = pageLimit(len(g.world.Battle.Log), 8)

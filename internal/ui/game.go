@@ -13,6 +13,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/vector"
 	"github.com/sakana396/fushigi_renkin/internal/core"
 	"github.com/sakana396/fushigi_renkin/internal/defs"
+	"github.com/sakana396/fushigi_renkin/internal/ui/assets"
 )
 
 const width, height = 1600, 940
@@ -46,7 +47,14 @@ type Game struct {
 	slotItems          []string
 	quantity           int
 	timeScale          int
-	scene              scene
+	window             string
+	windowDrawing      bool
+	windowImage        *ebiten.Image
+	mapImage           *ebiten.Image
+	markerImage        *ebiten.Image
+	townTiles          *ebiten.Image
+	dungeonTiles       *ebiten.Image
+	lastHorizontal     defs.Dir
 	battleAction       battleAction
 	battleItem         core.ItemKey
 	battleItemPage     int
@@ -56,15 +64,6 @@ type Game struct {
 	battleEventFrames  int
 	battleError        string
 }
-
-// scene は表示する場面を表す（DES-UI-06）。
-type scene int
-
-const (
-	workshopScene scene = iota
-	townScene
-	gatherScene
-)
 
 // battleAction は盤面を押したときの操作を表す（DES-UI-08）。
 type battleAction int
@@ -77,15 +76,37 @@ const (
 
 // NewGame は本体の目録と World を画面に結び付ける（DES-PKG-05）。
 func NewGame(world *core.World, catalog defs.Catalog) *Game {
-	return &Game{world: world, catalog: catalog, face: text.NewGoXFace(bitmapfont.Face), selectedGolem: -1, quantity: 1, timeScale: 1, message: "上のタブから場面を選んでください"}
+	return &Game{world: world, catalog: catalog, face: text.NewGoXFace(bitmapfont.Face), selectedGolem: -1, quantity: 1, timeScale: 1, lastHorizontal: defs.DirRight, message: "WASD・矢印キーで歩き、設備の前で E かスペースを押してください"}
 }
 
 // Run は画面を開き、ゲームを起動する（DES-PKG-05）。
 func Run(world *core.World, catalog defs.Catalog) error {
+	g := NewGame(world, catalog)
+	if err := g.loadTiles(); err != nil {
+		return err
+	}
 	ebiten.SetWindowSize(width, height)
 	ebiten.SetWindowTitle("ふしぎ錬金")
 	ebiten.SetTPS(60)
-	return ebiten.RunGame(NewGame(world, catalog))
+	return ebiten.RunGame(g)
+}
+
+// loadTiles は埋め込み画像を画面用に読み込む（DES-UI-14）。
+func (g *Game) loadTiles() error {
+	town, err := assets.TinyTown()
+	if err != nil {
+		return err
+	}
+	dungeon, err := assets.TinyDungeon()
+	if err != nil {
+		return err
+	}
+	g.townTiles = ebiten.NewImageFromImage(town)
+	g.dungeonTiles = ebiten.NewImageFromImage(dungeon)
+	g.windowImage = ebiten.NewImage(width, height)
+	g.markerImage = ebiten.NewImage(1, 1)
+	g.markerImage.Fill(color.White)
+	return nil
 }
 
 // Update はクリックとチートのキーを処理し、1 回の更新につき時間の倍率の分だけ tick を進める（DES-PKG-05、DES-TIME-01）。
@@ -96,6 +117,32 @@ func (g *Game) Update() error {
 			g.endBattleEvents()
 		} else {
 			g.advanceBattleEvents()
+		}
+	} else if g.window != "" && inpututil.IsKeyJustPressed(ebiten.KeyEscape) {
+		g.window = ""
+	} else if g.window == "" && g.world.Battle == nil && g.world.Player.Scene != core.SceneGather {
+		dx, dy := 0, 0
+		if ebiten.IsKeyPressed(ebiten.KeyD) || ebiten.IsKeyPressed(ebiten.KeyArrowRight) {
+			dx++
+		}
+		if ebiten.IsKeyPressed(ebiten.KeyA) || ebiten.IsKeyPressed(ebiten.KeyArrowLeft) {
+			dx--
+		}
+		if ebiten.IsKeyPressed(ebiten.KeyS) || ebiten.IsKeyPressed(ebiten.KeyArrowDown) {
+			dy++
+		}
+		if ebiten.IsKeyPressed(ebiten.KeyW) || ebiten.IsKeyPressed(ebiten.KeyArrowUp) {
+			dy--
+		}
+		if dx != 0 || dy != 0 {
+			if err := g.world.MovePlayer(dx, dy); err != nil {
+				g.result("", err)
+			}
+		}
+		if inpututil.IsKeyJustPressed(ebiten.KeyE) || inpututil.IsKeyJustPressed(ebiten.KeySpace) {
+			if fixture, ok := g.world.FacingFixture(); ok {
+				g.window = fixture
+			}
 		}
 	} else if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 		x, y := ebiten.CursorPosition()
@@ -128,64 +175,54 @@ var (
 	muted       = color.RGBA{177, 193, 201, 255}
 )
 
-// Draw は共通表示と選択した場面を描く（DES-UI-06、DES-UI-07）。
+// Draw は地図、窓、採取地、戦闘と共通の帯を描く（DES-UI-15〜21）。
 func (g *Game) Draw(screen *ebiten.Image) {
 	screen.Fill(bg)
 	g.buttons = g.buttons[:0]
-	g.label(screen, 14, 10, fmt.Sprintf("ふしぎ錬金   お金: %d   経過: %d 秒   ゴーレム: %d/%d   時間 ×%d", g.world.Money, g.world.Now/60, len(g.world.Golems), g.world.GolemSlots(), g.timeScale), white)
+	if g.world.Battle != nil || len(g.battleEvents) > 0 {
+		g.drawBattle(screen)
+	} else if g.world.Player.Scene == core.SceneGather {
+		g.drawGather(screen)
+		g.drawBattleResult(screen)
+		g.button(screen, 270, 76, 120, 28, "街へ戻る", false, func() { g.result("街へ戻りました", g.world.LeaveGather()) })
+	} else {
+		g.drawMap(screen)
+		if g.window != "" {
+			g.drawWindow(screen)
+		}
+	}
+	g.drawHeader(screen)
+}
+
+// drawHeader は全場面に共通の表示と操作案内を描く（DES-UI-20）。
+func (g *Game) drawHeader(screen *ebiten.Image) {
+	vector.DrawFilledRect(screen, 0, 0, width, 72, panelColor, false)
+	place := "採取地"
+	if m, ok := g.catalog.Map(g.world.Player.Scene); ok {
+		place = m.Name
+	}
+	g.label(screen, 14, 10, fmt.Sprintf("ふしぎ錬金   %s   お金: %d   経過: %d 秒   ゴーレム: %d/%d   時間 ×%d", place, g.world.Money, g.world.Now/60, len(g.world.Golems), g.world.GolemSlots(), g.timeScale), white)
 	g.label(screen, 1100, 10, "F12: チート（お金と素材）  F11: 時間 ×10", muted)
+	if g.world.Player.Scene == defs.MapWorkshop && g.world.Battle == nil {
+		g.label(screen, 700, 10, g.rankText(), white)
+	}
 	for i, line := range strings.Split(g.message, "／") {
+		y := 35 + i*14
+		if y >= 72 {
+			vector.DrawFilledRect(screen, 0, float32(y), width, 14, panelColor, false)
+		}
 		prefix := ""
 		if i == 0 {
 			prefix = "操作結果: "
 		}
-		g.label(screen, 14, 35+i*14, prefix+line, white)
+		g.label(screen, 14, y, prefix+line, white)
 	}
-	if g.scene == workshopScene && g.world.Battle == nil {
-		g.label(screen, 700, 10, g.rankText(), white)
-	}
-	// タブは操作結果の行数に合わせて下げる。本体データでは 1 回の納品で 1 段しか上がらず 2 行までに収まる。
-	// MOD の閾値で 3 段以上上がると、タブが下の一覧の上端に重なることがある。
-	tabY := 41 + len(strings.Split(g.message, "／"))*14
-	for i, title := range []string{"工房", "街", "採取地"} {
-		chosen := scene(i)
-		var action func()
-		if g.world.Battle == nil && len(g.battleEvents) == 0 {
-			action = func() { g.scene = chosen }
+	if g.world.Battle == nil && g.world.Player.Scene != core.SceneGather {
+		guide := "移動: WASD・矢印  使う: E・スペース"
+		if g.window != "" {
+			guide = "閉じる: Esc"
 		}
-		g.button(screen, 10+i*130, tabY, 120, 25, title, g.scene == chosen && g.world.Battle == nil && len(g.battleEvents) == 0, action)
-	}
-	if g.world.Battle != nil || len(g.battleEvents) > 0 {
-		g.drawBattle(screen)
-		return
-	}
-	switch g.scene {
-	case workshopScene:
-		g.drawInventory(screen, false)
-		g.drawCandidates(screen)
-		g.drawRecipes(screen)
-		g.drawCraft(screen)
-		g.drawGolems(screen)
-		g.drawAssignment(screen)
-	case townScene:
-		g.label(screen, 1195, 100, fmt.Sprintf("売買数: %d", g.quantity), white)
-		g.button(screen, 1295, 95, 35, 24, "－", false, func() {
-			if g.quantity > 1 {
-				g.quantity--
-			}
-		})
-		g.button(screen, 1335, 95, 35, 24, "＋", false, func() {
-			if g.quantity < 99 {
-				g.quantity++
-			}
-		})
-		g.drawInventory(screen, true)
-		g.drawShop(screen)
-		g.drawFacilities(screen)
-		g.drawQuests(screen)
-	case gatherScene:
-		g.drawGather(screen)
-		g.drawBattleResult(screen)
+		g.label(screen, 1100, 49, guide, muted)
 	}
 }
 
@@ -317,7 +354,13 @@ func (g *Game) button(dst *ebiten.Image, x, y, w, h int, title string, selected 
 	vector.DrawFilledRect(dst, float32(x), float32(y), float32(w), float32(h), ink, false)
 	g.label(dst, x+5, y+5, title, white)
 	if action != nil {
-		g.buttons = append(g.buttons, button{x, y, w, h, action})
+		buttonY := y
+		if g.windowDrawing {
+			buttonY += 42
+		}
+		if buttonY+h <= height && (!g.windowDrawing || buttonY+h <= 935) {
+			g.buttons = append(g.buttons, button{x, buttonY, w, h, action})
+		}
 	}
 }
 
@@ -487,7 +530,11 @@ func (g *Game) drawInventory(dst *ebiten.Image, canSell bool) {
 // drawCandidates は選択した入力枠に合う在庫の残数を表示する（DES-ALC-04、DES-UI-01、DES-UI-02）。
 func (g *Game) drawCandidates(dst *ebiten.Image) {
 	const x, y, w = 10, 655, 385
-	g.box(dst, x, y, w, 270, "錬金の素材候補")
+	height, rows, controls := 270, 8, 242
+	if g.windowDrawing {
+		height, rows, controls = 238, 6, 210
+	}
+	g.box(dst, x, y, w, height, "錬金の素材候補")
 	recipe, ok := g.catalog.Recipe(g.recipeID)
 	if !ok || g.craftSlot < 0 || g.craftSlot >= len(recipe.Inputs) {
 		g.label(dst, x+8, y+36, "レシピと入力枠を選んでください", muted)
@@ -515,7 +562,6 @@ func (g *Game) drawCandidates(dst *ebiten.Image) {
 	if available == 0 && pickedCount < recipe.Inputs[g.craftSlot].Count {
 		g.label(dst, x+205, y+7, "合う素材がありません", muted)
 	}
-	const rows = 8
 	maxPage := (len(candidates) - 1) / rows
 	if g.candidatePage > maxPage {
 		g.candidatePage = maxPage
@@ -530,13 +576,13 @@ func (g *Game) drawCandidates(dst *ebiten.Image) {
 		}
 		g.button(dst, x+8, y+32+(i%rows)*26, w-16, 24, title, false, action)
 	}
-	g.button(dst, x+8, y+242, 45, 25, "前", false, func() {
+	g.button(dst, x+8, y+controls, 45, 25, "前", false, func() {
 		if g.candidatePage > 0 {
 			g.candidatePage--
 		}
 	})
-	g.label(dst, x+62, y+247, fmt.Sprintf("%d / %d", g.candidatePage+1, maxPage+1), muted)
-	g.button(dst, x+139, y+242, 45, 25, "次", false, func() {
+	g.label(dst, x+62, y+controls+5, fmt.Sprintf("%d / %d", g.candidatePage+1, maxPage+1), muted)
+	g.button(dst, x+139, y+controls, 45, 25, "次", false, func() {
 		if g.candidatePage < maxPage {
 			g.candidatePage++
 		}
@@ -750,7 +796,11 @@ func (g *Game) drawRecipes(dst *ebiten.Image) {
 // drawCraft は入力枠と予想品質・成立ボーナスを表示する（DES-ALC-03、DES-PKG-05、UC-03）。
 func (g *Game) drawCraft(dst *ebiten.Image) {
 	const x, y, w = 800, 465, 385
-	g.box(dst, x, y, w, 460, "手作り錬金")
+	height, actionY := 460, 407
+	if g.windowDrawing {
+		height, actionY = 428, 385
+	}
+	g.box(dst, x, y, w, height, "手作り錬金")
 	recipe, ok := g.catalog.Recipe(g.recipeID)
 	if !ok {
 		g.label(dst, x+8, y+40, "上のレシピを選んでください", muted)
@@ -806,8 +856,8 @@ func (g *Game) drawCraft(dst *ebiten.Image) {
 			g.candidatePage = 0
 		}
 	}
-	g.button(dst, x+8, y+407, 160, 32, "この素材で錬金", false, craftAction)
-	g.button(dst, x+179, y+407, 120, 32, "選択を取消", false, func() {
+	g.button(dst, x+8, y+actionY, 160, 32, "この素材で錬金", false, craftAction)
+	g.button(dst, x+179, y+actionY, 120, 32, "選択を取消", false, func() {
 		g.selection = core.Selection{Slots: make([][]core.Stack, len(recipe.Inputs))}
 		g.craftSlot = 0
 		g.candidatePage = 0
@@ -894,7 +944,11 @@ func (g *Game) selectAssignmentRecipe(id string) {
 // drawAssignment は専用の一覧からレシピまたは採取地を割り当てる（DES-GOL-03、DES-UI-04、DES-UI-05、UC-06）。
 func (g *Game) drawAssignment(dst *ebiten.Image) {
 	const x, y, w = 1195, 375, 395
-	g.box(dst, x, y, w, 550, "ゴーレムの割り当て")
+	height := 550
+	if g.windowDrawing {
+		height = 518
+	}
+	g.box(dst, x, y, w, height, "ゴーレムの割り当て")
 	recipes := g.availableRecipes()
 	gathers := g.availableGathers()
 	const rows = 6
