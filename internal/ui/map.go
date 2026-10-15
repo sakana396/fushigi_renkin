@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"image"
 	"image/color"
+	"math"
 
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/text/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 	"github.com/sakana396/fushigi_renkin/internal/defs"
 )
@@ -47,6 +49,21 @@ func (g *Game) drawMap(screen *ebiten.Image) {
 				}
 			}
 			g.drawTile(dst, town, n, px, py)
+		}
+	}
+	g.drawPlayer(dst, ox, oy)
+	g.drawMapNames(dst, m, ox, oy, x0, x1, y0, y1)
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(0, 72)
+	screen.DrawImage(dst, op)
+}
+
+// drawMapNames は全タイルと主人公の上に設備・出口の名を描く（DES-UI-15）。
+func (g *Game) drawMapNames(dst *ebiten.Image, m defs.MapDef, ox, oy, x0, x1, y0, y1 int) {
+	fixture, facing := g.world.FacingFixture()
+	for y := y0; y < y1; y++ {
+		for x := x0; x < x1; x++ {
+			ch := m.Cell(x, y)
 			info := defs.TileInfo(ch)
 			name := info.Name
 			if info.Kind == defs.CellExit {
@@ -57,20 +74,35 @@ func (g *Game) drawMap(screen *ebiten.Image) {
 					}
 				}
 			}
-			if name != "" {
-				ink := white
-				if fixture, yes := g.world.FacingFixture(); yes && info.Fixture == fixture {
-					name = "E: " + name
-					ink = color.RGBA{255, 235, 93, 255}
-				}
-				g.label(dst, px, py+tilePixels-12, name, ink)
+			if name == "" {
+				continue
 			}
+			ink := white
+			if facing && info.Fixture != "" && info.Fixture == fixture {
+				name = "E: " + name
+				ink = color.RGBA{255, 235, 93, 255}
+			}
+			g.drawMapName(dst, ox+x*tilePixels, oy+y*tilePixels, name, ink)
 		}
 	}
-	g.drawPlayer(dst, ox, oy)
-	op := &ebiten.DrawImageOptions{}
-	op.GeoM.Translate(0, 72)
-	screen.DrawImage(dst, op)
+}
+
+// drawMapName は名前をマスの上端より上に置き、表示枠内に収める（DES-UI-15〜16）。
+func (g *Game) drawMapName(dst *ebiten.Image, x, y int, name string, ink color.RGBA) {
+	w, h := text.Measure(name, g.face, 0)
+	boxW, boxH := int(math.Ceil(w))+6, int(math.Ceil(h))+4
+	if x+boxW > width {
+		x = width - boxW
+	}
+	if x < 0 {
+		x = 0
+	}
+	y -= boxH
+	if y < 0 {
+		y = 0
+	}
+	vector.DrawFilledRect(dst, float32(x), float32(y), float32(boxW), float32(boxH), color.RGBA{22, 28, 37, 230}, false)
+	g.label(dst, x+3, y+2, name, ink)
 }
 
 // cameraOffset は小さい地図を中央に置き、大きい地図の端で止める（DES-UI-16）。
