@@ -42,6 +42,7 @@ type document struct {
 	Facilities []facilityDef `toml:"facility"`
 	Units      []unitDef     `toml:"unit"`
 	Quests     []questDef    `toml:"quest"`
+	Maps       []mapDef      `toml:"map"`
 }
 type gameDef struct {
 	BattleConfigured bool        `toml:"-"`
@@ -172,9 +173,9 @@ type source[T any] struct {
 	Value T
 }
 
-// Load は fs.FS 内の TOML をすべて読み、検証済みの目録を返す（DES-PKG-03、DES-VAL-01〜16）。
+// Load は fs.FS 内の TOML をすべて読み、検証済みの目録を返す（DES-PKG-03、DES-VAL-01〜24）。
 func Load(fsys fs.FS) (defs.Catalog, error) {
-	c := defs.Catalog{Items: map[string]defs.ItemDef{}, Recipes: map[string]defs.RecipeDef{}, Gathers: map[string]defs.GatherDef{}, Golems: map[string]defs.GolemDef{}, Facilities: map[string]defs.FacilityDef{}, Units: map[string]defs.UnitDef{}, Quests: map[string]defs.QuestDef{}}
+	c := defs.Catalog{Items: map[string]defs.ItemDef{}, Recipes: map[string]defs.RecipeDef{}, Gathers: map[string]defs.GatherDef{}, Golems: map[string]defs.GolemDef{}, Facilities: map[string]defs.FacilityDef{}, Units: map[string]defs.UnitDef{}, Quests: map[string]defs.QuestDef{}, Maps: map[string]defs.MapDef{}}
 	var errs Errors
 	var games []source[gameDef]
 	var items []source[itemDef]
@@ -184,6 +185,7 @@ func Load(fsys fs.FS) (defs.Catalog, error) {
 	var facilities []source[facilityDef]
 	var units []source[unitDef]
 	var quests []source[questDef]
+	var maps []source[mapDef]
 	var names []string
 	walkErr := fs.WalkDir(fsys, ".", func(name string, entry fs.DirEntry, err error) error {
 		if err != nil {
@@ -238,6 +240,9 @@ func Load(fsys fs.FS) (defs.Catalog, error) {
 		}
 		for _, v := range d.Quests {
 			quests = append(quests, source[questDef]{name, v})
+		}
+		for _, v := range d.Maps {
+			maps = append(maps, source[mapDef]{name, v})
 		}
 	}
 	add := func(file, key, reason string) { errs = append(errs, Diagnostic{file, key, reason}) }
@@ -572,6 +577,7 @@ func Load(fsys fs.FS) (defs.Catalog, error) {
 		c.Facilities[v.ID] = f
 	}
 	validateProgression(c, recipes, quests, add)
+	validateMaps(&c, maps, add)
 	if len(errs) > 0 {
 		return defs.Catalog{}, errs
 	}

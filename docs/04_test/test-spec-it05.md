@@ -30,6 +30,11 @@
 
 | ID | 対象 | 前提 | 入力・操作 | 期待結果 | 種別 |
 |---|---|---|---|---|---|
+| TC-FR-FLD-01-01 | FR-FLD-01、DES-DEF-09 | 地図の単体テスト用目録 | 地図の寸法と地図外 | 幅・高さは 2、地図外は 0、(0,1) は K | 正常 |
+| TC-FR-FLD-01-02 | FR-FLD-01、DES-DEF-09 | 地図の単体テスト用目録 | 空の地図 | 空の地図の幅は 0、Cell は 0 | 正常 |
+| TC-FR-FLD-01-03 | FR-FLD-01、DES-DEF-09 | 地図の単体テスト用目録 | 文字の種類 | 床・壁・設備・出入り口・未知の文字が表どおり | 正常 |
+| TC-FR-FLD-01-04 | FR-FLD-01、DES-DEF-09 | 地図の単体テスト用目録 | 設備の種類と表示名 | K/S/G/M/Q/F の種類と日本語名が表どおり | 正常 |
+| TC-FR-FLD-01-05 | FR-FLD-01、DES-DEF-09 | 地図の単体テスト用目録 | IDで地図を引く | town が見つかり、workshop は見つからない | 正常 |
 
 ### FR-FLD-02 壁や設備を通り抜けない
 
@@ -54,6 +59,36 @@
 
 | ID | 対象 | 前提 | 入力・操作 | 期待結果 | 種別 |
 |---|---|---|---|---|---|
+| TC-FR-FLD-04-01 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | 地図なし | 地図なしの目録を読める | 正常 |
+| TC-FR-FLD-04-02 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | 正常な二枚 | 2 枚の地図と工房の出入り口 (3,4) を読める | 正常 |
+| TC-FR-FLD-04-03 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | 地図IDが未知 | maps.toml と位置・理由: map[id=market].id に未知の ID を報告 | 異常 |
+| TC-FR-FLD-04-04 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | 同じID | maps.toml と位置・理由: map[id=workshop].id に重複を報告 | 異常 |
+| TC-FR-FLD-04-05 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | 片方不足 | maps.toml と位置・理由: map[id=town] に地図不足を報告 | 異常 |
+| TC-FR-FLD-04-06 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | 空の行 | maps.toml と位置・理由: rows[1] に長さ 0 を報告 | 異常 |
+| TC-FR-FLD-04-07 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | 長さが違う | maps.toml と位置・理由: rows[1] に 6 文字、rows[0] は 7 文字と報告 | 異常 |
+| TC-FR-FLD-04-08 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | 未知の文字 | maps.toml と位置・理由: rows[1][2] に未知の X を報告 | 異常 |
+| TC-FR-FLD-04-09 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | 多バイト文字の位置 | maps.toml と位置・理由: rows[1][2] に未知の「あ」を報告 | 異常 |
+| TC-FR-FLD-04-10 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | start省略 | maps.toml と位置・理由: start に書き忘れを報告 | 異常 |
+| TC-FR-FLD-04-11 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | startは壁 | maps.toml と位置・理由: start に (0,0) が壁と報告 | 異常 |
+| TC-FR-FLD-04-12 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | 必須設備不足 | maps.toml と位置・理由: map[id=workshop] に G 不足を報告 | 異常 |
+| TC-FR-FLD-04-13 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | 出口markは0不可 | maps.toml と位置・理由: exits[0].mark に 0 は使えないと報告 | 異常 |
+| TC-FR-FLD-04-14 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | 出口の定義不足 | maps.toml と位置・理由: rows[4][3] に数字 2 の定義不足を報告 | 異常 |
+| TC-FR-FLD-04-15 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | 行き先がない | maps.toml と位置・理由: exits[0].to に market が存在しないと報告 | 異常 |
+| TC-FR-FLD-04-16 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | 向きが未知 | maps.toml と位置・理由: exits[0].dir に未知の向きを報告 | 異常 |
+| TC-FR-FLD-04-17 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | 絵が未知 | maps.toml と位置・理由: exits[0].look に未知の絵を報告 | 異常 |
+| TC-FR-FLD-04-18 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | 到着先が壁 | maps.toml と位置・理由: exits[0].dir に到着のマス (3,3) が壁と報告 | 異常 |
+| TC-FR-FLD-04-19 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | 同じ行き先 | maps.toml と位置・理由: exits[1].to に行き先の重複を報告 | 異常 |
+| TC-FR-FLD-04-20 | FR-FLD-04、DES-VAL-23 | 地図の単体テスト用目録 | 設備に行けない | maps.toml と位置・理由: rows[1][5] に施設の看板へ行けないと報告 | 異常 |
+| TC-FR-FLD-04-21 | FR-FLD-04、DES-VAL-23 | 地図の単体テスト用目録 | 到着マスへ行けない | maps.toml と位置・理由: exits[0] に到着のマス (3,3) へ行けないと報告 | 異常 |
+| TC-FR-FLD-04-22 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | 出口が二マス | maps.toml と位置・理由: rows[4][3] に出入り口 1 が 2 マスと報告 | 異常 |
+| TC-FR-FLD-04-23 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | 自分への出口 | maps.toml と位置・理由: exits[0].to に自分への出口を報告 | 異常 |
+| TC-FR-FLD-04-24 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | 工房に採取地出口 | maps.toml と位置・理由: 工房の gather 行きを報告 | 異常 |
+| TC-FR-FLD-04-25 | FR-FLD-04、DES-VAL-23 | 地図の単体テスト用目録 | 形が誤りなら到達性は検査しない | maps.toml と位置・理由: 行の長さを報告し、到達性は報告しない | 異常 |
+| TC-FR-FLD-04-26 | FR-FLD-04、DES-VAL-23 | 地図の単体テスト用目録 | 開始位置が誤りなら到達性は検査しない | maps.toml と位置・理由: start の壁を報告し、到達性は報告しない | 異常 |
+| TC-FR-FLD-04-27 | FR-FLD-04、DES-VAL-18 | 地図の単体テスト用目録 | rows を空にする | maps.toml の rows に行数 1〜100 の誤り | 境界 |
+| TC-FR-FLD-04-28 | FR-FLD-04、DES-VAL-18 | 地図の単体テスト用目録 | 1 行を 101 文字にする | maps.toml の rows[1] に長さ 1〜100 文字の誤り | 境界 |
+| TC-FR-FLD-04-29 | FR-FLD-04、DES-VAL-18 | 地図の単体テスト用目録 | rows を 101 行にする | maps.toml の rows に行数 1〜100 の誤り | 境界 |
+| TC-FR-FLD-04-30 | FR-FLD-04、DES-VAL-18 | 地図の単体テスト用目録 | 設計書 3 章の 30 文字と 29 文字の行長例 | maps.toml の map[id=town].rows[4] に「29 文字。rows[0] は 30 文字」と報告 | 異常 |
 
 ### IF-08 主人公を動かし、設備を使う
 
@@ -83,6 +118,7 @@
 
 | ID | 対象 | 前提 | 入力・操作 | 期待結果 | 種別 |
 |---|---|---|---|---|---|
+| TC-NFR-08-01 | NFR-08、DES-VAL-24 | 地図以外の定義がそろった MapFS | 地図 TOML のシードと任意バイト列を FuzzLoadMaps に渡す | 異常終了せず、成功時の地図は基本不変条件を満たす | 異常 |
 
 ## 3. 手動確認の結果
 

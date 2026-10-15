@@ -174,6 +174,7 @@ type Catalog struct {
 	Facilities map[string]FacilityDef
 	Units      map[string]UnitDef
 	Quests     map[string]QuestDef
+	Maps       map[string]MapDef
 }
 
 // Unit は ID に対応するユニット定義と、見つかったかどうかを返す（DES-DEF-04、DES-DEF-06）。
