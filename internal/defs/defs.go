@@ -30,9 +30,10 @@ type UseEffect struct {
 	Value int
 }
 
-// RecipeDef は錬金の入出力と手作りボーナスを定義する（DES-IT01 2.1）。
+// RecipeDef は錬金の入出力、手作りボーナス、解放ランクを定義する（DES-IT01 2.1、DES-DEF-08）。
 type RecipeDef struct {
 	ID          string
+	Rank        int
 	Output      string
 	OutputCount int
 	Inputs      []InputSlot
@@ -54,9 +55,10 @@ type Bonus struct {
 	Add       int
 }
 
-// GatherDef は採取地を定義する（DES-IT01 2.1）。
+// GatherDef は採取地と解放ランクを定義する（DES-IT01 2.1、DES-DEF-08）。
 type GatherDef struct {
 	ID              string
+	Rank            int
 	Name            string
 	Rolls           int
 	CooldownSeconds int
@@ -90,9 +92,11 @@ type Placement struct {
 	Y    int
 }
 
-// QuestDef は製品の納品条件と報酬を定義する（DES-DEF-07）。
+// QuestDef は製品の納品条件、報酬、解放ランクを定義する（DES-DEF-07、DES-DEF-08）。
 type QuestDef struct {
 	ID         string
+	Rank       int
+	Reputation int
 	Item       string
 	MinQuality int
 	Count      int
@@ -148,9 +152,10 @@ type Effect struct {
 	Value int
 }
 
-// GameDef はゲーム開始時の設定と店の品ぞろえを定義する（DES-IT01 2.1）。
+// GameDef はゲーム開始時の設定、店の品ぞろえ、ランクの閾値を定義する（DES-IT01 2.1、DES-DEF-08）。
 type GameDef struct {
 	StartMoney     int
+	RankReputation []int
 	BaseGolemSlots int
 	Shop           []ShopOffer
 	Party          []Placement

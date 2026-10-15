@@ -83,10 +83,10 @@ func TestBaseDataIT03(t *testing.T) {
 	})
 	t.Run("TC-FR-MOD-02-23 依頼は製品だけで報酬が売値を超える", func(t *testing.T) {
 		want := []defs.QuestDef{
-			{ID: "q_burger", Item: "burger", MinQuality: 20, Count: 2, Reward: 120},
-			{ID: "q_potion", Item: "potion", MinQuality: 20, Count: 2, Reward: 70},
-			{ID: "q_bomb", Item: "bomb", MinQuality: 20, Count: 2, Reward: 80},
-			{ID: "q_bread", Item: "bread", MinQuality: 20, Count: 3, Reward: 65},
+			{ID: "q_burger", Rank: 1, Item: "burger", MinQuality: 20, Count: 2, Reward: 120},
+			{ID: "q_potion", Rank: 1, Item: "potion", MinQuality: 20, Count: 2, Reward: 70},
+			{ID: "q_bomb", Rank: 1, Item: "bomb", MinQuality: 20, Count: 2, Reward: 80},
+			{ID: "q_bread", Rank: 1, Item: "bread", MinQuality: 20, Count: 3, Reward: 65},
 		}
 		products := map[string]bool{}
 		for _, r := range c.Recipes {

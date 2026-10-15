@@ -304,7 +304,7 @@ func checkIT03Values(t *testing.T, c defs.Catalog) {
 	if got := c.Gathers["field"].Battle; !reflect.DeepEqual(got, wantBattle) {
 		t.Errorf("Battle = %+v; 欲しい値 = %+v", got, wantBattle)
 	}
-	wantQuests := map[string]defs.QuestDef{"delivery": {ID: "delivery", Item: "potion", MinQuality: 52, Count: 5, Reward: 120}}
+	wantQuests := map[string]defs.QuestDef{"delivery": {ID: "delivery", Rank: 1, Item: "potion", MinQuality: 52, Count: 5, Reward: 120}}
 	if !reflect.DeepEqual(c.Quests, wantQuests) {
 		t.Errorf("Quests = %+v; 欲しい値 = %+v", c.Quests, wantQuests)
 	}
