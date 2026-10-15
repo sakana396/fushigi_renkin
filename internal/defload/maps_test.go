@@ -1,7 +1,9 @@
 package defload
 
 import (
+	"errors"
 	"fmt"
+	"reflect"
 	"strings"
 	"testing"
 	"testing/fstest"
@@ -27,6 +29,25 @@ func loadMapText(s string) (defs.Catalog, error) {
 	return Load(fstest.MapFS{"maps.toml": &fstest.MapFile{Data: []byte(s)}})
 }
 func replaceOne(s, old, new string) string { return strings.Replace(s, old, new, 1) }
+
+// mapDiagnostics はファイル名・経路・理由を個別に検査する（DES-VAL-17〜23）。
+func mapDiagnostics(t *testing.T, err error, want string) Errors {
+	t.Helper()
+	var diagnostics Errors
+	if !errors.As(err, &diagnostics) {
+		t.Fatalf("Errors がない: %v", err)
+	}
+	found := false
+	for _, d := range diagnostics {
+		if d.File == "maps.toml" && strings.Contains(d.Path+": "+d.Reason, want) {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("want %q; got %v", want, diagnostics)
+	}
+	return diagnostics
+}
 
 // TestMaps は地図の読み込みと各検証規則の診断を確かめる（DES-DEF-09、DES-VAL-17〜23）。
 func TestMaps(t *testing.T) {
@@ -94,17 +115,23 @@ func TestMaps(t *testing.T) {
 					t.Fatalf("unexpected error: %v", err)
 				}
 				if tc.id == "TC-FR-FLD-04-02 正常な二枚" {
-					if len(c.Maps) != 2 || c.Maps[defs.MapWorkshop].Exits[0].X != 3 {
+					want := map[string]defs.MapDef{
+						defs.MapWorkshop: {ID: defs.MapWorkshop, Name: "工房", StartX: 1, StartY: 2, Rows: []string{"#######", "#KSG..#", "#.....#", "#.....#", "###1###"}, Exits: []defs.ExitDef{{Mark: '1', To: defs.MapTown, Dir: defs.DirUp, Look: "stone_door", X: 3, Y: 4}}},
+						defs.MapTown:     {ID: defs.MapTown, Name: "街", StartX: 1, StartY: 2, Rows: []string{"#########", "#M.Q.F..#", "#.......#", "#.......#", "###1#2###"}, Exits: []defs.ExitDef{{Mark: '1', To: defs.MapWorkshop, Dir: defs.DirUp, Look: "wood_door", X: 3, Y: 4}, {Mark: '2', To: defs.ExitGather, Dir: defs.DirUp, Look: "road", X: 5, Y: 4}}},
+					}
+					if !reflect.DeepEqual(c.Maps, want) {
 						t.Fatalf("maps: %+v", c.Maps)
 					}
 				}
 				return
 			}
-			if err == nil || !strings.Contains(err.Error(), "maps.toml: ") || !strings.Contains(err.Error(), tc.want) {
-				t.Fatalf("want %q; got %v", tc.want, err)
-			}
-			if strings.Contains(tc.id, "検査しない") && strings.Contains(err.Error(), "開始位置から行けない") {
-				t.Fatalf("到達性を検査した: %v", err)
+			diagnostics := mapDiagnostics(t, err, tc.want)
+			if strings.Contains(tc.id, "検査しない") {
+				for _, d := range diagnostics {
+					if strings.Contains(d.Reason, "開始位置から行けない") || strings.Contains(d.Reason, "開始位置から到着のマス") {
+						t.Fatalf("到達性を検査した: %v", diagnostics)
+					}
+				}
 			}
 		})
 	}
@@ -152,12 +179,64 @@ func FuzzLoadMaps(f *testing.F) {
 					t.Fatal("exit")
 				}
 			}
+			checkMapSemantics(t, m)
 			checkReachableMap(t, m)
 		}
 		if len(c.Maps) != 0 && len(c.Maps) != 2 {
 			t.Fatal(fmt.Sprint("maps: ", len(c.Maps)))
 		}
 	})
+}
+
+// checkMapSemantics は読み込み結果から設備と出入り口の規則を独立に確認する（DES-VAL-21・22・24）。
+func checkMapSemantics(t *testing.T, m defs.MapDef) {
+	t.Helper()
+	required := "KSG"
+	if m.ID == defs.MapTown {
+		required = "MQF"
+	}
+	for _, ch := range required {
+		found := false
+		for _, row := range m.Rows {
+			found = found || strings.ContainsRune(row, ch)
+		}
+		if !found {
+			t.Fatalf("TC-NFR-08-02 必須設備がない: %c", ch)
+		}
+	}
+	marks, destinations := map[byte]bool{}, map[string]bool{}
+	for _, e := range m.Exits {
+		if marks[e.Mark] || strings.Count(strings.Join(m.Rows, ""), string(e.Mark)) != 1 {
+			t.Fatalf("TC-NFR-08-03 mark の重複またはマス数: %c", e.Mark)
+		}
+		marks[e.Mark] = true
+		if e.To == m.ID || e.To != defs.MapWorkshop && e.To != defs.MapTown && e.To != defs.ExitGather {
+			t.Fatalf("TC-NFR-08-04 行き先が不正: %s", e.To)
+		}
+		if e.Dir != defs.DirUp && e.Dir != defs.DirDown && e.Dir != defs.DirLeft && e.Dir != defs.DirRight {
+			t.Fatalf("TC-NFR-08-05 向きが不正: %s", e.Dir)
+		}
+		if e.Look != "stone_door" && e.Look != "wood_door" && e.Look != "road" {
+			t.Fatalf("TC-NFR-08-06 絵が不正: %s", e.Look)
+		}
+		if destinations[e.To] {
+			t.Fatalf("TC-NFR-08-07 同じ行き先が重複: %s", e.To)
+		}
+		destinations[e.To] = true
+		if e.To == defs.ExitGather && m.ID != defs.MapTown {
+			t.Fatal("TC-NFR-08-08 gather 行きが街の外にある")
+		}
+	}
+	for _, row := range m.Rows {
+		for i := 0; i < len(row); i++ {
+			if defs.TileInfo(row[i]).Kind == defs.CellExit && !marks[row[i]] {
+				t.Fatalf("TC-NFR-08-03 定義のない出口: %c", row[i])
+			}
+		}
+	}
+	if !destinations[map[string]string{defs.MapWorkshop: defs.MapTown, defs.MapTown: defs.MapWorkshop}[m.ID]] || m.ID == defs.MapTown && !destinations[defs.ExitGather] {
+		t.Fatal("TC-NFR-08-09 必須の出口がない")
+	}
 }
 
 // checkReachableMap は読み込み結果を独立に探索する（DES-VAL-23、DES-VAL-24）。

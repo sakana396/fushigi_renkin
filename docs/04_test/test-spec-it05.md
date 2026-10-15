@@ -35,6 +35,10 @@
 | TC-FR-FLD-01-03 | FR-FLD-01、DES-DEF-09 | 地図の単体テスト用目録 | 文字の種類 | 床・壁・設備・出入り口・未知の文字が表どおり | 正常 |
 | TC-FR-FLD-01-04 | FR-FLD-01、DES-DEF-09 | 地図の単体テスト用目録 | 設備の種類と表示名 | K/S/G/M/Q/F の種類と日本語名が表どおり | 正常 |
 | TC-FR-FLD-01-05 | FR-FLD-01、DES-DEF-09 | 地図の単体テスト用目録 | IDで地図を引く | town が見つかり、workshop は見つからない | 正常 |
+| TC-FR-FLD-01-06 | FR-FLD-01、DES-VAL-20 | 正常な二枚 | 工房の start.x を省略 | maps.toml の start に「開始位置が書かれていない」 | 異常 |
+| TC-FR-FLD-01-07 | FR-FLD-01、DES-VAL-20 | 正常な二枚 | 工房の start.y を省略 | maps.toml の start に「開始位置が書かれていない」 | 異常 |
+| TC-FR-FLD-01-08 | FR-FLD-01、DES-VAL-20 | 幅 7 の工房 | start を (7,2) にする | maps.toml の start に「開始位置 (7, 2) が地図の外」 | 境界 |
+| TC-FR-FLD-01-09 | FR-FLD-01、DES-VAL-22 | 出口 2・3 に定義がない二枚 | 同じ読み込みを 20 回行う | 診断は毎回同じ順で、各地図の数字順になる | 正常 |
 
 ### FR-FLD-02 壁や設備を通り抜けない
 
@@ -98,7 +102,7 @@
 | ID | 対象 | 前提 | 入力・操作 | 期待結果 | 種別 |
 |---|---|---|---|---|---|
 | TC-FR-FLD-04-01 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | 地図なし | 地図なしの目録を読める | 正常 |
-| TC-FR-FLD-04-02 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | 正常な二枚 | 2 枚の地図と工房の出入り口 (3,4) を読める | 正常 |
+| TC-FR-FLD-04-02 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | 正常な二枚 | 両地図の ID・Name・Rows・Start と全出口の Mark・To・Dir・Look・X・Y が設計例どおり | 正常 |
 | TC-FR-FLD-04-03 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | 地図IDが未知 | maps.toml と位置・理由: map[id=market].id に未知の ID を報告 | 異常 |
 | TC-FR-FLD-04-04 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | 同じID | maps.toml と位置・理由: map[id=workshop].id に重複を報告 | 異常 |
 | TC-FR-FLD-04-05 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | 片方不足 | maps.toml と位置・理由: map[id=town] に地図不足を報告 | 異常 |
@@ -127,6 +131,15 @@
 | TC-FR-FLD-04-28 | FR-FLD-04、DES-VAL-18 | 地図の単体テスト用目録 | 1 行を 101 文字にする | maps.toml の rows[1] に長さ 1〜100 文字の誤り | 境界 |
 | TC-FR-FLD-04-29 | FR-FLD-04、DES-VAL-18 | 地図の単体テスト用目録 | rows を 101 行にする | maps.toml の rows に行数 1〜100 の誤り | 境界 |
 | TC-FR-FLD-04-30 | FR-FLD-04、DES-VAL-18 | 地図の単体テスト用目録 | 設計書 3 章の 30 文字と 29 文字の行長例 | maps.toml の map[id=town].rows[4] に「29 文字。rows[0] は 30 文字」と報告 | 異常 |
+| TC-FR-FLD-04-31 | FR-FLD-04、DES-VAL-21 | 正常な二枚 | 街の Q を床にする | maps.toml に `map[id=town]: 依頼板（Q）がない` | 異常 |
+| TC-FR-FLD-04-32 | FR-FLD-04、DES-VAL-22 | 正常な二枚 | 工房の town 行きを消す | maps.toml に `map[id=workshop].exits: town 行きがない` | 異常 |
+| TC-FR-FLD-04-33 | FR-FLD-04、DES-VAL-22 | 正常な二枚 | 街の workshop 行きを消す | maps.toml に `map[id=town].exits: workshop 行きがない` | 異常 |
+| TC-FR-FLD-04-34 | FR-FLD-04、DES-VAL-22 | 正常な二枚 | 街の gather 行きを消す | maps.toml に `map[id=town].exits: gather 行きがない` | 異常 |
+| TC-FR-FLD-04-35 | FR-FLD-04、DES-VAL-22 | 正常な二枚 | 街の出口 mark を重複させる | maps.toml の exits[1].mark に重複を報告 | 異常 |
+| TC-FR-FLD-04-36 | FR-FLD-04、DES-VAL-22 | 正常な二枚 | mark を `12` にする | maps.toml の exits[1].mark に 1 文字の制約を報告 | 異常 |
+| TC-FR-FLD-04-37 | FR-FLD-04、DES-VAL-22 | 正常な二枚 | 工房の出口の到着先を設備または別の出口にする | maps.toml の exits[0].dir に (3,3) は床でないと報告 | 異常 |
+| TC-FR-FLD-04-38 | FR-FLD-04、DES-VAL-18〜23 | 誤りを重ねた二枚 | 設備・出口の誤りと到達不能、または行長・未知文字と開始位置の誤りを重ねる | DES-VAL-21・22 の誤りでは到達性を、DES-VAL-18・19 の誤りでは後続を報告しない | 異常 |
+| TC-FR-FLD-04-39 | FR-FLD-04、DES-VAL-23 | 内側の出口だけで分かれた工房 | 出口の向きを右にする | 出口を塗りつぶさず、到着のマス (3,4) へ行けないと報告 | 異常 |
 
 ### IF-08 主人公を動かし、設備を使う
 
@@ -187,6 +200,14 @@ TC-CST-04-05 の結果（2026-10-16）: 出典表の各列を ADR-0003 の決定
 | ID | 対象 | 前提 | 入力・操作 | 期待結果 | 種別 |
 |---|---|---|---|---|---|
 | TC-NFR-08-01 | NFR-08、DES-VAL-24 | 地図以外の定義がそろった MapFS | 地図 TOML のシードと任意バイト列を FuzzLoadMaps に渡す | 異常終了せず、成功時の地図は基本不変条件を満たす | 異常 |
+| TC-NFR-08-02 | NFR-08、DES-VAL-21・24 | 読み込み成功時の地図 | 必須設備を確認 | 工房に K/S/G、街に M/Q/F がそれぞれある | 正常 |
+| TC-NFR-08-03 | NFR-08、DES-VAL-22・24 | 読み込み成功時の地図 | mark と行の数字を確認 | mark は重複せず、それぞれ 1 マスにあり、未定義の数字がない | 正常 |
+| TC-NFR-08-04 | NFR-08、DES-VAL-22・24 | 読み込み成功時の地図 | 出口の To を確認 | 自分以外の地図または gather である | 正常 |
+| TC-NFR-08-05 | NFR-08、DES-VAL-22・24 | 読み込み成功時の地図 | 出口の Dir を確認 | 上下左右の 4 値である | 正常 |
+| TC-NFR-08-06 | NFR-08、DES-VAL-22・24 | 読み込み成功時の地図 | 出口の Look を確認 | stone_door・wood_door・road のいずれかである | 正常 |
+| TC-NFR-08-07 | NFR-08、DES-VAL-22・24 | 読み込み成功時の地図 | 出口の To の重複を確認 | 同じ行き先は 1 つまでである | 正常 |
+| TC-NFR-08-08 | NFR-08、DES-VAL-22・24 | 読み込み成功時の地図 | gather 行きの地図を確認 | town にだけ置かれている | 正常 |
+| TC-NFR-08-09 | NFR-08、DES-VAL-22・24 | 読み込み成功時の地図 | 必須の出口を確認 | 工房に town 行き、街に workshop・gather 行きがある | 正常 |
 
 ## 3. 手動確認の結果
 
