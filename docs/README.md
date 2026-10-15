@@ -31,7 +31,8 @@
 | 試験 | テスト仕様書（反復 2） | [04_test/test-spec-it02.md](04_test/test-spec-it02.md) | 反復 2 の範囲を記入済み |
 | 試験 | テスト仕様書（反復 3） | [04_test/test-spec-it03.md](04_test/test-spec-it03.md) | 雛形 |
 | 試験 | テスト仕様書（反復 4） | [04_test/test-spec-it04.md](04_test/test-spec-it04.md) | 雛形 |
-| 横断 | トレーサビリティマトリクス | [traceability.md](traceability.md) | 反復 1〜4 の行を用意 |
+| 試験 | テスト仕様書（反復 5） | [04_test/test-spec-it05.md](04_test/test-spec-it05.md) | 雛形 |
+| 横断 | トレーサビリティマトリクス | [traceability.md](traceability.md) | 反復 1〜5 の行を用意 |
 | 横断 | レビュー記録 | [reviews/](reviews/) | 記録中 |
 
 ## エージェント向けのルール
