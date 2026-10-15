@@ -9,7 +9,7 @@
 | 企画 | 企画案の比較（旧版） | [01_concept/concept-proposals.md](01_concept/concept-proposals.md) | 廃止（CON-002 に置き換え） |
 | 企画 | 要求抽出記録（ヒアリング） | [01_concept/elicitation-notes.md](01_concept/elicitation-notes.md) | 追記中 |
 | 企画 | 技術選定 ADR | [adr/0001-tech-stack.md](adr/0001-tech-stack.md) | 承認 |
-| 要求 | 要求仕様書 (SRS) | [02_requirements/srs.md](02_requirements/srs.md) | v0.4 確定 |
+| 要求 | 要求仕様書 (SRS) | [02_requirements/srs.md](02_requirements/srs.md) | v0.5 確定 |
 | 要求 | ユースケース記述・図 | [02_requirements/use-cases.md](02_requirements/use-cases.md) | v0.4 承認（反復 4 の範囲を追加） |
 | 反復 | 反復 1（プロトタイプ）計画書 | [iterations/it01/plan.md](iterations/it01/plan.md) | 承認 |
 | 反復 | 反復 1 振り返り | [iterations/it01/retrospective.md](iterations/it01/retrospective.md) | v1.0 確定 |
@@ -19,6 +19,7 @@
 | 反復 | 反復 3 振り返り | [iterations/it03/retrospective.md](iterations/it03/retrospective.md) | v1.0 確定 |
 | 反復 | 反復 4 計画書 | [iterations/it04/plan.md](iterations/it04/plan.md) | v1.0 確定 |
 | 反復 | 反復 4 振り返り | [iterations/it04/retrospective.md](iterations/it04/retrospective.md) | v1.0 確定 |
+| 反復 | 反復 5 計画書 | [iterations/it05/plan.md](iterations/it05/plan.md) | v1.0 確定 |
 | 設計 | 設計書（反復 1）: アーキテクチャ・クラス図・状態遷移図・シーケンス図 | [03_design/design-it01.md](03_design/design-it01.md) | v0.3 承認 |
 | 設計 | 設計書（反復 2）: 自動採取・錬金の素材選び・画面 | [03_design/design-it02.md](03_design/design-it02.md) | v0.2 承認 |
 | 設計 | 設計書（反復 3）: 品質の効果・戦闘・依頼・場面ごとの画面 | [03_design/design-it03.md](03_design/design-it03.md) | v0.2 承認 |
@@ -41,7 +42,7 @@
 
 | 接頭辞 | 対象 | 例 |
 |---|---|---|
-| `FR-<区分>-` | 機能要求（区分: ALC, ITM, MAT, ECO, TWN, GOL, RD, BTL, PRG, GFT, CHR, SYS, MOD） | `FR-ALC-04` |
+| `FR-<区分>-` | 機能要求（区分: ALC, ITM, MAT, ECO, TWN, GOL, RD, BTL, PRG, GFT, CHR, FLD, SYS, MOD） | `FR-ALC-04` |
 | `NFR-` | 非機能要求 | `NFR-06` |
 | `IF-` | 外部インタフェース要求 | `IF-03` |
 | `CST-` | 制約 | `CST-02` |
