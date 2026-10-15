@@ -76,6 +76,13 @@
 
 | ID | 対象 | 前提 | 入力・操作 | 期待結果 | 種別 |
 |---|---|---|---|---|---|
+| TC-CST-04-01 | CST-04、DES-UI-14 | Tiny Town 1.1 の `tilemap_packed.png` を配置 | `assets.TinyTown()` で読み込む | 誤りなく読め、画像の大きさは 192×176 px | 正常 |
+| TC-CST-04-02 | CST-04、DES-UI-14 | Tiny Dungeon 1.0 の `tilemap_packed.png` を配置 | `assets.TinyDungeon()` で読み込む | 誤りなく読め、画像の大きさは 192×176 px | 正常 |
+| TC-CST-04-03 | CST-04、ADR-0003 | Tiny Town 1.1 の同梱 `License.txt` を配置 | 埋め込まれた利用許諾を読む | `Tiny Town (1.1)`、`Creative Commons Zero, CC0`、CC0 1.0 の URL を含む | 正常 |
+| TC-CST-04-04 | CST-04、ADR-0003 | Tiny Dungeon 1.0 の同梱 `License.txt` を配置 | 埋め込まれた利用許諾を読む | `Tiny Dungeon (1.0)`、`Creative Commons Zero, CC0`、CC0 1.0 の URL を含む | 正常 |
+| TC-CST-04-05 | CST-04、ADR-0003 | `internal/ui/assets/README.md` がある | 出典表を目視で照合する | 両素材について、版・作者・配布元 URL・CC0 1.0・利用許諾ファイル名・確認日 2026-10-15・取り込んだファイルと元のファイル名が記録されている | 手動 |
+
+TC-CST-04-05 の結果（2026-10-16）: 出典表の各列を ADR-0003 の決定 2・3 と同梱の License.txt に照合し、両素材とも期待結果を満たした。
 
 ### NFR-08 定義データで異常終了しない（反復 5 の追加分）
 
