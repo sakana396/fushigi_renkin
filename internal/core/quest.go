@@ -12,7 +12,10 @@ var ErrNoQuest = errors.New("依頼がありません")
 // drawQuest は表示中でない依頼を ID 順の候補から抽選する（DES-QST-01）。
 func (w *World) drawQuest() string {
 	var candidates []string
-	for id := range w.catalog.Quests {
+	for id, quest := range w.catalog.Quests {
+		if w.locked(quest.Rank) {
+			continue
+		}
 		shown := false
 		for _, current := range w.Quests {
 			if current == id {
@@ -71,8 +74,16 @@ func (w *World) Deliver(index int) error {
 	if quest.Reward < 0 || w.Money > max-quest.Reward {
 		return fmt.Errorf("依頼番号 %d: %w", index+1, ErrInvalidCount)
 	}
+	if quest.Reputation < 0 || w.Reputation > max-quest.Reputation {
+		return fmt.Errorf("依頼番号 %d の評判: %w", index+1, ErrInvalidCount)
+	}
+	oldRank := w.Rank()
 	w.Inventory = trial
 	w.Money += quest.Reward
+	w.Reputation += quest.Reputation
+	for rank := oldRank + 1; rank <= w.Rank(); rank++ {
+		w.rankUps = append(w.rankUps, rank)
+	}
 	w.Quests[index] = ""
 	w.Quests[index] = w.drawQuest()
 	return nil

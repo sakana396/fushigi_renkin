@@ -19,7 +19,9 @@ type World struct {
 	InjuredUntil uint64
 	Golems       []Golem
 	Money        int
+	Reputation   int
 	Now          uint64
+	rankUps      []int
 	Facilities   map[string]int
 	gatherReady  map[string]uint64
 }
