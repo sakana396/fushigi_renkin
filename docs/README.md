@@ -20,7 +20,7 @@
 | 反復 | 反復 4 計画書 | [iterations/it04/plan.md](iterations/it04/plan.md) | v1.0 確定 |
 | 反復 | 反復 4 振り返り | [iterations/it04/retrospective.md](iterations/it04/retrospective.md) | v1.0 確定 |
 | 反復 | 反復 5 計画書 | [iterations/it05/plan.md](iterations/it05/plan.md) | v1.0 確定 |
-| 反復 | 反復 5 振り返り | [iterations/it05/retrospective.md](iterations/it05/retrospective.md) | v0.1 案 |
+| 反復 | 反復 5 振り返り | [iterations/it05/retrospective.md](iterations/it05/retrospective.md) | v1.0 確定 |
 | 設計 | 設計書（反復 1）: アーキテクチャ・クラス図・状態遷移図・シーケンス図 | [03_design/design-it01.md](03_design/design-it01.md) | v0.3 承認 |
 | 設計 | 設計書（反復 2）: 自動採取・錬金の素材選び・画面 | [03_design/design-it02.md](03_design/design-it02.md) | v0.2 承認 |
 | 設計 | 設計書（反復 3）: 品質の効果・戦闘・依頼・場面ごとの画面 | [03_design/design-it03.md](03_design/design-it03.md) | v0.2 承認 |
