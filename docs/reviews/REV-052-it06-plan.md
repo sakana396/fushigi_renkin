@@ -4,7 +4,7 @@
 - 日付: 2026-10-16
 - 作成: Claude Code
 - レビュー: spec-reviewer（仕様適合レビュー）
-- 承認: **要**（`docs/00_plan/`、`docs/01_concept/elicitation-notes.md`、`docs/02_requirements/srs.md` を変更している。AGENTS.md「自動マージの条件」3）。計画書 8 章は開発者が推奨どおりに決定した（E-105）。PLAN v0.5 と SRS v0.6 の承認: **承認**（E-107。Q-1・Q-4・Q-6・Q-7 は承認。Q-2 は「途中の節目も入れる」、Q-3 は「何度でも戦える」、Q-5 は「今ある要素＋足す 5 つだけ」）
+- 承認: **要**（`docs/00_plan/`、`docs/01_concept/elicitation-notes.md`、`docs/02_requirements/srs.md` を変更している。AGENTS.md「自動マージの条件」3）。計画書 8 章は開発者が推奨どおりに決定した（E-105）。PLAN v0.5 と SRS v0.6 の承認: **承認**（E-107。Q-1・Q-4・Q-6・Q-7 は承認。Q-2 は「途中の節目も入れる」、Q-3 は「何度でも戦える」、Q-5 は「今ある要素＋足す 5 つだけ」）。E-107 の文面も開発者が確認した（「おｋ」）
 - 結果: すべての指摘に対応した。開発者が承認した
 
 ## 検証
