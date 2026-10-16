@@ -15,14 +15,19 @@ jobs:
       # 文書（docs/ と .md）だけの変更なら、Go の検査を省く。main への push では常に行う
       - name: 変更の種類を調べる
         id: changes
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
         run: |
-          if [ "${{ github.event_name }}" != "pull_request" ]; then
+          if [ "$EVENT_NAME" != "pull_request" ]; then
             echo "code=true" >> "$GITHUB_OUTPUT"
             exit 0
           fi
-          files=$(git diff --name-only "origin/${{ github.base_ref }}...HEAD")
+          # 名前の変更は元の名前も出す（.go を .md に変えたときに検査を省かないため）
+          files=$(git diff --name-only --no-renames "origin/$BASE_REF...HEAD")
           echo "$files"
-          if echo "$files" | grep -qvE '^docs/|\.md$'; then
+          # testdata の .md はテストの入力なので、コードとして扱う
+          if echo "$files" | grep -qvE '^docs/|\.md$' || echo "$files" | grep -q '/testdata/'; then
             echo "code=true" >> "$GITHUB_OUTPUT"
           else
             echo "code=false" >> "$GITHUB_OUTPUT"
