@@ -6,10 +6,16 @@ import (
 	"sort"
 )
 
-// ErrNoQuest は指定した依頼板の位置が空のときの誤り（DES-QST-02）。
+// ErrNoQuest は指定した候補または受けた依頼がないときの誤り（DES-QST-05）。
 var ErrNoQuest = errors.New("依頼がありません")
 
-// drawQuest は表示中でない依頼を ID 順の候補から抽選する（DES-QST-01）。
+// MaxAcceptedQuests は同時に受けられる依頼の上限（DES-QST-04）。
+const MaxAcceptedQuests = 3
+
+// ErrQuestLimit は受けた依頼が上限に達したときの誤り（DES-QST-05）。
+var ErrQuestLimit = errors.New("受けられる依頼は 3 件までです")
+
+// drawQuest は候補にも受けた依頼にもない依頼を ID 順から抽選する（DES-QST-04）。
 func (w *World) drawQuest() string {
 	var candidates []string
 	for id, quest := range w.catalog.Quests {
@@ -19,6 +25,12 @@ func (w *World) drawQuest() string {
 		shown := false
 		for _, current := range w.Quests {
 			if current == id {
+				shown = true
+				break
+			}
+		}
+		for _, accepted := range w.Accepted {
+			if accepted == id {
 				shown = true
 				break
 			}
@@ -34,15 +46,34 @@ func (w *World) drawQuest() string {
 	return candidates[w.questRNG.IntN(len(candidates))]
 }
 
-// Deliver は条件を満たす在庫を低品質から納品し、報酬と次の依頼を得る（DES-QST-01、DES-QST-02、DES-WLD-01）。
-func (w *World) Deliver(index int) error {
-	if index < 0 || index >= len(w.Quests) {
-		return fmt.Errorf("依頼番号 %d: %w", index+1, ErrUnknownID)
-	}
-	id := w.Quests[index]
-	if id == "" {
+// AcceptQuest は候補を受けた依頼の末尾へ移す（DES-QST-05、DES-WLD-01）。
+func (w *World) AcceptQuest(index int) error {
+	if index < 0 || index >= len(w.Quests) || w.Quests[index] == "" {
 		return fmt.Errorf("依頼番号 %d: %w", index+1, ErrNoQuest)
 	}
+	if len(w.Accepted) >= MaxAcceptedQuests {
+		return ErrQuestLimit
+	}
+	w.Accepted = append(w.Accepted, w.Quests[index])
+	w.Quests[index] = ""
+	return nil
+}
+
+// AbandonQuest は受けた依頼をやめ、後ろの依頼を前に詰める（DES-QST-05、DES-WLD-01）。
+func (w *World) AbandonQuest(index int) error {
+	if index < 0 || index >= len(w.Accepted) {
+		return fmt.Errorf("依頼番号 %d: %w", index+1, ErrNoQuest)
+	}
+	w.Accepted = append(w.Accepted[:index], w.Accepted[index+1:]...)
+	return nil
+}
+
+// DeliverQuest は受けた依頼へ低品質から納品し、報酬と評判を得る（DES-QST-02・03・05、DES-WLD-01）。
+func (w *World) DeliverQuest(index int) error {
+	if index < 0 || index >= len(w.Accepted) {
+		return fmt.Errorf("依頼番号 %d: %w", index+1, ErrNoQuest)
+	}
+	id := w.Accepted[index]
 	quest, ok := w.catalog.Quest(id)
 	if !ok {
 		return fmt.Errorf("依頼 ID %s: %w", id, ErrUnknownID)
@@ -84,7 +115,6 @@ func (w *World) Deliver(index int) error {
 	for rank := oldRank + 1; rank <= w.Rank(); rank++ {
 		w.rankUps = append(w.rankUps, rank)
 	}
-	w.Quests[index] = ""
-	w.Quests[index] = w.drawQuest()
+	w.Accepted = append(w.Accepted[:index], w.Accepted[index+1:]...)
 	return nil
 }
