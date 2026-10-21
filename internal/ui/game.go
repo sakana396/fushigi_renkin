@@ -253,7 +253,7 @@ func (g *Game) drawQuests(dst *ebiten.Image) {
 		g.label(dst, x+8, yy+43, fmt.Sprintf("納品できる在庫: %d/%d", eligible, quest.Count), muted)
 		index := i
 		g.button(dst, x+8, yy+66, 150, 28, "納品する", false, func() {
-			g.result("納品しました", g.world.Deliver(index))
+			g.result("納品しました", g.world.DeliverQuest(index))
 			g.showRankUps()
 		})
 	}
