@@ -158,7 +158,7 @@ type Effect struct {
 
 // GameDef はゲーム開始時の設定、店の品ぞろえ、ランクの閾値を定義する（DES-IT01 2.1、DES-DEF-08）。
 type GameDef struct {
-	// 日の長さ（DES-DAY-01、DES-VAL-29）。
+	// 1 日の秒数。0 は日替わりなし（DES-DAY-01、DES-VAL-29）。
 	DaySeconds     int
 	StartMoney     int
 	RankReputation []int

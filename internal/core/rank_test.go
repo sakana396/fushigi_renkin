@@ -205,14 +205,15 @@ func TestRankReputationOverflow(t *testing.T) {
 		{"TC-FR-ECO-05-35 在庫不足が先", max - 119, max - 6, ErrNotEnoughItems},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			w := NewWorld(c, 1)
+			w := acceptedQuestWorld(c, 1)
 			w.Money, w.Reputation = tc.money, tc.reputation
 			w.rankUps = []int{2}
 			if tc.want != ErrNotEnoughItems {
 				addQuestItems(t, w, 20, 20)
 			}
+			beforeState := questState(w)
 			beforeItems, beforeQuests := w.Inventory.Stacks(), w.Quests
-			err := w.Deliver(0)
+			err := w.DeliverQuest(0)
 			if !errors.Is(err, tc.want) {
 				t.Fatalf("誤り = %v、期待 %v", err, tc.want)
 			}
@@ -222,7 +223,7 @@ func TestRankReputationOverflow(t *testing.T) {
 				}
 				return
 			}
-			if w.Reputation != tc.reputation || w.Money != tc.money || !reflect.DeepEqual(w.Inventory.Stacks(), beforeItems) || w.Quests != beforeQuests || !reflect.DeepEqual(w.TakeRankUps(), []int{2}) {
+			if !reflect.DeepEqual(questState(w), beforeState) || w.Reputation != tc.reputation || w.Money != tc.money || !reflect.DeepEqual(w.Inventory.Stacks(), beforeItems) || w.Quests != beforeQuests || !reflect.DeepEqual(w.TakeRankUps(), []int{2}) {
 				t.Fatal("失敗で状態が変化")
 			}
 			if tc.money == 0 && !strings.Contains(err.Error(), "評判") {
@@ -253,15 +254,18 @@ func TestRankQuestAndReputation(t *testing.T) {
 	})
 	t.Run("TC-FR-ECO-05-31 計算例の二段階上昇", func(t *testing.T) {
 		w.Reputation = 2
+		if err := w.AcceptQuest(0); err != nil {
+			t.Fatal(err)
+		}
 		addQuestItems(t, w, 20, 20)
-		if err := w.Deliver(0); err != nil {
+		if err := w.DeliverQuest(0); err != nil {
 			t.Fatal(err)
 		}
 		if w.Reputation != 9 || w.Rank() != 3 || !reflect.DeepEqual(w.TakeRankUps(), []int{2, 3}) || len(w.TakeRankUps()) != 0 {
 			t.Fatalf("評判 = %d、ランク = %d、次の知らせ = %v", w.Reputation, w.Rank(), w.TakeRankUps())
 		}
 	})
-	t.Run("TC-NFR-06-40 解放後も ID 順と同じ乱数列", func(t *testing.T) {
+	t.Run("TC-NFR-06-40 解放後の日替わりも ID 順と同じ乱数列", func(t *testing.T) {
 		ids := []string{"a", "b", "c"}
 		rng := rand.New(rand.NewPCG(42, 1))
 		var shown [3]string
@@ -270,13 +274,21 @@ func TestRankQuestAndReputation(t *testing.T) {
 			shown[i] = ids[n]
 			ids = append(ids[:n], ids[n+1:]...)
 		}
-		ids = []string{shown[0], "d"}
-		if ids[0] > ids[1] {
-			ids[0], ids[1] = ids[1], ids[0]
+		if w.Quests != [3]string{"", shown[1], shown[2]} {
+			t.Fatalf("納品で補充された: %v", w.Quests)
 		}
-		want := ids[rng.IntN(2)]
-		if w.Quests[0] != want || w.Quests[1] != shown[1] || w.Quests[2] != shown[2] {
-			t.Fatalf("依頼板 = %v、期待先頭 = %s", w.Quests, want)
+		ids = []string{"a", "b", "c", "d"}
+		var want [3]string
+		for i := range want {
+			n := rng.IntN(len(ids))
+			want[i] = ids[n]
+			ids = append(ids[:n], ids[n+1:]...)
+		}
+		w.catalog.Game.DaySeconds = 1
+		w.Now = 59
+		w.Tick()
+		if w.Quests != want {
+			t.Fatalf("日替わり候補=%v 期待=%v", w.Quests, want)
 		}
 	})
 }
@@ -297,10 +309,10 @@ func TestRankSingleAndNoRankUp(t *testing.T) {
 			q := c.Quests["q"]
 			q.Reputation = 1
 			c.Quests["q"] = q
-			w := NewWorld(c, 1)
+			w := acceptedQuestWorld(c, 1)
 			w.Reputation = tc.before
 			addQuestItems(t, w, 20, 20)
-			if err := w.Deliver(0); err != nil {
+			if err := w.DeliverQuest(0); err != nil {
 				t.Fatal(err)
 			}
 			ups := w.TakeRankUps()
