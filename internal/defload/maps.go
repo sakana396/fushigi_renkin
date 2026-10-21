@@ -19,7 +19,12 @@ type mapExit struct {
 	Dir  string `toml:"dir"`
 	Look string `toml:"look"`
 }
+type mapLot struct {
+	Mark     string `toml:"mark"`
+	Facility string `toml:"facility"`
+}
 type mapDef struct {
+	Lots  []mapLot  `toml:"lots"`
 	ID    string    `toml:"id"`
 	Name  string    `toml:"name"`
 	Start *mapStart `toml:"start"`
@@ -27,13 +32,12 @@ type mapDef struct {
 	Exits []mapExit `toml:"exits"`
 }
 type mapSource struct {
-	file       string
-	value      defs.MapDef
-	valid      bool
-	exitsValid bool
+	file  string
+	value defs.MapDef
+	valid bool
 }
 
-// validateMaps は地図の形、参照と到達性を順に検査する（DES-VAL-17〜23）。
+// validateMaps は地図の形、参照と到達性を順に検査する（DES-VAL-17〜28）。
 func validateMaps(c *defs.Catalog, maps []source[mapDef], add func(string, string, string)) {
 	if len(maps) == 0 {
 		return
@@ -45,7 +49,11 @@ func validateMaps(c *defs.Catalog, maps []source[mapDef], add func(string, strin
 		}
 		return maps[i].File < maps[j].File
 	})
-	ids := []string{defs.MapTown, defs.MapWorkshop}
+	ids := []string{defs.MapTown}
+	for id := range c.Gathers {
+		ids = append(ids, id)
+	}
+	sort.Strings(ids)
 	sources := make(map[string]*mapSource)
 	for _, s := range maps {
 		v := s.Value
@@ -53,8 +61,8 @@ func validateMaps(c *defs.Catalog, maps []source[mapDef], add func(string, strin
 		m := defs.MapDef{ID: v.ID, Name: v.Name, Rows: v.Rows}
 		bad := false
 		report := func(key, reason string) { add(s.File, key, reason); bad = true }
-		if v.ID != defs.MapWorkshop && v.ID != defs.MapTown {
-			report(p+".id", "地図の ID は workshop または town")
+		if _, ok := c.Gathers[v.ID]; v.ID != defs.MapTown && (!ok || v.ID == defs.ExitGather) {
+			report(p+".id", "地図の ID は town または採取地の ID")
 		}
 		_, duplicate := sources[v.ID]
 		if duplicate {
@@ -87,25 +95,56 @@ func validateMaps(c *defs.Catalog, maps []source[mapDef], add func(string, strin
 		if bad {
 			continue
 		}
-		if v.Start == nil || v.Start.X == nil || v.Start.Y == nil {
-			report(p+".start", "開始位置が書かれていない")
-		} else {
-			m.StartX, m.StartY = *v.Start.X, *v.Start.Y
-			if m.StartX < 0 || m.StartX >= m.Width() || m.StartY < 0 || m.StartY >= m.Height() {
-				report(p+".start", fmt.Sprintf("開始位置 (%d, %d) が地図の外", m.StartX, m.StartY))
-			} else if ch := m.Cell(m.StartX, m.StartY); defs.TileInfo(ch).Kind != defs.CellFloor {
-				report(p+".start", fmt.Sprintf("開始位置 (%d, %d) が床ではない（%q）", m.StartX, m.StartY, string(ch)))
-			}
-		}
-		required := "KSG"
 		if v.ID == defs.MapTown {
-			required = "MQF"
+			if v.Start == nil || v.Start.X == nil || v.Start.Y == nil {
+				report(p+".start", "開始位置が書かれていない")
+			} else {
+				m.StartX, m.StartY = *v.Start.X, *v.Start.Y
+				if m.StartX < 0 || m.StartX >= m.Width() || m.StartY < 0 || m.StartY >= m.Height() {
+					report(p+".start", fmt.Sprintf("開始位置 (%d, %d) が地図の外", m.StartX, m.StartY))
+				} else if ch := m.Cell(m.StartX, m.StartY); defs.TileInfo(ch).Kind != defs.CellFloor {
+					report(p+".start", fmt.Sprintf("開始位置 (%d, %d) が床ではない（%q）", m.StartX, m.StartY, string(ch)))
+				}
+			}
+			for _, ch := range "DMQ" {
+				if !strings.ContainsRune(strings.Join(v.Rows, ""), ch) {
+					report(p, fmt.Sprintf("%s（%c）がない", defs.TileInfo(byte(ch)).Name, ch))
+				}
+			}
+		} else if v.Start != nil {
+			report(p+".start", "採取地の地図には開始位置を書かない")
 		}
-		for _, ch := range required {
-			if !strings.ContainsRune(strings.Join(v.Rows, ""), ch) {
-				report(p, fmt.Sprintf("%s（%c）がない", defs.TileInfo(byte(ch)).Name, ch))
+		picks, enemies := 0, 0
+		for y, row := range v.Rows {
+			for x := 0; x < len(row); x++ {
+				kind := defs.TileInfo(row[x]).Kind
+				if kind == defs.CellPick {
+					picks++
+				}
+				if kind == defs.CellEnemy {
+					enemies++
+				}
+				if v.ID == defs.MapTown && (kind == defs.CellPick || kind == defs.CellEnemy) {
+					report(fmt.Sprintf("%s.rows[%d][%d]", p, y, x), "拾う場所・敵は採取地にしか置けない")
+				}
+				if v.ID != defs.MapTown && (kind == defs.CellLot || kind == defs.CellFixture) {
+					report(fmt.Sprintf("%s.rows[%d][%d]", p, y, x), "区画・設備は街にしか置けない")
+				}
 			}
 		}
+		if v.ID != defs.MapTown {
+			if picks == 0 {
+				add(s.File, p+".rows", "拾う場所は 1 マス以上必要")
+			}
+			want := 0
+			if c.Gathers[v.ID].Battle != nil {
+				want = 1
+			}
+			if enemies != want {
+				add(s.File, p+".rows", fmt.Sprintf("敵（E）が %d マスある（必要なマス数は %d）", enemies, want))
+			}
+		}
+		validateLots(&m, v.Lots, *c, report)
 		counts := map[byte]int{}
 		coords := map[byte][2]int{}
 		for y, row := range v.Rows {
@@ -133,10 +172,14 @@ func validateMaps(c *defs.Catalog, maps []source[mapDef], add func(string, strin
 			if counts[mark] != 1 {
 				report(q+".mark", fmt.Sprintf("出入り口 %q は rows にちょうど 1 マス必要", e.Mark))
 			}
+			wantTo := defs.MapTown
+			if v.ID == defs.MapTown {
+				wantTo = defs.ExitGather
+			}
 			if e.To == v.ID {
 				report(q+".to", "自分の地図には行けない")
-			} else if e.To != defs.MapWorkshop && e.To != defs.MapTown && e.To != defs.ExitGather {
-				report(q+".to", "行き先がない: "+e.To)
+			} else if e.To != wantTo {
+				report(q+".to", "行き先がない: "+e.To+"（必要な行き先は "+wantTo+"）")
 			}
 			if tos[e.To] {
 				report(q+".to", "同じ行き先が重複")
@@ -179,24 +222,21 @@ func validateMaps(c *defs.Catalog, maps []source[mapDef], add func(string, strin
 				report(fmt.Sprintf("%s.rows[%d][%d]", p, xy[1], xy[0]), fmt.Sprintf("出入り口 %q の定義がない", string(mark)))
 			}
 		}
-		if v.ID == defs.MapWorkshop && !tos[defs.MapTown] {
-			report(p+".exits", "town 行きがない")
-		}
+		wantTo := defs.MapTown
 		if v.ID == defs.MapTown {
-			if !tos[defs.MapWorkshop] {
-				report(p+".exits", "workshop 行きがない")
-			}
-			if !tos[defs.ExitGather] {
-				report(p+".exits", "gather 行きがない")
-			}
+			wantTo = defs.ExitGather
 		}
-		if v.ID != defs.MapTown && tos[defs.ExitGather] {
-			report(p+".exits", "gather 行きは town にだけ置く")
+		if len(v.Exits) != 1 || !tos[wantTo] {
+			report(p+".exits", wantTo+" 行きがちょうど 1 つ必要")
+		}
+		if v.ID != defs.MapTown && !bad {
+			e := m.Exits[0]
+			dx, dy := mapDirection(e.Dir)
+			m.StartX, m.StartY = e.X+dx, e.Y+dy
 		}
 		if src := sources[v.ID]; src != nil && !duplicate {
 			src.value = m
 			src.valid = !bad
-			src.exitsValid = !bad
 		}
 	}
 	for _, id := range ids {
@@ -206,42 +246,10 @@ func validateMaps(c *defs.Catalog, maps []source[mapDef], add func(string, strin
 	}
 	for _, id := range ids {
 		src := sources[id]
-		if src == nil || !src.valid {
-			continue
-		}
-		p := "map[id=" + id + "]"
-		for i, e := range src.value.Exits {
-			if e.To == defs.ExitGather {
-				continue
-			}
-			other := sources[e.To]
-			if other == nil {
-				add(src.file, fmt.Sprintf("%s.exits[%d].to", p, i), "行き先がない: "+e.To)
-				src.exitsValid = false
-				continue
-			}
-			if !other.valid {
-				src.exitsValid = false
-				continue
-			}
-			n := 0
-			for _, back := range other.value.Exits {
-				if back.To == id {
-					n++
-				}
-			}
-			if n != 1 {
-				add(src.file, fmt.Sprintf("%s.exits[%d].to", p, i), "戻り道がない: "+e.To)
-				src.exitsValid = false
-			}
-		}
-	}
-	for _, id := range ids {
-		src := sources[id]
 		if src == nil {
 			continue
 		}
-		if src.valid && src.exitsValid {
+		if src.valid {
 			validateMapReachability(src, add)
 		}
 		if src.valid {
@@ -274,7 +282,7 @@ func validateMapReachability(src *mapSource, add func(string, string, string)) {
 	for y, row := range m.Rows {
 		for x := 0; x < len(row); x++ {
 			info := defs.TileInfo(row[x])
-			if info.Kind != defs.CellFixture {
+			if info.Kind != defs.CellFixture && info.Kind != defs.CellPick && info.Kind != defs.CellEnemy {
 				continue
 			}
 			ok := false
@@ -286,6 +294,21 @@ func validateMapReachability(src *mapSource, add func(string, string, string)) {
 			if !ok {
 				add(src.file, fmt.Sprintf("%s.rows[%d][%d]", p, y, x), "開始位置から行けない: "+info.Name)
 			}
+		}
+	}
+	for i, lot := range m.Lots {
+		ok := false
+		for y := lot.Y; y < lot.Y+3; y++ {
+			for x := lot.X; x < lot.X+3; x++ {
+				for _, d := range dirs {
+					if reachable(x+d[0], y+d[1]) {
+						ok = true
+					}
+				}
+			}
+		}
+		if !ok {
+			add(src.file, fmt.Sprintf("%s.lots[%d]", p, i), "開始位置から行けない: 区画")
 		}
 	}
 	for i, e := range m.Exits {
@@ -302,6 +325,96 @@ func validateMapReachability(src *mapSource, add func(string, string, string)) {
 		}
 		if !reachable(e.X+dx, e.Y+dy) {
 			add(src.file, fmt.Sprintf("%s.exits[%d]", p, i), fmt.Sprintf("開始位置から到着のマス (%d, %d) へ行けない", e.X+dx, e.Y+dy))
+		}
+	}
+}
+
+// mapDirection は出口から到着マスへの差分を返す（DES-VAL-22）。
+func mapDirection(dir defs.Dir) (int, int) {
+	switch dir {
+	case defs.DirUp:
+		return 0, -1
+	case defs.DirDown:
+		return 0, 1
+	case defs.DirLeft:
+		return -1, 0
+	case defs.DirRight:
+		return 1, 0
+	}
+	return 0, 0
+}
+
+// validateLots は文字と施設の対応、3×3 の形を検証し左上を保存する（DES-DEF-11、DES-VAL-25）。
+func validateLots(m *defs.MapDef, lots []mapLot, c defs.Catalog, report func(string, string)) {
+	p := "map[id=" + m.ID + "]"
+	if m.ID != defs.MapTown {
+		if lots != nil {
+			report(p+".lots", "lots は街にだけ書く")
+		}
+		return
+	}
+	marks := map[byte]bool{}
+	facilities := map[string]bool{}
+	for i, l := range lots {
+		q := fmt.Sprintf("%s.lots[%d]", p, i)
+		if len(l.Mark) != 1 || l.Mark[0] < 'a' || l.Mark[0] > 'i' {
+			report(q+".mark", "mark は a〜i の 1 文字")
+			continue
+		}
+		mark := l.Mark[0]
+		if marks[mark] {
+			report(q+".mark", "mark が重複")
+		}
+		marks[mark] = true
+		if _, ok := c.Facilities[l.Facility]; !ok {
+			report(q+".facility", "存在しない施設: "+l.Facility)
+		}
+		if facilities[l.Facility] {
+			report(q+".facility", "同じ施設の区画が重複")
+		}
+		facilities[l.Facility] = true
+		minX, minY, count := m.Width(), m.Height(), 0
+		for y, row := range m.Rows {
+			for x := range row {
+				if row[x] == mark {
+					count++
+					if x < minX {
+						minX = x
+					}
+					if y < minY {
+						minY = y
+					}
+				}
+			}
+		}
+		square := count == 9
+		for y := minY; y < minY+3; y++ {
+			for x := minX; x < minX+3; x++ {
+				if m.Cell(x, y) != mark {
+					square = false
+				}
+			}
+		}
+		if !square {
+			report(q, fmt.Sprintf("区画 %q が 3 × 3 の四角になっていない", l.Mark))
+		}
+		m.Lots = append(m.Lots, defs.LotDef{Mark: mark, Facility: l.Facility, X: minX, Y: minY})
+	}
+	for y, row := range m.Rows {
+		for x := range row {
+			if defs.TileInfo(row[x]).Kind == defs.CellLot && !marks[row[x]] {
+				report(fmt.Sprintf("%s.rows[%d][%d]", p, y, x), "区画の定義がない")
+			}
+		}
+	}
+	ids := make([]string, 0, len(c.Facilities))
+	for id := range c.Facilities {
+		ids = append(ids, id)
+	}
+	sort.Strings(ids)
+	for _, id := range ids {
+		if !facilities[id] {
+			report(p+".lots", "施設 "+id+" の区画がない")
 		}
 	}
 }

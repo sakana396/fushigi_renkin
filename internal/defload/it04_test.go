@@ -82,6 +82,25 @@ count = 1
 reward = 1
 rank = 3
 reputation = 1
+[[quest]]
+id = "q7"
+item = "potion"
+min_quality = 1
+count = 1
+reward = 1
+[[quest]]
+id = "q8"
+item = "potion"
+min_quality = 1
+count = 1
+reward = 1
+[[quest]]
+id = "q9"
+item = "potion"
+min_quality = 1
+count = 1
+reward = 1
+
 `
 
 func TestIT04RankDefinitions(t *testing.T) {
@@ -109,9 +128,9 @@ func TestIT04RankDefinitions(t *testing.T) {
 		}, "recipe[id=essence].rank", nil},
 		{"TC-FR-MOD-04-52 上限を超えるランクは誤り", func(s string) string { return strings.Replace(s, "rank = 3\nrolls", "rank = 5\nrolls", 1) }, "gather[id=mine].rank", nil},
 		{"TC-FR-MOD-04-53 評判は負にできない", func(s string) string { return strings.Replace(s, "reputation = 1", "reputation = -1", 1) }, "quest[id=q1].reputation", nil},
-		{"TC-FR-MOD-04-54 ランク 1 の依頼が 2 件", func(s string) string {
+		{"TC-FR-MOD-04-54 ランク 1 の依頼が 5 件", func(s string) string {
 			return strings.Replace(s, "id = \"q3\"\nitem", "id = \"q3\"\nrank = 2\nitem", 1)
-		}, "quest: ランク 1 の依頼は 3 件以上", nil},
+		}, "quest: ランク 1 の依頼が 5 件しかない（6 件以上が必要）", nil},
 		{"TC-FR-MOD-04-55 ランク 2 に評判を得られる依頼がない", func(s string) string {
 			return strings.Replace(s, "rank = 2\nreputation = 1\n[[quest]]", "rank = 2\nreputation = 0\n[[quest]]", 1)
 		}, "quest: ランク 2 に評判を得られる依頼がありません", nil},

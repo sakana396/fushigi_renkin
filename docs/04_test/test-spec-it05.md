@@ -32,15 +32,15 @@
 |---|---|---|---|---|---|
 | TC-FR-FLD-01-01 | FR-FLD-01、DES-DEF-09 | 地図の単体テスト用目録 | 地図の寸法と地図外 | 幅・高さは 2、地図外は 0、(0,1) は K | 正常 |
 | TC-FR-FLD-01-02 | FR-FLD-01、DES-DEF-09 | 地図の単体テスト用目録 | 空の地図 | 空の地図の幅は 0、Cell は 0 | 正常 |
-| TC-FR-FLD-01-03 | FR-FLD-01、DES-DEF-09 | 地図の単体テスト用目録 | 文字の種類 | 床・壁・設備・出入り口・未知の文字が表どおり | 正常 |
-| TC-FR-FLD-01-04 | FR-FLD-01、DES-DEF-09 | 地図の単体テスト用目録 | 設備の種類と表示名 | K/S/G/M/Q/F の種類と日本語名が表どおり | 正常 |
-| TC-FR-FLD-01-05 | FR-FLD-01、DES-DEF-09 | 地図の単体テスト用目録 | IDで地図を引く | town が見つかり、workshop は見つからない | 正常 |
-| TC-FR-FLD-01-06 | FR-FLD-01、DES-VAL-20 | 正常な二枚 | 工房の start.x を省略 | maps.toml の start に「開始位置が書かれていない」 | 異常 |
-| TC-FR-FLD-01-07 | FR-FLD-01、DES-VAL-20 | 正常な二枚 | 工房の start.y を省略 | maps.toml の start に「開始位置が書かれていない」 | 異常 |
-| TC-FR-FLD-01-08 | FR-FLD-01、DES-VAL-20 | 幅 7 の工房 | start を (7,2) にする | maps.toml の start に「開始位置 (7, 2) が地図の外」 | 境界 |
-| TC-FR-FLD-01-09 | FR-FLD-01、DES-VAL-22 | 出口 2・3 に定義がない二枚 | 同じ読み込みを 20 回行う | 診断は毎回同じ順で、各地図の数字順になる | 正常 |
-| TC-FR-FLD-01-30 | FR-FLD-01、DES-DAT-03 | 本体の定義データ | 工房の地図を読む | 20×12、開始位置 (9,8)、全行と街への扉が 5.1 節どおり | 正常 |
-| TC-FR-FLD-01-31 | FR-FLD-01、DES-DAT-03 | 本体の定義データ | 街の地図を読む | 30×20、開始位置 (10,15)、全行と工房・採取地への出口が 5.1 節どおり | 正常 |
+| TC-FR-FLD-01-03 | FR-FLD-01、DES-DEF-09 | 反復 6 で変更: test-spec-it06.md の置き換え一覧を参照 | 固定文字表を引く | D/M/Q:設備、a〜i:区画、*/o:拾う場所、E:敵、~:壁、K/S/G/F:未知 | 正常 |
+| TC-FR-FLD-01-04 | FR-FLD-01、DES-DEF-09 | 反復 6 で変更: test-spec-it06.md の置き換え一覧を参照 | D/M/Q の設備名を引く | 工房の扉・店・依頼板 | 正常 |
+| TC-FR-FLD-01-05 | FR-FLD-01、DES-DEF-09 | 反復 6 で変更: test-spec-it06.md の置き換え一覧を参照 | IDで地図を引く | town は取得でき、未登録の workshop は取得できない | 正常 |
+| TC-FR-FLD-01-06 | FR-FLD-01、DES-VAL-20 | 反復 6 で変更: test-spec-it06.md の置き換え一覧を参照 | 街の開始位置の座標省略または範囲外 | map[id=town].start と理由を診断 | 異常 |
+| TC-FR-FLD-01-07 | FR-FLD-01、DES-VAL-20 | 反復 6 で変更: test-spec-it06.md の置き換え一覧を参照 | 街の開始位置の座標省略または範囲外 | map[id=town].start と理由を診断 | 異常 |
+| TC-FR-FLD-01-08 | FR-FLD-01、DES-VAL-20 | 反復 6 で変更: test-spec-it06.md の置き換え一覧を参照 | 街の開始位置の座標省略または範囲外 | map[id=town].start と理由を診断 | 境界 |
+| TC-FR-FLD-01-09 | FR-FLD-01、DES-VAL-20 | 反復 6 で変更: test-spec-it06.md の置き換え一覧を参照 | 街の start.x を -1 にする | map[id=town].start と理由を診断 | 異常・境界 |
+| TC-FR-FLD-01-30 | FR-FLD-01、DES-DAT-03 | 反復 6 で変更: test-spec-it06.md の置き換え一覧を参照 | 工房の地図がないことと全採取地の地図を確認 | 工房地図なし。全採取地に town 行き出口がある | 正常 |
+| TC-FR-FLD-01-31 | FR-FLD-01、DES-DAT-03 | 反復 6 で変更: test-spec-it06.md の置き換え一覧を参照 | 街の設備・区画・出口を確認 | D/M/Q と全施設の区画、gather 行き出口 1 つ | 正常 |
 | TC-FR-FLD-01-40 | FR-FLD-01、DES-UI-15〜16 | Windows 版を新規起動 | 工房の地図を見て、各設備と南の扉に近づく | 帯の下に 20×12 マスの工房が中央配置され、幅 960 px、高さ 576 px。土色の床と石の壁の上に棚・錬金釜・作業台が描かれ、各マスの上側に暗い下地付きで「在庫の棚」「錬金釜」「ゴーレムの作業台」、南の扉の上側に「街へ」が末尾・下端まで欠けずに出る。主人公が設備の下で上を向いても「E: 錬金釜」などが頭に隠れない | 手動・正常 |
 | TC-FR-FLD-01-41 | FR-FLD-01、DES-UI-15〜16 | 街へ移動済み | 街全体を上下に歩き、家と設備と出口を見る | 30×20 マスの街は横中央で幅 1440 px。草と道、家の壁の左端・右端の縁、屋根の上の段の棟と下の段の軒が出る。設備の上側に暗い下地付きで「店」「依頼板」「施設の看板」、北の扉に「工房へ」、南の道に「採取地へ」が末尾・下端まで欠けずに出る。縦カメラの移動量は最大 92 px で、地図の外は見えない | 手動・境界 |
 | TC-FR-FLD-01-42 | FR-FLD-01、DES-UI-15 | 工房で錬金釜を向く | 地図の設備名を見る | 錬金釜のマスの名が明るい「E: 錬金釜」に変わる。向きを外すと通常の「錬金釜」になる | 手動・正常 |
@@ -119,48 +119,48 @@
 
 | ID | 対象 | 前提 | 入力・操作 | 期待結果 | 種別 |
 |---|---|---|---|---|---|
-| TC-FR-FLD-04-01 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | 地図なし | 地図なしの目録を読める | 正常 |
-| TC-FR-FLD-04-02 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | 正常な二枚 | 両地図の ID・Name・Rows・Start と全出口の Mark・To・Dir・Look・X・Y が設計例どおり | 正常 |
-| TC-FR-FLD-04-03 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | 地図IDが未知 | maps.toml と位置・理由: map[id=market].id に未知の ID を報告 | 異常 |
-| TC-FR-FLD-04-04 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | 同じID | maps.toml と位置・理由: map[id=workshop].id に重複を報告 | 異常 |
-| TC-FR-FLD-04-05 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | 片方不足 | maps.toml と位置・理由: map[id=town] に地図不足を報告 | 異常 |
-| TC-FR-FLD-04-06 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | 空の行 | maps.toml と位置・理由: rows[1] に長さ 0 を報告 | 異常 |
-| TC-FR-FLD-04-07 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | 長さが違う | maps.toml と位置・理由: rows[1] に 6 文字、rows[0] は 7 文字と報告 | 異常 |
-| TC-FR-FLD-04-08 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | 未知の文字 | maps.toml と位置・理由: rows[1][2] に未知の X を報告 | 異常 |
-| TC-FR-FLD-04-09 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | 多バイト文字の位置 | maps.toml と位置・理由: rows[1][2] に未知の「あ」を報告 | 異常 |
-| TC-FR-FLD-04-10 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | start省略 | maps.toml と位置・理由: start に書き忘れを報告 | 異常 |
-| TC-FR-FLD-04-11 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | startは壁 | maps.toml と位置・理由: start に (0,0) が壁と報告 | 異常 |
-| TC-FR-FLD-04-12 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | 必須設備不足 | maps.toml と位置・理由: map[id=workshop] に G 不足を報告 | 異常 |
-| TC-FR-FLD-04-13 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | 出口markは0不可 | maps.toml と位置・理由: exits[0].mark に 0 は使えないと報告 | 異常 |
-| TC-FR-FLD-04-14 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | 出口の定義不足 | maps.toml と位置・理由: rows[4][3] に数字 2 の定義不足を報告 | 異常 |
-| TC-FR-FLD-04-15 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | 行き先がない | maps.toml と位置・理由: exits[0].to に market が存在しないと報告 | 異常 |
-| TC-FR-FLD-04-16 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | 向きが未知 | maps.toml と位置・理由: exits[0].dir に未知の向きを報告 | 異常 |
-| TC-FR-FLD-04-17 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | 絵が未知 | maps.toml と位置・理由: exits[0].look に未知の絵を報告 | 異常 |
-| TC-FR-FLD-04-18 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | 到着先が壁 | maps.toml と位置・理由: exits[0].dir に到着のマス (3,3) が壁と報告 | 異常 |
-| TC-FR-FLD-04-19 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | 同じ行き先 | maps.toml と位置・理由: exits[1].to に行き先の重複を報告 | 異常 |
-| TC-FR-FLD-04-20 | FR-FLD-04、DES-VAL-23 | 地図の単体テスト用目録 | 設備に行けない | maps.toml と位置・理由: rows[1][5] に施設の看板へ行けないと報告 | 異常 |
-| TC-FR-FLD-04-21 | FR-FLD-04、DES-VAL-23 | 地図の単体テスト用目録 | 到着マスへ行けない | maps.toml と位置・理由: exits[0] に到着のマス (3,3) へ行けないと報告 | 異常 |
-| TC-FR-FLD-04-22 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | 出口が二マス | maps.toml と位置・理由: rows[4][3] に出入り口 1 が 2 マスと報告 | 異常 |
-| TC-FR-FLD-04-23 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | 自分への出口 | maps.toml と位置・理由: exits[0].to に自分への出口を報告 | 異常 |
-| TC-FR-FLD-04-24 | FR-FLD-04、DES-VAL-17〜22 | 地図の単体テスト用目録 | 工房に採取地出口 | maps.toml と位置・理由: 工房の gather 行きを報告 | 異常 |
-| TC-FR-FLD-04-25 | FR-FLD-04、DES-VAL-23 | 地図の単体テスト用目録 | 形が誤りなら到達性は検査しない | maps.toml と位置・理由: 行の長さを報告し、到達性は報告しない | 異常 |
-| TC-FR-FLD-04-26 | FR-FLD-04、DES-VAL-23 | 地図の単体テスト用目録 | 開始位置が誤りなら到達性は検査しない | maps.toml と位置・理由: start の壁を報告し、到達性は報告しない | 異常 |
-| TC-FR-FLD-04-27 | FR-FLD-04、DES-VAL-18 | 地図の単体テスト用目録 | rows を空にする | maps.toml の rows に行数 1〜100 の誤り | 境界 |
-| TC-FR-FLD-04-28 | FR-FLD-04、DES-VAL-18 | 地図の単体テスト用目録 | 1 行を 101 文字にする | maps.toml の rows[1] に長さ 1〜100 文字の誤り | 境界 |
-| TC-FR-FLD-04-29 | FR-FLD-04、DES-VAL-18 | 地図の単体テスト用目録 | rows を 101 行にする | maps.toml の rows に行数 1〜100 の誤り | 境界 |
-| TC-FR-FLD-04-30 | FR-FLD-04、DES-VAL-18 | 地図の単体テスト用目録 | 設計書 3 章の 30 文字と 29 文字の行長例 | maps.toml の map[id=town].rows[4] に「29 文字。rows[0] は 30 文字」と報告 | 異常 |
-| TC-FR-FLD-04-31 | FR-FLD-04、DES-VAL-21 | 正常な二枚 | 街の Q を床にする | maps.toml に `map[id=town]: 依頼板（Q）がない` | 異常 |
-| TC-FR-FLD-04-32 | FR-FLD-04、DES-VAL-22 | 正常な二枚 | 工房の town 行きを消す | maps.toml に `map[id=workshop].exits: town 行きがない` | 異常 |
-| TC-FR-FLD-04-33 | FR-FLD-04、DES-VAL-22 | 正常な二枚 | 街の workshop 行きを消す | maps.toml に `map[id=town].exits: workshop 行きがない` | 異常 |
-| TC-FR-FLD-04-34 | FR-FLD-04、DES-VAL-22 | 正常な二枚 | 街の gather 行きを消す | maps.toml に `map[id=town].exits: gather 行きがない` | 異常 |
-| TC-FR-FLD-04-35 | FR-FLD-04、DES-VAL-22 | 正常な二枚 | 街の出口 mark を重複させる | maps.toml の exits[1].mark に重複を報告 | 異常 |
-| TC-FR-FLD-04-36 | FR-FLD-04、DES-VAL-22 | 正常な二枚 | mark を `12` にする | maps.toml の exits[1].mark に 1 文字の制約を報告 | 異常 |
-| TC-FR-FLD-04-37 | FR-FLD-04、DES-VAL-22 | 正常な二枚 | 工房の出口の到着先を設備または別の出口にする | maps.toml の exits[0].dir に (3,3) は床でないと報告 | 異常 |
-| TC-FR-FLD-04-38 | FR-FLD-04、DES-VAL-18〜23 | 誤りを重ねた二枚 | 設備・出口の誤りと到達不能、または行長・未知文字と開始位置の誤りを重ねる | DES-VAL-21・22 の誤りでは到達性を、DES-VAL-18・19 の誤りでは後続を報告しない | 異常 |
-| TC-FR-FLD-04-39 | FR-FLD-04、DES-VAL-23 | 内側の出口だけで分かれた工房 | 出口の向きを右にする | 出口を塗りつぶさず、到着のマス (3,4) へ行けないと報告 | 異常 |
-| TC-FR-FLD-04-40 | FR-FLD-04、DES-DAT-03、DES-VAL-17〜23 | 本体の定義データ | defload で全データを読む | 検証が通り、地図が 2 枚ある | 正常 |
-| TC-FR-FLD-04-41 | FR-FLD-04、DES-FLD-06 | 本体の工房 | 錬金釜・在庫の棚・ゴーレムの作業台・扉の前の床マスから、上下左右の最短距離を求める | 全 6 組が 5.2 節の表どおり（2、2、4、8、8、8）で、各 8 マス以内 | 境界 |
-| TC-FR-FLD-04-42 | FR-FLD-04、DES-FLD-06 | 本体の街 | 工房の扉・店・依頼板・施設の看板・採取地への出口の前の床マスから、上下左右の最短距離を求める | 全 10 組が 5.2 節の表どおり（8、3、6、7、5、2、7、1、2、3）で、各 8 マス以内 | 境界 |
+| TC-FR-FLD-04-01 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | TestMaps の同 ID の入力を読み込む（地図集合・行数などを変更） | 正常に読み込める | 正常 |
+| TC-FR-FLD-04-02 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | TestMaps の同 ID の入力を読み込む（地図集合・行数などを変更） | 正常に読み込める | 正常 |
+| TC-FR-FLD-04-03 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `id = "town"` を `id = "market"` に変更 | ファイル名・位置・理由を含み `.id: 地図の ID` を診断 | 異常 |
+| TC-FR-FLD-04-04 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | TestMaps の同 ID の入力を読み込む（地図集合・行数などを変更） | ファイル名・位置・理由を含み `重複` を診断 | 異常 |
+| TC-FR-FLD-04-05 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | TestMaps の同 ID の入力を読み込む（地図集合・行数などを変更） | ファイル名・位置・理由を含み `map[id=meadow]: 地図がない` を診断 | 異常 |
+| TC-FR-FLD-04-06 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `#DMQ..#` を `` に変更 | ファイル名・位置・理由を含み `行の長さは 1〜100` を診断 | 異常 |
+| TC-FR-FLD-04-07 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `#DMQ..#` を `#DMQ.#` に変更 | ファイル名・位置・理由を含み `行の長さが` を診断 | 異常 |
+| TC-FR-FLD-04-08 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `#DMQ..#` を `#DXQ..#` に変更 | ファイル名・位置・理由を含み `rows[1][2]: 知らない文字` を診断 | 異常 |
+| TC-FR-FLD-04-09 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `#DMQ..#` を `#DあX..#` に変更 | ファイル名・位置・理由を含み `rows[1][2]: 知らない文字` を診断 | 異常 |
+| TC-FR-FLD-04-10 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `start = { x = 1, y = 2 }` を `` に変更 | ファイル名・位置・理由を含み `開始位置が書かれていない` を診断 | 異常 |
+| TC-FR-FLD-04-11 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `x = 1, y = 2` を `x = 0, y = 0` に変更 | ファイル名・位置・理由を含み `床ではない` を診断 | 異常 |
+| TC-FR-FLD-04-12 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `#DMQ..#` を `#DM...#` に変更 | ファイル名・位置・理由を含み `依頼板（Q）がない` を診断 | 異常 |
+| TC-FR-FLD-04-13 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `mark = "1"` を `mark = "0"` に変更 | ファイル名・位置・理由を含み `mark は 1〜9` を診断 | 異常 |
+| TC-FR-FLD-04-14 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `###1###` を `###3###` に変更 | ファイル名・位置・理由を含み `定義がない` を診断 | 異常 |
+| TC-FR-FLD-04-15 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `to = "gather"` を `to = "missing"` に変更 | ファイル名・位置・理由を含み `行き先がない` を診断 | 異常 |
+| TC-FR-FLD-04-16 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `dir = "up"` を `dir = "north"` に変更 | ファイル名・位置・理由を含み `向きは` を診断 | 異常 |
+| TC-FR-FLD-04-17 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `look = "stone_door"` を `look = "none"` に変更 | ファイル名・位置・理由を含み `絵は` を診断 | 異常 |
+| TC-FR-FLD-04-18 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `"#.....#", "#.....#"` を `"#.....#", "#..#..#"` に変更 | ファイル名・位置・理由を含み `到着のマス (3, 3) が床ではない` を診断 | 異常 |
+| TC-FR-FLD-04-19 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | TestMaps の同 ID の入力を読み込む（地図集合・行数などを変更） | ファイル名・位置・理由を含み `同じ行き先が重複` を診断 | 異常 |
+| TC-FR-FLD-04-20 | FR-FLD-04、DES-VAL-23 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `"#DMQ..#", "#.....#"` を `"#DMQ#.#", "#..#..#"` に変更 | ファイル名・位置・理由を含み `開始位置から行けない` を診断 | 異常 |
+| TC-FR-FLD-04-21 | FR-FLD-04、DES-VAL-23 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `"#.....#", "#.....#"` を `"#..#..#", "#.#...#"` に変更 | ファイル名・位置・理由を含み `開始位置から到着のマス` を診断 | 異常 |
+| TC-FR-FLD-04-22 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `###1###` を `##11###` に変更 | ファイル名・位置・理由を含み `2 マスある` を診断 | 異常 |
+| TC-FR-FLD-04-23 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `to = "gather"` を `to = "town"` に変更 | ファイル名・位置・理由を含み `自分の地図` を診断 | 異常 |
+| TC-FR-FLD-04-24 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `to = "town"` を `to = "gather"` に変更 | ファイル名・位置・理由を含み `行き先がない` を診断 | 異常 |
+| TC-FR-FLD-04-25 | FR-FLD-04、DES-VAL-23 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `#DMQ..#` を `#DMQ.#` に変更 | ファイル名・位置・理由を含み `行の長さが` を診断 | 異常 |
+| TC-FR-FLD-04-26 | FR-FLD-04、DES-VAL-23 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `x = 1, y = 2` を `x = 0, y = 0` に変更 | ファイル名・位置・理由を含み `床ではない` を診断 | 異常 |
+| TC-FR-FLD-04-27 | FR-FLD-04、DES-VAL-18 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | TestMaps の同 ID の入力を読み込む（地図集合・行数などを変更） | ファイル名・位置・理由を含み `行数は` を診断 | 境界 |
+| TC-FR-FLD-04-28 | FR-FLD-04、DES-VAL-18 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | TestMaps の同 ID の入力を読み込む（地図集合・行数などを変更） | ファイル名・位置・理由を含み `行の長さは` を診断 | 境界 |
+| TC-FR-FLD-04-29 | FR-FLD-04、DES-VAL-18 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | TestMaps の同 ID の入力を読み込む（地図集合・行数などを変更） | ファイル名・位置・理由を含み `行数は` を診断 | 境界 |
+| TC-FR-FLD-04-30 | FR-FLD-04、DES-VAL-18 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | TestMaps の同 ID の入力を読み込む（地図集合・行数などを変更） | ファイル名・位置・理由を含み `行の長さが` を診断 | 異常 |
+| TC-FR-FLD-04-31 | FR-FLD-04、DES-VAL-21 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `#DMQ..#` を `#DM...#` に変更 | ファイル名・位置・理由を含み `依頼板` を診断 | 異常 |
+| TC-FR-FLD-04-32 | FR-FLD-04、DES-VAL-22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `to = "town"` を `to = "gather"` に変更 | ファイル名・位置・理由を含み `town 行きがちょうど` を診断 | 異常 |
+| TC-FR-FLD-04-33 | FR-FLD-04、DES-VAL-22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `to = "gather"` を `to = "town"` に変更 | ファイル名・位置・理由を含み `gather 行きがちょうど` を診断 | 異常 |
+| TC-FR-FLD-04-34 | FR-FLD-04、DES-VAL-22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `to = "gather"` を `to = "meadow"` に変更 | ファイル名・位置・理由を含み `gather 行きがちょうど` を診断 | 異常 |
+| TC-FR-FLD-04-35 | FR-FLD-04、DES-VAL-22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | TestMaps の同 ID の入力を読み込む（地図集合・行数などを変更） | ファイル名・位置・理由を含み `mark が重複` を診断 | 異常 |
+| TC-FR-FLD-04-36 | FR-FLD-04、DES-VAL-22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `mark = "2"` を `mark = "12"` に変更 | ファイル名・位置・理由を含み `mark は` を診断 | 異常 |
+| TC-FR-FLD-04-37 | FR-FLD-04、DES-VAL-22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `"#.....#", "#.....#"` を `"#.....#", "#..D..#"` に変更 | ファイル名・位置・理由を含み `到着のマス` を診断 | 異常 |
+| TC-FR-FLD-04-38 | FR-FLD-04、DES-VAL-18〜23 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `#DMQ..#` を `#DXQ..#` に変更 | ファイル名・位置・理由を含み `知らない文字` を診断 | 異常 |
+| TC-FR-FLD-04-39 | FR-FLD-04、DES-VAL-23 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | TestMaps の同 ID の入力を読み込む（地図集合・行数などを変更） | ファイル名・位置・理由を含み `開始位置から到着のマス` を診断 | 異常 |
+| TC-FR-FLD-04-40 | FR-FLD-04、DES-DAT-03、DES-VAL-17〜23 | 反復 6 で変更: test-spec-it06.md の置き換え一覧を参照 | defload で全データを読む | 反復 6 の文字表・出口の規則を満たす（test-spec-it06.md 参照） | 正常 |
+| TC-FR-FLD-04-41 | FR-FLD-04、DES-FLD-06 | 反復 6 で変更: test-spec-it06.md の置き換え一覧を参照 | 工房地図の廃止と全採取地の地図を確認 | 工房地図なし、全採取地に地図あり（旧工房距離の規則は廃止） | 境界 |
+| TC-FR-FLD-04-42 | FR-FLD-04、DES-FLD-06 | 反復 6 で変更: test-spec-it06.md の置き換え一覧を参照 | 街の設備と出口を確認 | D/M/Q、区画と gather 行き出口 1 つ（旧距離の規則は廃止） | 境界 |
 
 ### IF-08 主人公を動かし、設備を使う
 
@@ -169,12 +169,12 @@
 
 | ID | 対象 | 前提 | 入力・操作 | 期待結果 | 種別 |
 |---|---|---|---|---|---|
-| TC-IF-08-01 | IF-08、DES-FLD-04 | 工房 (240,224)、上 | 計算例 10: FacingFixture | cauldron、true、状態不変 | 正常 |
-| TC-IF-08-02 | IF-08、DES-FLD-04 | 工房 (288,224)、上 | 計算例 11: FacingFixture | 同面積は x が小さい cauldron、true | 境界 |
-| TC-IF-08-03 | IF-08、DES-FLD-04 | 工房 (290,224)、上 | 計算例 12: FacingFixture | 面積が大きい shelf、true | 境界 |
+| TC-IF-08-01 | IF-08、DES-FLD-04 | 反復 6 で変更: 元の地図の設備位置を保ち D/M/Q に置換 | 計算例 10: FacingFixture | workshop_door、true、状態不変 | 正常 |
+| TC-IF-08-02 | IF-08、DES-FLD-04 | 反復 6 で変更: 元の地図の設備位置を保ち D/M/Q に置換 | 計算例 11: FacingFixture | workshop_door、true、状態不変 | 境界 |
+| TC-IF-08-03 | IF-08、DES-FLD-04 | 反復 6 で変更: 元の地図の設備位置を保ち D/M/Q に置換 | 計算例 12: FacingFixture | shop、true、状態不変 | 境界 |
 | TC-IF-08-04 | IF-08、DES-FLD-04 | 工房 (240,224)、下 | 計算例 13: FacingFixture | 空、false | 正常 |
 | TC-IF-08-05 | IF-08、DES-FLD-04 | 工房 (240,240)、上 | 計算例 14: FacingFixture | 隙間 16 では空、false | 境界 |
-| TC-IF-08-06 | IF-08、DES-FLD-04 | 工房 (240,239)、上 | 計算例 15: FacingFixture | 隙間 15 では cauldron、true | 境界 |
+| TC-IF-08-06 | IF-08、DES-FLD-04 | 反復 6 で変更: 元の地図の設備位置を保ち D/M/Q に置換 | 計算例 15: FacingFixture | workshop_door、true、状態不変 | 境界 |
 | TC-IF-08-07 | IF-08、DES-FLD-02、DES-WLD-01 | 工房 (432,336)、下 | 計算例 23: MovePlayer(2,0) | ErrInvalidDirection、状態不変 | 異常 |
 | TC-IF-08-08 | IF-08、DES-FLD-02、DES-WLD-01 | 工房 (432,336)、下、戦闘中 | 計算例 31: 右へ移動 | ErrInBattle、状態不変 | 異常 |
 | TC-IF-08-09 | IF-08、DES-FLD-02、DES-WLD-01 | 地図なし、戦闘中 | MovePlayer(2,0) | ErrInvalidDirection が最初、状態不変 | 異常 |
@@ -185,11 +185,11 @@
 | TC-IF-08-14 | IF-08、DES-TIME-02、NFR-06 | 同じ地図とシードの世界を 2 つ | 同じ移動列 | 主人公の最終状態が一致 | 正常 |
 | TC-IF-08-15 | IF-08、DES-FLD-02、DES-WLD-01 | 工房 (432,336)、下 | MovePlayer(0,2) | ErrInvalidDirection、状態不変 | 異常 |
 | TC-IF-08-16 | IF-08、DES-FLD-02、DES-WLD-01 | 工房 (432,336)、下 | MovePlayer(-2,0) | ErrInvalidDirection、状態不変 | 異常 |
-| TC-IF-08-17 | IF-08、DES-FLD-04 | 工房 (544,144)、右 | FacingFixture | workbench、true、状態不変 | 正常 |
-| TC-IF-08-18 | IF-08、DES-FLD-04 | 工房 (416,144)、左 | FacingFixture | shelf、true、状態不変 | 正常 |
+| TC-IF-08-17 | IF-08、DES-FLD-04 | 反復 6 で変更: 元の地図の設備位置を保ち D/M/Q に置換 | FacingFixture | quest_board、true、状態不変 | 正常 |
+| TC-IF-08-18 | IF-08、DES-FLD-04 | 反復 6 で変更: 元の地図の設備位置を保ち D/M/Q に置換 | FacingFixture | shop、true、状態不変 | 正常 |
 | TC-IF-08-19 | IF-08、DES-FLD-04 | 工房 (128,144)、左。前は壁 | FacingFixture | 空、false、状態不変 | 境界 |
-| TC-IF-08-20 | IF-08、DES-FLD-04 | 小地図の (3,1) に錬金釜、(3,2) に棚。主人公 (256,192)、右 | FacingFixture | 前の帯の重なりは両方 16×32。同面積なので y が小さい錬金釜、true | 境界 |
-| TC-IF-08-21 | IF-08、DES-FLD-04 | 工房 (529,144)、右。作業台との隙間 15 | FacingFixture | 前の帯が作業台に 1 単位重なり workbench、true | 境界 |
+| TC-IF-08-20 | IF-08、DES-FLD-04 | 反復 6 で変更: (3,1) に工房の扉 D、(3,2) に店 M。主人公 (256,192)、右 | FacingFixture | 前の帯の重なりは両方 16×32。同面積なので y が小さい workshop_door、true | 境界 |
+| TC-IF-08-21 | IF-08、DES-FLD-04 | 反復 6 で変更: 元の地図の設備位置を保ち D/M/Q に置換 | FacingFixture | quest_board、true、状態不変 | 境界 |
 | TC-IF-08-40 | IF-08、DES-UI-17〜18 | 工房の開始位置 | W/A/S/D と各矢印を順に押す | 主人公は押した方向へ歩き、上下左右の向きの三角が当たり判定の該当側に出る。左向きの絵は右向きの左右反転 | 手動・正常 |
 | TC-IF-08-41 | IF-08、DES-UI-18 | 工房の床で設備を向いていない | E、スペース、地図のクリックを順に行う | 窓は開かず主人公の位置は変わらない。クリックだけでは設備を使えない | 手動・異常 |
 | TC-IF-08-42 | IF-08、DES-UI-18〜19 | 工房で錬金釜の前を向く | E で開き、移動キーとスペースを押し、Esc で閉じる | 「錬金釜」の窓と「閉じる」（x=10、y=76）が出る。窓中は位置・向きが変わらず、Esc 後も開く前と同じ | 手動・正常 |
@@ -244,15 +244,15 @@ TC-CST-04-05 の結果（2026-10-16）: 出典表の各列を ADR-0003 の決定
 
 | ID | 対象 | 前提 | 入力・操作 | 期待結果 | 種別 |
 |---|---|---|---|---|---|
-| TC-NFR-08-01 | NFR-08、DES-VAL-24 | 地図以外の定義がそろった MapFS | 地図 TOML のシードと任意バイト列を FuzzLoadMaps に渡す | 異常終了せず、成功時の地図は基本不変条件を満たす | 異常 |
-| TC-NFR-08-02 | NFR-08、DES-VAL-21・24 | 読み込み成功時の地図 | 必須設備を確認 | 工房に K/S/G、街に M/Q/F がそれぞれある | 正常 |
-| TC-NFR-08-03 | NFR-08、DES-VAL-22・24 | 読み込み成功時の地図 | mark と行の数字を確認 | mark は重複せず、それぞれ 1 マスにあり、未定義の数字がない | 正常 |
-| TC-NFR-08-04 | NFR-08、DES-VAL-22・24 | 読み込み成功時の地図 | 出口の To を確認 | 自分以外の地図または gather である | 正常 |
-| TC-NFR-08-05 | NFR-08、DES-VAL-22・24 | 読み込み成功時の地図 | 出口の Dir を確認 | 上下左右の 4 値である | 正常 |
-| TC-NFR-08-06 | NFR-08、DES-VAL-22・24 | 読み込み成功時の地図 | 出口の Look を確認 | stone_door・wood_door・road のいずれかである | 正常 |
-| TC-NFR-08-07 | NFR-08、DES-VAL-22・24 | 読み込み成功時の地図 | 出口の To の重複を確認 | 同じ行き先は 1 つまでである | 正常 |
-| TC-NFR-08-08 | NFR-08、DES-VAL-22・24 | 読み込み成功時の地図 | gather 行きの地図を確認 | town にだけ置かれている | 正常 |
-| TC-NFR-08-09 | NFR-08、DES-VAL-22・24 | 読み込み成功時の地図 | 必須の出口を確認 | 工房に town 行き、街に workshop・gather 行きがある | 正常 |
+| TC-NFR-08-01 | NFR-08、DES-VAL-24 | 反復 6 で変更: test-spec-it06.md の置き換え一覧を参照 | 地図 TOML のシードと任意バイト列を FuzzLoadMaps に渡す | 異常終了しない。成功時は地図の形と文字、到達性を満たす | 異常 |
+| TC-NFR-08-02 | NFR-08、DES-VAL-21・24 | 反復 6 で変更: test-spec-it06.md の置き換え一覧を参照 | 必須設備を確認 | 街に D/M/Q がある | 正常 |
+| TC-NFR-08-03 | NFR-08、DES-VAL-22・24 | 反復 6 で変更: test-spec-it06.md の置き換え一覧を参照 | mark と行の数字を確認 | mark は重複せず、数字のマスと出口の定義が 1 対 1 | 正常 |
+| TC-NFR-08-04 | NFR-08、DES-VAL-22・24 | 反復 6 で変更: test-spec-it06.md の置き換え一覧を参照 | 出口の To を確認 | 街の出口は gather、採取地の出口は town | 正常 |
+| TC-NFR-08-05 | NFR-08、DES-VAL-22・24 | 反復 6 で変更: test-spec-it06.md の置き換え一覧を参照 | 出口の Dir を確認 | up・down・left・right のいずれか | 正常 |
+| TC-NFR-08-06 | NFR-08、DES-VAL-22・24 | 反復 6 で変更: test-spec-it06.md の置き換え一覧を参照 | 出口の Look を確認 | stone_door・wood_door・road のいずれか | 正常 |
+| TC-NFR-08-07 | NFR-08、DES-VAL-22・24 | 反復 6 で変更: test-spec-it06.md の置き換え一覧を参照 | 出口の To の重複を確認 | 同じ行き先は重複しない | 正常 |
+| TC-NFR-08-08 | NFR-08、DES-VAL-22・24 | 反復 6 で変更: test-spec-it06.md の置き換え一覧を参照 | gather 行きの地図を確認 | gather 行きは街にだけある | 正常 |
+| TC-NFR-08-09 | NFR-08、DES-VAL-22・24 | 反復 6 で変更: test-spec-it06.md の置き換え一覧を参照 | 必須の出口を確認 | 各地図に指定された行き先の出口がちょうど 1 つ | 正常 |
 
 ## 3. 手動確認の結果
 

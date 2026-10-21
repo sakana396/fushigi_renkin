@@ -78,3 +78,31 @@ item = "potion"
 min_quality = 150
 count = 2
 reward = 180
+
+# 反復 6 の検証を満たす最小の追加。依頼の本調整は #106。
+[[quest]]
+id = "q_burger_extra"
+rank = 1
+reputation = 2
+item = "burger"
+min_quality = 20
+count = 2
+reward = 120
+
+[[quest]]
+id = "q_bread_extra"
+rank = 1
+reputation = 1
+item = "bread"
+min_quality = 20
+count = 3
+reward = 65
+
+[[quest]]
+id = "q_cheese_extra"
+rank = 1
+reputation = 1
+item = "cheese"
+min_quality = 20
+count = 2
+reward = 80

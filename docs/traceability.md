@@ -60,3 +60,17 @@
 | IF-08 | #86, #89 | DES-FLD-02, DES-FLD-04, DES-UI-17〜19 | TC-IF-08-01〜21、TC-IF-08-40〜60 | `internal/core/player.go`, `internal/core/player_test.go`, `internal/ui/game.go`, `internal/ui/map.go`, `internal/ui/window.go`, `internal/ui/battle.go` | 実装済み（Windows の手動確認は合格） |
 | CST-04 | #88 | ADR-0003, DES-UI-14 | TC-CST-04-01〜07 | `internal/ui/assets/` | 実装済み |
 | NFR-08 | #85 | DES-VAL-24 | TC-NFR-08-01〜09 | `internal/defload/maps_test.go` | 一部実装済み（地図のファジングに成功時の設備・出口の不変条件を追加） |
+
+## 反復 6（#103 定義と検証）
+
+| 要求 ID | Issue | 設計要素 | テストケース ID | 実装 | 状態 |
+|---|---|---|---|---|---|
+| FR-FLD-04 | #103 | DES-DEF-09〜12、DES-VAL-15・17・20〜29 | TC-FR-FLD-04-50〜57 | `internal/defs`、`internal/defload`（`it06_test.go`、`maps_test.go`） | 定義・検証を実装済み（core・画面・完成データは各担当 Issue） |
+| FR-FLD-01 | #103 | DES-DEF-09〜12、DES-VAL-15・17・20〜29 | TC-FR-FLD-01-50〜54 | `internal/defs`、`internal/defload`（`it06_test.go`、`maps_test.go`） | 定義・検証を実装済み（core・画面・完成データは各担当 Issue） |
+| FR-TWN-02 | #103 | DES-DEF-09〜12、DES-VAL-15・17・20〜29 | TC-FR-TWN-02-30〜32 | `internal/defs`、`internal/defload`（`it06_test.go`、`maps_test.go`） | 定義・検証を実装済み（core・画面・完成データは各担当 Issue） |
+| FR-TWN-07 | #103 | DES-DEF-09〜12、DES-VAL-15・17・20〜29 | TC-FR-TWN-07-30〜46 | `internal/defs`、`internal/defload`（`it06_test.go`、`maps_test.go`） | 定義・検証を実装済み（core・画面・完成データは各担当 Issue） |
+| FR-FLD-05 | #103 | DES-DEF-09〜12、DES-VAL-15・17・20〜29 | TC-FR-FLD-05-30〜44 | `internal/defs`、`internal/defload`（`it06_test.go`、`maps_test.go`） | 定義・検証を実装済み（core・画面・完成データは各担当 Issue） |
+| FR-PRG-05 | #103 | DES-DEF-09〜12、DES-VAL-15・17・20〜29 | TC-FR-PRG-05-30〜37 | `internal/defs`、`internal/defload`（`it06_test.go`、`maps_test.go`） | 定義・検証を実装済み（core・画面・完成データは各担当 Issue） |
+| FR-ECO-07 | #103 | DES-DEF-09〜12、DES-VAL-15・17・20〜29 | TC-FR-ECO-07-30〜33 | `internal/defs`、`internal/defload`（`it06_test.go`、`maps_test.go`） | 定義・検証を実装済み（core・画面・完成データは各担当 Issue） |
+| FR-MOD-04 | #103 | DES-DEF-09〜12、DES-VAL-15・17・20〜29 | TC-FR-MOD-04-80〜82 | `internal/defs`、`internal/defload`（`it06_test.go`、`maps_test.go`） | 定義・検証を実装済み（core・画面・完成データは各担当 Issue） |
+| NFR-08 | #103 | DES-DEF-09〜12、DES-VAL-15・17・20〜29 | TC-NFR-08-10 | `internal/defs`、`internal/defload`（`it06_test.go`、`maps_test.go`） | 定義・検証を実装済み（core・画面・完成データは各担当 Issue） |

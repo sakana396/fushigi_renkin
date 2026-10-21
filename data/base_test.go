@@ -17,7 +17,7 @@ func TestBaseData(t *testing.T) {
 		{"TC-FR-MOD-02-04 本体データの読み込み", func(t *testing.T, c defs.Catalog) {
 			materials := []string{"wheat", "water", "milk", "meat", "herb", "ore", "glow_moss"}
 			products := []string{"flour", "bread", "cheese", "burger", "deluxe_burger", "potion", "tonic", "glow_crystal", "lantern", "bomb"}
-			if len(c.Items) != len(materials)+len(products) || len(c.Recipes) != 13 || len(c.Facilities) != 2 || len(c.Golems) != 1 || len(c.Gathers) != 4 || len(c.Game.Shop) != 3 || len(c.Units) != 6 || len(c.Quests) != 9 || len(c.Maps) != 2 {
+			if len(c.Items) != len(materials)+len(products) || len(c.Recipes) != 13 || len(c.Facilities) != 2 || len(c.Golems) != 1 || len(c.Gathers) != 4 || len(c.Game.Shop) != 3 || len(c.Units) != 6 || len(c.Quests) != 12 || len(c.Maps) != 5 {
 				t.Fatalf("定義の数: items=%d recipes=%d facilities=%d golems=%d gathers=%d shop=%d units=%d quests=%d maps=%d", len(c.Items), len(c.Recipes), len(c.Facilities), len(c.Golems), len(c.Gathers), len(c.Game.Shop), len(c.Units), len(c.Quests), len(c.Maps))
 			}
 			for _, id := range append(materials, products...) {

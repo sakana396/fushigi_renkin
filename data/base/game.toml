@@ -1,4 +1,5 @@
 [game]
+day_seconds = 300
 start_money = 100
 base_golem_slots = 1
 rank_reputation = [3, 8, 15]

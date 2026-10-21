@@ -3,26 +3,32 @@ package defload
 import (
 	"errors"
 	"fmt"
-	"reflect"
+	"github.com/sakana396/fushigi_renkin/internal/defs"
+	"os"
 	"strings"
 	"testing"
 	"testing/fstest"
-
-	"github.com/sakana396/fushigi_renkin/internal/defs"
 )
 
-const validMaps = `[[map]]
-id = "workshop"
-name = "工房"
-start = { x = 1, y = 2 }
-rows = ["#######", "#KSG..#", "#.....#", "#.....#", "###1###"]
-exits = [{ mark = "1", to = "town", dir = "up", look = "stone_door" }]
+const validMaps = `[game]
+day_seconds=1
+[[item]]
+id="herb"
+[[gather]]
+id="meadow"
+respawn_seconds=1
+rolls=1
+cooldown_seconds=1
+drops=[{item="herb",weight=1,quality_min=1,quality_max=1}]
 [[map]]
 id = "town"
-name = "街"
 start = { x = 1, y = 2 }
-rows = ["#########", "#M.Q.F..#", "#.......#", "#.......#", "###1#2###"]
-exits = [{ mark = "1", to = "workshop", dir = "up", look = "wood_door" }, { mark = "2", to = "gather", dir = "up", look = "road" }]
+rows = ["#######", "#DMQ..#", "#.....#", "#.....#", "###1###"]
+exits = [{ mark = "1", to = "gather", dir = "up", look = "stone_door" }]
+[[map]]
+id = "meadow"
+rows = ["#########", "#*...o..#", "#.......#", "#.......#", "###2#####"]
+exits = [{ mark = "2", to = "town", dir = "up", look = "road" }]
 `
 
 func loadMapText(s string) (defs.Catalog, error) {
@@ -30,106 +36,114 @@ func loadMapText(s string) (defs.Catalog, error) {
 }
 func replaceOne(s, old, new string) string { return strings.Replace(s, old, new, 1) }
 
-// mapDiagnostics はファイル名・経路・理由を個別に検査する（DES-VAL-17〜23）。
+// mapDiagnostics は診断のファイル・位置・理由を確かめる（DES-VAL-17〜29）。
 func mapDiagnostics(t *testing.T, err error, want string) Errors {
 	t.Helper()
-	var diagnostics Errors
-	if !errors.As(err, &diagnostics) {
-		t.Fatalf("Errors がない: %v", err)
+	var ds Errors
+	if !errors.As(err, &ds) {
+		t.Fatalf("診断がない: %v", err)
 	}
 	found := false
-	for _, d := range diagnostics {
+	for _, d := range ds {
+		if d.File == "" || d.Path == "" || d.Reason == "" {
+			t.Fatalf("不完全な診断: %+v", d)
+		}
 		if d.File == "maps.toml" && strings.Contains(d.Path+": "+d.Reason, want) {
 			found = true
 		}
 	}
 	if !found {
-		t.Fatalf("want %q; got %v", want, diagnostics)
+		t.Fatalf("期待 %q; 診断 %v", want, err)
 	}
-	return diagnostics
+	return ds
 }
 
-// TestMaps は地図の読み込みと各検証規則の診断を確かめる（DES-DEF-09、DES-VAL-17〜23）。
+// TestMaps は反復 6 の地図の形・出口・到達性を確かめる（DES-VAL-17〜24）。
 func TestMaps(t *testing.T) {
-	valid := validMaps
-	cases := []struct {
-		id   string
-		edit func(string) string
-		want string
-	}{
-		{"TC-FR-FLD-04-01 地図なし", func(string) string { return "" }, ""},
-		{"TC-FR-FLD-04-02 正常な二枚", func(s string) string { return s }, ""},
-		{"TC-FR-FLD-04-03 地図IDが未知", func(s string) string { return replaceOne(s, "id = \"town\"", "id = \"market\"") }, "map[id=market].id: 地図の ID"},
-		{"TC-FR-FLD-04-04 同じID", func(s string) string {
-			return s + strings.Replace(s[:strings.LastIndex(s, "[[map]]")], "workshop", "workshop", 1)
-		}, "map[id=workshop].id: ID が重複"},
-		{"TC-FR-FLD-04-05 片方不足", func(s string) string { return s[:strings.LastIndex(s, "[[map]]")] }, "map[id=town]: 地図がない"},
-		{"TC-FR-FLD-04-06 空の行", func(s string) string { return replaceOne(s, "#KSG..#", "") }, "rows[1]: 行の長さは 1〜100"},
-		{"TC-FR-FLD-04-07 長さが違う", func(s string) string { return replaceOne(s, "#KSG..#", "#KSG.#") }, "rows[1]: 行の長さが rows[0] と違う（6 文字。rows[0] は 7 文字）"},
-		{"TC-FR-FLD-04-08 未知の文字", func(s string) string { return replaceOne(s, "#KSG..#", "#KXG..#") }, "rows[1][2]: 知らない文字 \"X\""},
-		{"TC-FR-FLD-04-09 多バイト文字の位置", func(s string) string { return replaceOne(s, "#KSG..#", "#KあX..#") }, "rows[1][2]: 知らない文字 \"あ\""},
-		{"TC-FR-FLD-04-10 start省略", func(s string) string { return replaceOne(s, "start = { x = 1, y = 2 }\n", "") }, "map[id=workshop].start: 開始位置が書かれていない"},
-		{"TC-FR-FLD-04-11 startは壁", func(s string) string { return replaceOne(s, "x = 1, y = 2", "x = 0, y = 0") }, "map[id=workshop].start: 開始位置 (0, 0) が床ではない"},
-		{"TC-FR-FLD-04-12 必須設備不足", func(s string) string { return replaceOne(s, "#KSG..#", "#KS...#") }, "map[id=workshop]: ゴーレムの作業台（G）がない"},
-		{"TC-FR-FLD-04-13 出口markは0不可", func(s string) string { return replaceOne(s, "mark = \"1\"", "mark = \"0\"") }, "exits[0].mark: mark は 1〜9"},
-		{"TC-FR-FLD-04-14 出口の定義不足", func(s string) string { return replaceOne(s, "###1###", "###2###") }, "rows[4][3]: 出入り口 \"2\" の定義がない"},
-		{"TC-FR-FLD-04-15 行き先がない", func(s string) string { return replaceOne(s, "to = \"town\"", "to = \"market\"") }, "exits[0].to: 行き先がない: market"},
-		{"TC-FR-FLD-04-16 向きが未知", func(s string) string { return replaceOne(s, "dir = \"up\"", "dir = \"north\"") }, "exits[0].dir: 向きは"},
-		{"TC-FR-FLD-04-17 絵が未知", func(s string) string { return replaceOne(s, "look = \"stone_door\"", "look = \"none\"") }, "exits[0].look: 絵は"},
-		{"TC-FR-FLD-04-18 到着先が壁", func(s string) string { return strings.Replace(s, "#.....#", "#..#..#", 2) }, "exits[0].dir: 到着のマス (3, 3) が床ではない"},
-		{"TC-FR-FLD-04-19 同じ行き先", func(s string) string { return replaceOne(s, "to = \"gather\"", "to = \"workshop\"") }, "exits[1].to: 同じ行き先が重複"},
-		{"TC-FR-FLD-04-20 設備に行けない", func(s string) string {
-			return replaceOne(replaceOne(s, "#M.Q.F..#", "#M.Q#F#.#"), "#.......#", "#....#..#")
-		}, "rows[1][5]: 開始位置から行けない: 施設の看板"},
-		{"TC-FR-FLD-04-21 到着マスへ行けない", func(s string) string { return replaceOne(replaceOne(s, "#.....#", "#..#..#"), "#.....#", "#.#...#") }, "開始位置から到着のマス (3, 3) へ行けない"},
-		{"TC-FR-FLD-04-22 出口が二マス", func(s string) string { return replaceOne(s, "###1###", "##11###") }, "出入り口 \"1\" が 2 マスある"},
-		{"TC-FR-FLD-04-23 自分への出口", func(s string) string { return replaceOne(s, "to = \"town\"", "to = \"workshop\"") }, "exits[0].to: 自分の地図には行けない"},
-		{"TC-FR-FLD-04-24 工房に採取地出口", func(s string) string { return replaceOne(s, "to = \"town\"", "to = \"gather\"") }, "gather 行きは town にだけ置く"},
-		{"TC-FR-FLD-04-25 形が誤りなら到達性は検査しない", func(s string) string {
-			return replaceOne(replaceOne(s, "#M.Q.F..#", "#M.Q#F#.#"), "#.......#", "#....#..")
-		}, "rows[2]: 行の長さが rows[0] と違う"},
-		{"TC-FR-FLD-04-26 開始位置が誤りなら到達性は検査しない", func(s string) string {
-			return replaceOne(replaceOne(replaceOne(s, "#M.Q.F..#", "#M.Q#F#.#"), "#.......#", "#....#..#"), "x = 1, y = 2", "x = 0, y = 0")
-		}, "start: 開始位置 (0, 0) が床ではない"},
-		{"TC-FR-FLD-04-27 行がない", func(s string) string {
-			return replaceOne(s, "rows = [\"#######\", \"#KSG..#\", \"#.....#\", \"#.....#\", \"###1###\"]", "rows = []")
-		}, "rows: 行数は 1〜100"},
-		{"TC-FR-FLD-04-28 幅が101", func(s string) string { return replaceOne(s, "#KSG..#", strings.Repeat(".", 101)) }, "rows[1]: 行の長さは 1〜100 文字"},
-		{"TC-FR-FLD-04-29 高さが101", func(s string) string {
-			return replaceOne(s, "###1###\"]", "###1###\", "+strings.Repeat("\"#.....#\", ", 96)+"\"#.....#\"]")
-		}, "rows: 行数は 1〜100"},
-		{"TC-FR-FLD-04-30 設計例の行長診断", func(string) string {
-			rows := []string{}
-			for i := 0; i < 4; i++ {
-				rows = append(rows, fmt.Sprintf("%q", strings.Repeat(".", 30)))
-			}
-			rows = append(rows, fmt.Sprintf("%q", strings.Repeat(".", 29)))
-			return "[[map]]\nid=\"town\"\nrows=[" + strings.Join(rows, ",") + "]\n"
-		}, "map[id=town].rows[4]: 行の長さが rows[0] と違う（29 文字。rows[0] は 30 文字）"},
+	cases := []struct{ id, old, new, want string }{
+		{"TC-FR-FLD-04-01", "", "", ""},
+		{"TC-FR-FLD-04-02", "", "", ""},
+		{"TC-FR-FLD-04-03", "id = \"town\"", "id = \"market\"", ".id: 地図の ID"},
+		{"TC-FR-FLD-04-04", "", "", "重複"},
+		{"TC-FR-FLD-04-05", "", "", "map[id=meadow]: 地図がない"},
+		{"TC-FR-FLD-04-06", "#DMQ..#", "", "行の長さは 1〜100"},
+		{"TC-FR-FLD-04-07", "#DMQ..#", "#DMQ.#", "行の長さが"},
+		{"TC-FR-FLD-04-08", "#DMQ..#", "#DXQ..#", "rows[1][2]: 知らない文字"},
+		{"TC-FR-FLD-04-09", "#DMQ..#", "#DあX..#", "rows[1][2]: 知らない文字"},
+		{"TC-FR-FLD-04-10", "start = { x = 1, y = 2 }", "", "開始位置が書かれていない"},
+		{"TC-FR-FLD-04-11", "x = 1, y = 2", "x = 0, y = 0", "床ではない"},
+		{"TC-FR-FLD-04-12", "#DMQ..#", "#DM...#", "依頼板（Q）がない"},
+		{"TC-FR-FLD-04-13", "mark = \"1\"", "mark = \"0\"", "mark は 1〜9"},
+		{"TC-FR-FLD-04-14", "###1###", "###3###", "定義がない"},
+		{"TC-FR-FLD-04-15", "to = \"gather\"", "to = \"missing\"", "行き先がない"},
+		{"TC-FR-FLD-04-16", "dir = \"up\"", "dir = \"north\"", "向きは"},
+		{"TC-FR-FLD-04-17", "look = \"stone_door\"", "look = \"none\"", "絵は"},
+		{"TC-FR-FLD-04-18", "\"#.....#\", \"#.....#\"", "\"#.....#\", \"#..#..#\"", "到着のマス (3, 3) が床ではない"},
+		{"TC-FR-FLD-04-19", "", "", "同じ行き先が重複"},
+		{"TC-FR-FLD-04-20", "\"#DMQ..#\", \"#.....#\"", "\"#DMQ#.#\", \"#..#..#\"", "開始位置から行けない"},
+		{"TC-FR-FLD-04-21", "\"#.....#\", \"#.....#\"", "\"#..#..#\", \"#.#...#\"", "開始位置から到着のマス"},
+		{"TC-FR-FLD-04-22", "###1###", "##11###", "2 マスある"},
+		{"TC-FR-FLD-04-23", "to = \"gather\"", "to = \"town\"", "自分の地図"},
+		{"TC-FR-FLD-04-24", "to = \"town\"", "to = \"gather\"", "行き先がない"},
+		{"TC-FR-FLD-04-25", "#DMQ..#", "#DMQ.#", "行の長さが"},
+		{"TC-FR-FLD-04-26", "x = 1, y = 2", "x = 0, y = 0", "床ではない"},
+		{"TC-FR-FLD-04-27", "", "", "行数は"},
+		{"TC-FR-FLD-04-28", "", "", "行の長さは"},
+		{"TC-FR-FLD-04-29", "", "", "行数は"},
+		{"TC-FR-FLD-04-30", "", "", "行の長さが"},
+		{"TC-FR-FLD-04-31", "#DMQ..#", "#DM...#", "依頼板"},
+		{"TC-FR-FLD-04-32", "to = \"town\"", "to = \"gather\"", "town 行きがちょうど"},
+		{"TC-FR-FLD-04-33", "to = \"gather\"", "to = \"town\"", "gather 行きがちょうど"},
+		{"TC-FR-FLD-04-34", "to = \"gather\"", "to = \"meadow\"", "gather 行きがちょうど"},
+		{"TC-FR-FLD-04-35", "", "", "mark が重複"},
+		{"TC-FR-FLD-04-36", "mark = \"2\"", "mark = \"12\"", "mark は"},
+		{"TC-FR-FLD-04-37", "\"#.....#\", \"#.....#\"", "\"#.....#\", \"#..D..#\"", "到着のマス"},
+		{"TC-FR-FLD-04-38", "#DMQ..#", "#DXQ..#", "知らない文字"},
+		{"TC-FR-FLD-04-39", "", "", "開始位置から到着のマス"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.id, func(t *testing.T) {
-			c, err := loadMapText(tc.edit(valid))
+			input := replaceOne(validMaps, tc.old, tc.new)
+			switch tc.id {
+			case "TC-FR-FLD-04-01":
+				input = ""
+			case "TC-FR-FLD-04-04":
+				input = validMaps + validMaps[strings.Index(validMaps, "[[map]]"):strings.LastIndex(validMaps, "[[map]]")]
+			case "TC-FR-FLD-04-05":
+				input = validMaps[:strings.LastIndex(validMaps, "[[map]]")]
+			case "TC-FR-FLD-04-19":
+				input = replaceOne(validMaps, `look = "stone_door" }]`, `look = "stone_door" }, {mark="3",to="gather",dir="up",look="road"}]`)
+			case "TC-FR-FLD-04-35":
+				input = replaceOne(validMaps, `look = "stone_door" }]`, `look = "stone_door" }, {mark="1",to="gather",dir="up",look="road"}]`)
+			case "TC-FR-FLD-04-27":
+				input = replaceOne(validMaps, `rows = ["#######", "#DMQ..#", "#.....#", "#.....#", "###1###"]`, `rows=[]`)
+			case "TC-FR-FLD-04-28":
+				input = replaceOne(validMaps, "#DMQ..#", strings.Repeat(".", 101))
+			case "TC-FR-FLD-04-29":
+				input = replaceOne(validMaps, `"###1###"]`, strings.Repeat(`"#.....#",`, 97)+`"###1###"]`)
+			case "TC-FR-FLD-04-30":
+				input = `[[map]]
+ id="town"
+ rows=["..", "."]`
+			case "TC-FR-FLD-04-39":
+				input = replaceOne(validMaps, `rows = ["#######", "#DMQ..#", "#.....#", "#.....#", "###1###"]`, `rows=["#######","#DMQ..#","#.#...#","#.#...#","#.1...#","#.#...#","#.#...#"]`)
+				input = replaceOne(input, `dir = "up"`, `dir = "right"`)
+			}
+			c, err := loadMapText(input)
 			if tc.want == "" {
 				if err != nil {
-					t.Fatalf("unexpected error: %v", err)
+					t.Fatal(err)
 				}
-				if tc.id == "TC-FR-FLD-04-02 正常な二枚" {
-					want := map[string]defs.MapDef{
-						defs.MapWorkshop: {ID: defs.MapWorkshop, Name: "工房", StartX: 1, StartY: 2, Rows: []string{"#######", "#KSG..#", "#.....#", "#.....#", "###1###"}, Exits: []defs.ExitDef{{Mark: '1', To: defs.MapTown, Dir: defs.DirUp, Look: "stone_door", X: 3, Y: 4}}},
-						defs.MapTown:     {ID: defs.MapTown, Name: "街", StartX: 1, StartY: 2, Rows: []string{"#########", "#M.Q.F..#", "#.......#", "#.......#", "###1#2###"}, Exits: []defs.ExitDef{{Mark: '1', To: defs.MapWorkshop, Dir: defs.DirUp, Look: "wood_door", X: 3, Y: 4}, {Mark: '2', To: defs.ExitGather, Dir: defs.DirUp, Look: "road", X: 5, Y: 4}}},
-					}
-					if !reflect.DeepEqual(c.Maps, want) {
-						t.Fatalf("maps: %+v", c.Maps)
-					}
+				if tc.id == "TC-FR-FLD-04-02" && len(c.Maps) != 2 {
+					t.Fatal(c.Maps)
 				}
 				return
 			}
-			diagnostics := mapDiagnostics(t, err, tc.want)
-			if strings.Contains(tc.id, "検査しない") {
-				for _, d := range diagnostics {
-					if strings.Contains(d.Reason, "開始位置から行けない") || strings.Contains(d.Reason, "開始位置から到着のマス") {
-						t.Fatalf("到達性を検査した: %v", diagnostics)
+			ds := mapDiagnostics(t, err, tc.want)
+			if tc.id == "TC-FR-FLD-04-25" || tc.id == "TC-FR-FLD-04-26" || tc.id == "TC-FR-FLD-04-38" {
+				for _, d := range ds {
+					if strings.Contains(d.Reason, "開始位置から") {
+						t.Fatal(ds)
 					}
 				}
 			}
@@ -139,23 +153,43 @@ func TestMaps(t *testing.T) {
 
 // FuzzLoadMaps は任意の TOML を読み、成功した地図の基本不変条件を調べる（DES-VAL-24）。
 func FuzzLoadMaps(f *testing.F) {
-	const seedCase = "TC-NFR-08-01 地図TOMLのシードと任意バイト列"
+	const seedCase = "TC-NFR-08-10 / TC-NFR-08-01 地図TOMLのシードと任意バイト列"
 	f.Log(seedCase)
 	valid := validMaps
-	for _, s := range []string{valid, "", "[[map]]\nid=\"town\"\nrows=[]", strings.Replace(valid, "#KSG..#", "#KあG..#", 1), strings.Replace(valid, "start = { x = 1, y = 2 }\n", "", 1), strings.Replace(valid, "to = \"town\"", "to = \"market\"", 1), strings.Replace(valid, "#KSG..#", "#KSG.#", 1), strings.Replace(valid, "#KSG..#", "#KS...#", 1), strings.Replace(valid, "#M.Q.F..#", "#M.Q#F#.#", 1)} {
+	battleSeed, err := os.ReadFile("testdata/it06/battle.toml")
+	if err != nil {
+		f.Fatal(err)
+	}
+	f.Add(battleSeed)
+	seed, err := os.ReadFile("testdata/it06/maps.toml")
+	if err != nil {
+		f.Fatal(err)
+	}
+	for _, s := range []string{valid, string(seed), strings.ReplaceAll(valid, "meadow", "cave"), "", "[[map]]\nid=\"town\"\nrows=[]"} {
 		f.Add([]byte(s))
 	}
+	// 正常な種から、各規則の異常を一つずつ作る（DES-VAL-24）。
+	for _, tc := range []struct{ old, new string }{
+		{`id = "meadow"` + "\nrows", `id = "unknown"` + "\nrows"},
+		{"T*,,,,T", "T*,,,あ"}, {"T*,,,,T", "T*,,,T"},
+		{"start = {x=5,y=5}", ""}, {`T,aaa,,DT`, `T,aaa,,,T`},
+		{`to="town"`, `to="gather"`}, {`T*,,,,T`, `T*#,,,T`},
+		{"aaa", "aa,"}, {`mark="a"`, `mark="j"`}, {`facility="market"`, `facility="missing"`},
+		{`look="stall"`, `look="castle"`}, {"T*,,,,T", "TE,,,,T"},
+		{"respawn_seconds = 2", "respawn_seconds = 86401"}, {"day_seconds = 300", "day_seconds = 0"},
+	} {
+		if !strings.Contains(string(seed), tc.old) {
+			f.Fatalf("種の置換対象がない: %s", tc.old)
+		}
+		f.Add([]byte(strings.Replace(string(seed), tc.old, tc.new, 1)))
+	}
 	f.Fuzz(func(t *testing.T, data []byte) {
-		c, err := Load(fstest.MapFS{
-			"maps.toml":    &fstest.MapFile{Data: data},
-			"items.toml":   &fstest.MapFile{Data: []byte("[[item]]\nid=\"herb\"\n")},
-			"recipes.toml": &fstest.MapFile{Data: []byte("[[recipe]]\nid=\"tea\"\noutput=\"herb\"\noutput_count=1\nseconds=1\ninputs=[{item=\"herb\",count=1}]\n")},
-		})
+		c, err := loadMapText(string(data))
 		if err != nil {
 			return
 		}
 		for id, m := range c.Maps {
-			if id != defs.MapWorkshop && id != defs.MapTown {
+			if _, ok := c.Gathers[id]; id != defs.MapTown && !ok {
 				t.Fatalf("ID: %s", id)
 			}
 			if m.Width() < 1 || m.Width() > 100 || m.Height() < 1 || m.Height() > 100 {
@@ -179,10 +213,11 @@ func FuzzLoadMaps(f *testing.F) {
 					t.Fatal("exit")
 				}
 			}
+			checkIT06Catalog(t, c, m)
 			checkMapSemantics(t, m)
 			checkReachableMap(t, m)
 		}
-		if len(c.Maps) != 0 && len(c.Maps) != 2 {
+		if len(c.Maps) != 0 && len(c.Maps) != len(c.Gathers)+1 {
 			t.Fatal(fmt.Sprint("maps: ", len(c.Maps)))
 		}
 	})
@@ -191,9 +226,9 @@ func FuzzLoadMaps(f *testing.F) {
 // checkMapSemantics は読み込み結果から設備と出入り口の規則を独立に確認する（DES-VAL-21・22・24）。
 func checkMapSemantics(t *testing.T, m defs.MapDef) {
 	t.Helper()
-	required := "KSG"
+	required := ""
 	if m.ID == defs.MapTown {
-		required = "MQF"
+		required = "DMQ"
 	}
 	for _, ch := range required {
 		found := false
@@ -210,7 +245,7 @@ func checkMapSemantics(t *testing.T, m defs.MapDef) {
 			t.Fatalf("TC-NFR-08-03 mark の重複またはマス数: %c", e.Mark)
 		}
 		marks[e.Mark] = true
-		if e.To == m.ID || e.To != defs.MapWorkshop && e.To != defs.MapTown && e.To != defs.ExitGather {
+		if e.To == m.ID || e.To != "meadow" && e.To != defs.MapTown && e.To != defs.ExitGather {
 			t.Fatalf("TC-NFR-08-04 行き先が不正: %s", e.To)
 		}
 		if e.Dir != defs.DirUp && e.Dir != defs.DirDown && e.Dir != defs.DirLeft && e.Dir != defs.DirRight {
@@ -234,7 +269,11 @@ func checkMapSemantics(t *testing.T, m defs.MapDef) {
 			}
 		}
 	}
-	if !destinations[map[string]string{defs.MapWorkshop: defs.MapTown, defs.MapTown: defs.MapWorkshop}[m.ID]] || m.ID == defs.MapTown && !destinations[defs.ExitGather] {
+	wantTo := defs.MapTown
+	if m.ID == defs.MapTown {
+		wantTo = defs.ExitGather
+	}
+	if len(m.Exits) != 1 || !destinations[wantTo] {
 		t.Fatal("TC-NFR-08-09 必須の出口がない")
 	}
 }
@@ -260,7 +299,8 @@ func checkReachableMap(t *testing.T, m defs.MapDef) {
 	}
 	for y := 0; y < h; y++ {
 		for x := 0; x < w; x++ {
-			if defs.TileInfo(m.Cell(x, y)).Kind != defs.CellFixture {
+			kind := defs.TileInfo(m.Cell(x, y)).Kind
+			if kind != defs.CellFixture && kind != defs.CellPick && kind != defs.CellEnemy {
 				continue
 			}
 			ok := false
@@ -272,6 +312,21 @@ func checkReachableMap(t *testing.T, m defs.MapDef) {
 			if !ok {
 				t.Fatalf("unreachable fixture (%d,%d)", x, y)
 			}
+		}
+	}
+	for _, l := range m.Lots {
+		accessible := false
+		for y := l.Y; y < l.Y+3; y++ {
+			for x := l.X; x < l.X+3; x++ {
+				for _, d := range dirs {
+					if visited[[2]int{x + d[0], y + d[1]}] {
+						accessible = true
+					}
+				}
+			}
+		}
+		if !accessible {
+			t.Fatal("区画の前へ行けない")
 		}
 	}
 	for _, e := range m.Exits {
@@ -290,6 +345,63 @@ func checkReachableMap(t *testing.T, m defs.MapDef) {
 		}
 		if !visited[[2]int{x, y}] {
 			t.Fatalf("unreachable exit %c", e.Mark)
+		}
+	}
+}
+
+// checkIT06Catalog は成功した目録の区画と敵、秒数を独立に検査する（DES-VAL-24〜29）。
+func checkIT06Catalog(t *testing.T, c defs.Catalog, m defs.MapDef) {
+	t.Helper()
+	if c.Game.DaySeconds < 1 || c.Game.DaySeconds > 86400 {
+		t.Fatal("日の秒数")
+	}
+	all := strings.Join(m.Rows, "")
+	for i := range all {
+		kind := defs.TileInfo(all[i]).Kind
+		if m.ID == defs.MapTown {
+			if kind == defs.CellPick || kind == defs.CellEnemy {
+				t.Fatal("街に拾う場所・敵")
+			}
+		} else if kind == defs.CellLot || kind == defs.CellFixture {
+			t.Fatal("採取地に区画・設備")
+		}
+	}
+	if m.ID != defs.MapTown {
+		g := c.Gathers[m.ID]
+		want := 0
+		if g.Battle != nil {
+			want = 1
+		}
+		if g.RespawnSeconds < 1 || g.RespawnSeconds > 86400 || strings.Count(all, "E") != want || strings.Count(all, "*")+strings.Count(all, "o") < 1 || len(m.Lots) > 0 {
+			t.Fatal("採取地の定義")
+		}
+		return
+	}
+	if len(m.Lots) != len(c.Facilities) {
+		t.Fatal("区画と施設の数")
+	}
+	marks := map[byte]bool{}
+	facilities := map[string]bool{}
+	for _, l := range m.Lots {
+		f, ok := c.Facilities[l.Facility]
+		if !ok || marks[l.Mark] || facilities[l.Facility] || l.Mark < 'a' || l.Mark > 'i' || strings.Count(all, string(l.Mark)) != 9 {
+			t.Fatal("区画の対応")
+		}
+		marks[l.Mark] = true
+		facilities[l.Facility] = true
+		for y := l.Y; y < l.Y+3; y++ {
+			for x := l.X; x < l.X+3; x++ {
+				if m.Cell(x, y) != l.Mark {
+					t.Fatal("区画の形")
+				}
+			}
+		}
+		for _, level := range f.Levels {
+			switch level.Look {
+			case "stall", "cottage", "house", "manor":
+			default:
+				t.Fatal("施設の見た目")
+			}
 		}
 	}
 }

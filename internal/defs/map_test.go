@@ -19,7 +19,7 @@ func TestMapDefinition(t *testing.T) {
 		for _, tc := range []struct {
 			chars string
 			kind  CellKind
-		}{{".,:", CellFloor}, {"#W^T", CellWall}, {"KSGMQF", CellFixture}, {"123456789", CellExit}, {"0X", CellUnknown}} {
+		}{{".,:", CellFloor}, {"#W^T~", CellWall}, {"DMQ", CellFixture}, {"123456789", CellExit}, {"abcdefghi", CellLot}, {"*o", CellPick}, {"E", CellEnemy}, {"0XKSGF", CellUnknown}} {
 			for i := 0; i < len(tc.chars); i++ {
 				if got := TileInfo(tc.chars[i]).Kind; got != tc.kind {
 					t.Errorf("%c: %v", tc.chars[i], got)
@@ -31,7 +31,7 @@ func TestMapDefinition(t *testing.T) {
 		for _, tc := range []struct {
 			ch         byte
 			kind, name string
-		}{{'K', FixtureCauldron, "錬金釜"}, {'S', FixtureShelf, "在庫の棚"}, {'G', FixtureWorkbench, "ゴーレムの作業台"}, {'M', FixtureShop, "店"}, {'Q', FixtureQuestBoard, "依頼板"}, {'F', FixtureFacilityBoard, "施設の看板"}} {
+		}{{'D', FixtureWorkshopDoor, "工房の扉"}, {'M', FixtureShop, "店"}, {'Q', FixtureQuestBoard, "依頼板"}} {
 			got := TileInfo(tc.ch)
 			if got.Fixture != tc.kind || got.Name != tc.name {
 				t.Errorf("%c: %+v", tc.ch, got)
@@ -43,7 +43,7 @@ func TestMapDefinition(t *testing.T) {
 		if m, ok := c.Map(MapTown); !ok || m.ID != MapTown {
 			t.Fatal("missing town")
 		}
-		if _, ok := c.Map(MapWorkshop); ok {
+		if _, ok := c.Map("workshop"); ok {
 			t.Fatal("unexpected workshop")
 		}
 	})

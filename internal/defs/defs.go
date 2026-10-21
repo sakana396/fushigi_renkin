@@ -57,6 +57,8 @@ type Bonus struct {
 
 // GatherDef は採取地と解放ランクを定義する（DES-IT01 2.1、DES-DEF-08）。
 type GatherDef struct {
+	// 拾う場所が戻る秒数（DES-DEF-10、DES-VAL-28）。
+	RespawnSeconds  int
 	ID              string
 	Rank            int
 	Name            string
@@ -141,6 +143,8 @@ type FacilityDef struct {
 
 // FacilityLevel は施設の強化に必要なものと効果を定義する（DES-IT01 2.1）。
 type FacilityLevel struct {
+	// 段階ごとの区画の見た目（DES-DEF-12）。
+	Look      string
 	Money     int
 	Materials []ItemAmount
 	Effects   []Effect
@@ -154,6 +158,8 @@ type Effect struct {
 
 // GameDef はゲーム開始時の設定、店の品ぞろえ、ランクの閾値を定義する（DES-IT01 2.1、DES-DEF-08）。
 type GameDef struct {
+	// 日の長さ（DES-DAY-01、DES-VAL-29）。
+	DaySeconds     int
 	StartMoney     int
 	RankReputation []int
 	BaseGolemSlots int

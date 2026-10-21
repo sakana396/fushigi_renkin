@@ -1,0 +1,47 @@
+[game]
+battle_width=3
+battle_height=3
+injury_seconds=1
+party=[{unit="hero",x=0,y=0}]
+day_seconds = 300
+[[unit]]
+id="hero"
+role="front"
+hp=1
+attack=1
+speed=1
+move=1
+range=1
+[[unit]]
+id="foe"
+role="enemy"
+hp=1
+attack=1
+speed=1
+move=1
+range=1
+[[item]]
+id = "herb"
+[[facility]]
+id = "market"
+levels = [{look="stall"}, {look="house"}]
+[[gather]]
+id = "meadow"
+rolls = 1
+cooldown_seconds = 1
+respawn_seconds = 2
+drops = [{item="herb",weight=1,quality_min=1,quality_max=1}]
+[gather.battle]
+enemies=[{unit="foe",x=2,y=2}]
+rolls=1
+drops=[{item="herb",weight=1,quality_min=1,quality_max=1}]
+[[map]]
+id = "town"
+start = {x=5,y=5}
+rows = ["TTTTTTTTT", "T,aaa,,QT", "T,aaa,,,T", "T,aaa,,DT", "T,,,,,,MT", "T,,,,,,,T", "TTTT2TTTT"]
+lots = [{mark="a",facility="market"}]
+exits = [{mark="2",to="gather",dir="up",look="road"}]
+[[map]]
+id = "meadow"
+rows = ["TTTTTTT", "T*,,,ET", "T,,o,,T", "T*,,,,T", "TTT1TTT"]
+exits = [{mark="1",to="town",dir="up",look="road"}]

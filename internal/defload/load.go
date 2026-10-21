@@ -45,6 +45,7 @@ type document struct {
 	Maps       []mapDef      `toml:"map"`
 }
 type gameDef struct {
+	DaySeconds       *int        `toml:"day_seconds"`
 	BattleConfigured bool        `toml:"-"`
 	RankReputation   []int       `toml:"rank_reputation"`
 	StartMoney       int         `toml:"start_money"`
@@ -96,6 +97,7 @@ type bonus struct {
 	Add       int    `toml:"add"`
 }
 type gatherDef struct {
+	RespawnSeconds  *int       `toml:"respawn_seconds"`
 	ID              string     `toml:"id"`
 	Rank            *int       `toml:"rank"`
 	Name            string     `toml:"name"`
@@ -160,6 +162,7 @@ type facilityDef struct {
 	Levels []facilityLevel `toml:"levels"`
 }
 type facilityLevel struct {
+	Look      *string      `toml:"look"`
 	Money     int          `toml:"money"`
 	Materials []itemAmount `toml:"materials"`
 	Effects   []effect     `toml:"effects"`
@@ -173,7 +176,7 @@ type source[T any] struct {
 	Value T
 }
 
-// Load は fs.FS 内の TOML をすべて読み、検証済みの目録を返す（DES-PKG-03、DES-VAL-01〜24）。
+// Load は fs.FS 内の TOML をすべて読み、検証済みの目録を返す（DES-PKG-03、DES-VAL-01〜29）。
 func Load(fsys fs.FS) (defs.Catalog, error) {
 	c := defs.Catalog{Items: map[string]defs.ItemDef{}, Recipes: map[string]defs.RecipeDef{}, Gathers: map[string]defs.GatherDef{}, Golems: map[string]defs.GolemDef{}, Facilities: map[string]defs.FacilityDef{}, Units: map[string]defs.UnitDef{}, Quests: map[string]defs.QuestDef{}, Maps: map[string]defs.MapDef{}}
 	var errs Errors
@@ -217,6 +220,9 @@ func Load(fsys fs.FS) (defs.Catalog, error) {
 			errs = append(errs, Diagnostic{name, key.String(), "未知のキー"})
 		}
 		if d.Game != nil {
+			if !meta.IsDefined("game", "day_seconds") {
+				d.Game.DaySeconds = nil
+			}
 			d.Game.BattleConfigured = meta.IsDefined("game", "party") || meta.IsDefined("game", "battle_width") || meta.IsDefined("game", "battle_height") || meta.IsDefined("game", "injury_seconds")
 			games = append(games, source[gameDef]{name, *d.Game})
 		}
@@ -418,7 +424,7 @@ func Load(fsys fs.FS) (defs.Catalog, error) {
 		if len(games) > 1 {
 			unique("game", s.File, "game")
 		}
-		c.Game = defs.GameDef{StartMoney: v.StartMoney, RankReputation: v.RankReputation, BaseGolemSlots: v.BaseGolemSlots, BattleWidth: v.BattleWidth, BattleHeight: v.BattleHeight, InjurySeconds: v.InjurySeconds}
+		c.Game = defs.GameDef{DaySeconds: optionalSeconds(s.File, "game.day_seconds", v.DaySeconds, len(maps) > 0, add), StartMoney: v.StartMoney, RankReputation: v.RankReputation, BaseGolemSlots: v.BaseGolemSlots, BattleWidth: v.BattleWidth, BattleHeight: v.BattleHeight, InjurySeconds: v.InjurySeconds}
 		for i, n := range v.RankReputation {
 			if n < 1 || i > 0 && n <= v.RankReputation[i-1] {
 				add(s.File, fmt.Sprintf("game.rank_reputation[%d]", i), "1 以上で狭義に増えること")
@@ -445,6 +451,9 @@ func Load(fsys fs.FS) (defs.Catalog, error) {
 				break
 			}
 		}
+	}
+	if len(maps) > 0 && len(games) == 0 {
+		add(maps[0].File, "game.day_seconds", "必須の秒数が書かれていない")
 	}
 	for _, s := range recipes {
 		v := s.Value
@@ -518,10 +527,13 @@ func Load(fsys fs.FS) (defs.Catalog, error) {
 		v := s.Value
 		p := "gather[id=" + v.ID + "]"
 		unique("gather", s.File, v.ID)
+		if len(maps) > 0 && (v.ID == defs.MapTown || v.ID == defs.ExitGather) {
+			add(s.File, p+".id", "採取地の ID に town・gather は使えない")
+		}
 		positive(s.File, p+".rolls", v.Rolls)
 		positive(s.File, p+".cooldown_seconds", v.CooldownSeconds)
 		nonEmpty(s.File, p+".drops", len(v.Drops))
-		g := defs.GatherDef{ID: v.ID, Rank: rank(s.File, p+".rank", v.Rank, len(c.Game.RankReputation)+1), Name: v.Name, Rolls: v.Rolls, CooldownSeconds: v.CooldownSeconds}
+		g := defs.GatherDef{RespawnSeconds: optionalSeconds(s.File, p+".respawn_seconds", v.RespawnSeconds, len(maps) > 0, add), ID: v.ID, Rank: rank(s.File, p+".rank", v.Rank, len(c.Game.RankReputation)+1), Name: v.Name, Rolls: v.Rolls, CooldownSeconds: v.CooldownSeconds}
 		g.Drops = validateDrops(s.File, p+".drops", v.Drops)
 		if v.Battle != nil {
 			b := v.Battle
@@ -564,7 +576,16 @@ func Load(fsys fs.FS) (defs.Catalog, error) {
 		f := defs.FacilityDef{ID: v.ID, Name: v.Name}
 		for i, level := range v.Levels {
 			q := fmt.Sprintf("%s.levels[%d]", p, i)
-			l := defs.FacilityLevel{Money: level.Money, Materials: convertMaterials(s.File, q+".materials", level.Materials)}
+			look := ""
+			if level.Look != nil {
+				look = *level.Look
+			}
+			if len(maps) > 0 || level.Look != nil {
+				if look != "stall" && look != "cottage" && look != "house" && look != "manor" {
+					add(s.File, q+".look", fmt.Sprintf("知らない見た目 %q（stall・cottage・house・manor が必要）", look))
+				}
+			}
+			l := defs.FacilityLevel{Look: look, Money: level.Money, Materials: convertMaterials(s.File, q+".materials", level.Materials)}
 			for j, e := range level.Effects {
 				r := fmt.Sprintf("%s.effects[%d]", q, j)
 				if e.Kind != "golem_slots" && e.Kind != "sell_rate" {
@@ -599,8 +620,8 @@ func validateProgression(c defs.Catalog, recipes []source[recipeDef], quests []s
 			positiveQuest[q.Rank] = true
 		}
 	}
-	if rankOne < 3 {
-		add(questFile(quests), "quest", "ランク 1 の依頼は 3 件以上必要")
+	if rankOne < 6 {
+		add(questFile(quests), "quest", fmt.Sprintf("ランク 1 の依頼が %d 件しかない（6 件以上が必要）", rankOne))
 	}
 	for r := 1; r <= len(c.Game.RankReputation); r++ {
 		if !positiveQuest[r] {
@@ -684,4 +705,18 @@ func questFile(quests []source[questDef]) string {
 		return "<definitions>"
 	}
 	return quests[0].File
+}
+
+// optionalSeconds は明示と省略を区別して秒数を検証する（DES-VAL-28・29）。
+func optionalSeconds(file, key string, value *int, required bool, add func(string, string, string)) int {
+	if value == nil {
+		if required {
+			add(file, key, "必須の秒数が書かれていない")
+		}
+		return 0
+	}
+	if *value < 1 || *value > 86400 {
+		add(file, key, "1〜86400 であること")
+	}
+	return *value
 }

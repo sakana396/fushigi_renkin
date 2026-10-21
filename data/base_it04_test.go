@@ -44,6 +44,11 @@ func TestBaseDataIT04(t *testing.T) {
 			"q_deluxe":        {ID: "q_deluxe", Rank: 4, Item: "deluxe_burger", MinQuality: 150, Count: 1, Reward: 250},
 			"q_potion_master": {ID: "q_potion_master", Rank: 4, Item: "potion", MinQuality: 150, Count: 2, Reward: 180},
 		}
+		for _, id := range []string{"q_burger", "q_bread", "q_cheese"} {
+			q := want[id]
+			q.ID = id + "_extra"
+			want[q.ID] = q
+		}
 		if !reflect.DeepEqual(c.Quests, want) {
 			t.Errorf("依頼 = %+v、期待 %+v", c.Quests, want)
 		}
