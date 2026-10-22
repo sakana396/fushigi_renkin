@@ -1,8 +1,10 @@
 package ui
 
 import (
-	"reflect"
 	"testing"
+
+	"github.com/sakana396/fushigi_renkin/data"
+	"github.com/sakana396/fushigi_renkin/internal/defload"
 
 	"github.com/sakana396/fushigi_renkin/internal/core"
 	"github.com/sakana396/fushigi_renkin/internal/defs"
@@ -43,24 +45,35 @@ func TestWindowTextAndGeometry(t *testing.T) {
 			t.Fatal("名前")
 		}
 	})
-	t.Run("TC-FR-TWN-07-61 区画のタイル", func(t *testing.T) {
-		for _, look := range []string{"", "stall", "cottage", "house", "manor"} {
-			tiles := lotTiles(look)
-			if len(tiles) != 9 {
-				t.Fatal(look)
-			}
-			if look == "" && tiles[7] != 83 {
-				t.Fatal("立て札")
-			}
-			if look == "stall" && tiles[4] != 57 {
-				t.Fatal("屋台")
-			}
-			if look != "" && look != "stall" && tiles[7] != 86 {
-				t.Fatal("扉")
+	t.Run("TC-FR-TWN-07-61 区画の段階とタイル", func(t *testing.T) {
+		catalog, err := defload.Load(data.Base)
+		if err != nil {
+			t.Fatal(err)
+		}
+		// 期待値は DES-DAT-04 5.1 節の全施設・全段階から取る。
+		for id, looks := range map[string][3]string{
+			"market":     {"", "stall", "house"},
+			"workshop":   {"", "cottage", "house"},
+			"golem_shed": {"", "cottage", "manor"},
+			"inn":        {"", "cottage", "manor"},
+		} {
+			for level, want := range looks {
+				if got := lotLook(catalog.Facilities[id], level); got != want {
+					t.Errorf("%s 段階%d: got=%q want=%q", id, level, got, want)
+				}
 			}
 		}
-		if reflect.DeepEqual(lotTiles("cottage"), lotTiles("house")) || reflect.DeepEqual(lotTiles("house"), lotTiles("manor")) {
-			t.Fatal("見た目が同じ")
+		// 期待値は DES-IT06 7章の区画タイル表。固定長の全要素を照合する。
+		for look, want := range map[string][9]int{
+			"":        {44, 45, 46, 56, 0, 58, 68, 83, 70},
+			"stall":   {0, 0, 0, 0, 57, 0, 0, 0, 0},
+			"cottage": {52, 53, 54, 64, 65, 66, 72, 86, 75},
+			"house":   {48, 49, 50, 60, 61, 62, 84, 86, 87},
+			"manor":   {48, 51, 50, 60, 63, 62, 84, 86, 87},
+		} {
+			if got := lotTiles(look); got != want {
+				t.Errorf("%q: got=%v want=%v", look, got, want)
+			}
 		}
 	})
 	t.Run("TC-IF-08-64 向きの印", func(t *testing.T) {
@@ -89,6 +102,38 @@ func TestQuestLines(t *testing.T) {
 	t.Run("TC-IF-06-42 戻るボタンの位置", func(t *testing.T) {
 		if returnX != 10 || returnY != 76 || returnWidth != 120 || returnHeight != 28 || gatherTop != 112 || returnY+returnHeight >= gatherTop {
 			t.Fatal("見出しと一覧が重なる")
+		}
+	})
+}
+
+// 日替わりは過去の操作結果を置き換え、同じ更新のランクだけを併記する（DES-UI-27）。
+func TestNoticeMessage(t *testing.T) {
+	t.Run("TC-FR-PRG-05-60 知らせの置き換えと同時通知", func(t *testing.T) {
+		for _, tc := range []struct {
+			name, current string
+			ranks         []string
+			days          []int
+			want          string
+		}{
+			{"知らせなし", "錬金しました", nil, nil, "錬金しました"},
+			{"日だけ", "錬金しました", nil, []int{2}, "2 日目になりました。依頼板の依頼が入れ替わりました"},
+			{"ランクだけ", "納品しました", []string{"工房ランク 2"}, nil, "工房ランク 2"},
+			{"同じ更新", "納品しました", []string{"工房ランク 2", "工房ランク 3"}, []int{2}, "工房ランク 2／工房ランク 3／2 日目になりました。依頼板の依頼が入れ替わりました"},
+			{"最新の日だけ", "前の知らせ", nil, []int{2, 3}, "3 日目になりました。依頼板の依頼が入れ替わりました"},
+		} {
+			if got := noticeMessage(tc.current, tc.ranks, tc.days); got != tc.want {
+				t.Errorf("%s: got=%q want=%q", tc.name, got, tc.want)
+			}
+		}
+		message := "錬金しました"
+		for day := 2; day <= 100; day++ {
+			message = noticeMessage(message, nil, []int{day})
+			if message != dayNotice(day) {
+				t.Fatalf("%d日目に過去の知らせが残る: %q", day, message)
+			}
+			if got := noticeMessage(message, nil, nil); got != message {
+				t.Fatalf("次の更新で変わる: %q", got)
+			}
 		}
 	})
 }

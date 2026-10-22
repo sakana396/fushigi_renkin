@@ -161,10 +161,7 @@ func (g *Game) Update() error {
 	for i := 0; i < g.timeScale; i++ {
 		g.world.Tick()
 	}
-	g.showRankUps()
-	for _, day := range g.world.TakeNewDays() {
-		g.message += "／" + dayNotice(day)
-	}
+	g.showNotices()
 	return nil
 }
 
@@ -209,7 +206,7 @@ func (g *Game) drawHeader(screen *ebiten.Image) {
 	g.label(screen, 14, 10, fmt.Sprintf("ふしぎ錬金   %s   お金: %d   経過: %d 秒   %s   ゴーレム: %d/%d   時間 ×%d", place, g.world.Money, g.world.Now/60, dayText(g.world.Day()), len(g.world.Golems), g.world.GolemSlots(), g.timeScale), white)
 	g.label(screen, 1100, 10, "F12: チート（お金と素材）  F11: 時間 ×10", muted)
 	if g.world.Battle == nil && g.world.Player.Scene != core.SceneGather {
-		g.label(screen, 700, 49, g.rankText(), white)
+		g.label(screen, 700, 10, g.rankText(), white)
 	}
 	for i, line := range strings.Split(g.message, "／") {
 		y := 35 + i*14
@@ -238,7 +235,7 @@ func (g *Game) drawQuests(dst *ebiten.Image) {
 	for i, id := range g.world.Quests {
 		g.drawQuestRow(dst, id, i, 130+i*100, false)
 	}
-	g.box(dst, 10, 470, 775, 420, fmt.Sprintf("受けた依頼（%d/3）", len(g.world.Accepted)))
+	g.box(dst, 10, 470, 775, 420, fmt.Sprintf("受けた依頼（%d/%d）", len(g.world.Accepted), core.MaxAcceptedQuests))
 	for i, id := range g.world.Accepted {
 		g.drawQuestRow(dst, id, i, 510+i*120, true)
 	}
@@ -269,7 +266,7 @@ func (g *Game) drawQuestRow(dst *ebiten.Image, id string, index, y int, accepted
 		}
 	}
 	g.label(dst, 20, y+44, fmt.Sprintf("納品できる在庫: %d/%d", eligible, quest.Count), muted)
-	g.button(dst, 430, y, 150, 28, "納品", false, func() { g.result("納品しました", g.world.DeliverQuest(index)); g.showRankUps() })
+	g.button(dst, 430, y, 150, 28, "納品", false, func() { g.result("納品しました", g.world.DeliverQuest(index)) })
 	g.button(dst, 600, y, 150, 28, "やめる", false, func() { g.result("依頼をやめました", g.world.AbandonQuest(index)) })
 }
 
@@ -281,8 +278,8 @@ func (g *Game) rankText() string {
 	return fmt.Sprintf("ランク %d（最高）/ 評判 %d", g.world.Rank(), g.world.Reputation)
 }
 
-// showRankUps は未読の上昇と解放された定義の表示名を操作結果に並べる（DES-UI-11）。
-func (g *Game) showRankUps() {
+// showNotices は未読のランク上昇・解放と日替わりを操作結果に並べる（DES-UI-11・27）。
+func (g *Game) showNotices() {
 	var notices []string
 	for _, rank := range g.world.TakeRankUps() {
 		unlocked := g.world.Unlocked(rank)
@@ -315,9 +312,7 @@ func (g *Game) showRankUps() {
 		}
 		notices = append(notices, notice)
 	}
-	if len(notices) > 0 {
-		g.message = strings.Join(notices, "／")
-	}
+	g.message = noticeMessage(g.message, notices, g.world.TakeNewDays())
 }
 
 // availableRecipes は現在のランクで解放済みのレシピを ID 順に返す（DES-UI-11）。

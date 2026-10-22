@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/sakana396/fushigi_renkin/internal/core"
 	"github.com/sakana396/fushigi_renkin/internal/defs"
@@ -37,6 +38,14 @@ func lotName(name string, level int) string {
 	return fmt.Sprintf("%s Lv%d", name, level)
 }
 
+// lotLook は施設の現在の段階から絵を選び、段階0は空き地にする（DES-UI-24）。
+func lotLook(facility defs.FacilityDef, level int) string {
+	if level > 0 && level <= len(facility.Levels) {
+		return facility.Levels[level-1].Look
+	}
+	return ""
+}
+
 // lotTiles は区画の左上から行順に Tiny Town の番号を返す（DES-UI-24）。
 func lotTiles(look string) [9]int {
 	switch look {
@@ -49,7 +58,7 @@ func lotTiles(look string) [9]int {
 	case "manor":
 		return [9]int{48, 51, 50, 60, 63, 62, 84, 86, 87}
 	default:
-		return [9]int{32, 32, 32, 32, 0, 32, 32, 83, 32}
+		return [9]int{44, 45, 46, 56, 0, 58, 68, 83, 70}
 	}
 }
 
@@ -71,6 +80,18 @@ func directionMarker(x, y int, dir defs.Dir) [6]float32 {
 func dayText(day int) string { return fmt.Sprintf("%d 日目", day) }
 func dayNotice(day int) string {
 	return dayText(day) + "になりました。依頼板の依頼が入れ替わりました"
+}
+
+// noticeMessage は新しい知らせで操作結果を置き換え、同じ更新のランクと日を並べる（DES-UI-11・27）。
+func noticeMessage(current string, ranks []string, days []int) string {
+	notices := append([]string(nil), ranks...)
+	if len(days) > 0 {
+		notices = append(notices, dayNotice(days[len(days)-1]))
+	}
+	if len(notices) == 0 {
+		return current
+	}
+	return strings.Join(notices, "／")
 }
 
 // questLines は候補と受注済みで共通の依頼条件・報酬を組み立てる（DES-UI-25）。

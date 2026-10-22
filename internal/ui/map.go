@@ -58,10 +58,7 @@ func (g *Game) drawMap(screen *ebiten.Image) {
 	for _, lot := range m.Lots {
 		facility := g.catalog.Facilities[lot.Facility]
 		level := g.world.Facilities[lot.Facility]
-		look := ""
-		if level > 0 && level <= len(facility.Levels) {
-			look = facility.Levels[level-1].Look
-		}
+		look := lotLook(facility, level)
 		for i, n := range lotTiles(look) {
 			g.drawTile(dst, true, n, ox+(lot.X+i%3)*tilePixels, oy+(lot.Y+i/3)*tilePixels)
 		}
@@ -110,6 +107,7 @@ func (g *Game) drawMapNames(dst *ebiten.Image, m defs.MapDef, ox, oy, x0, x1, y0
 		name := lotName(g.catalog.Facilities[lot.Facility].Name, g.world.Facilities[lot.Facility])
 		ink := white
 		if facing && fixture.Kind == core.TargetLot && fixture.ID == lot.Facility {
+			name = "E: " + name
 			ink = color.RGBA{255, 235, 93, 255}
 		}
 		g.drawMapName(dst, ox+lot.X*tilePixels, oy+lot.Y*tilePixels, name, ink)
