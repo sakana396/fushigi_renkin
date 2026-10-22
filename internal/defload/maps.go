@@ -125,10 +125,10 @@ func validateMaps(c *defs.Catalog, maps []source[mapDef], add func(string, strin
 					enemies++
 				}
 				if v.ID == defs.MapTown && (kind == defs.CellPick || kind == defs.CellEnemy) {
-					report(fmt.Sprintf("%s.rows[%d][%d]", p, y, x), "拾う場所・敵は採取地にしか置けない")
+					report(fmt.Sprintf("%s.rows[%d][%d]", p, y, x), fmt.Sprintf("%s（%c）は採取地にしか置けない", defs.TileInfo(row[x]).Name, row[x]))
 				}
-				if v.ID != defs.MapTown && (kind == defs.CellLot || kind == defs.CellFixture) {
-					report(fmt.Sprintf("%s.rows[%d][%d]", p, y, x), "区画・設備は街にしか置けない")
+				if v.ID != defs.MapTown && kind == defs.CellLot {
+					report(fmt.Sprintf("%s.rows[%d][%d]", p, y, x), fmt.Sprintf("区画（%c）は街にしか置けない", row[x]))
 				}
 			}
 		}

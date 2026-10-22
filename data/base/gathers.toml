@@ -1,5 +1,5 @@
 [[gather]]
-respawn_seconds = 20
+respawn_seconds = 45
 id = "meadow"
 name = "風の草原"
 rolls = 3
@@ -15,7 +15,7 @@ enemies = [{ unit = "slime", x = 6, y = 2 }, { unit = "slime", x = 6, y = 4 }]
 drops = [{ item = "herb", weight = 3, quality_min = 40, quality_max = 90 }, { item = "glow_moss", weight = 1, quality_min = 40, quality_max = 90 }]
 
 [[gather]]
-respawn_seconds = 20
+respawn_seconds = 45
 id = "spring_cave"
 name = "泉の洞窟"
 rolls = 3
@@ -31,7 +31,7 @@ enemies = [{ unit = "slime", x = 6, y = 2 }, { unit = "wolf", x = 6, y = 4 }]
 drops = [{ item = "ore", weight = 3, quality_min = 40, quality_max = 90 }, { item = "glow_moss", weight = 1, quality_min = 40, quality_max = 90 }]
 
 [[gather]]
-respawn_seconds = 20
+respawn_seconds = 60
 id = "sunny_hill"
 name = "陽だまりの丘"
 rank = 2
@@ -54,7 +54,7 @@ drops = [
 ]
 
 [[gather]]
-respawn_seconds = 20
+respawn_seconds = 75
 id = "crystal_forest"
 name = "水晶の森"
 rank = 3

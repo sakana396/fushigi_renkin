@@ -453,7 +453,7 @@ func Load(fsys fs.FS) (defs.Catalog, error) {
 		}
 	}
 	if len(maps) > 0 && len(games) == 0 {
-		add(maps[0].File, "game.day_seconds", "必須の秒数が書かれていない")
+		add(maps[0].File, "game.day_seconds", "書かれていない（地図を使うときは必須）")
 	}
 	for _, s := range recipes {
 		v := s.Value
@@ -580,7 +580,9 @@ func Load(fsys fs.FS) (defs.Catalog, error) {
 			if level.Look != nil {
 				look = *level.Look
 			}
-			if len(maps) > 0 || level.Look != nil {
+			if len(maps) > 0 && level.Look == nil {
+				add(s.File, q+".look", "書かれていない（地図を使うときは必須）")
+			} else if level.Look != nil {
 				if look != "stall" && look != "cottage" && look != "house" && look != "manor" {
 					add(s.File, q+".look", fmt.Sprintf("知らない見た目 %q（stall・cottage・house・manor が必要）", look))
 				}
@@ -711,12 +713,12 @@ func questFile(quests []source[questDef]) string {
 func optionalSeconds(file, key string, value *int, required bool, add func(string, string, string)) int {
 	if value == nil {
 		if required {
-			add(file, key, "必須の秒数が書かれていない")
+			add(file, key, "書かれていない（地図を使うときは必須）")
 		}
 		return 0
 	}
 	if *value < 1 || *value > 86400 {
-		add(file, key, "1〜86400 であること")
+		add(file, key, fmt.Sprintf("1 以上 86400 以下にする（%d）", *value))
 	}
 	return *value
 }

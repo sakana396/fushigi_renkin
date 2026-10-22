@@ -57,7 +57,7 @@ type Bonus struct {
 
 // GatherDef は採取地と解放ランクを定義する（DES-IT01 2.1、DES-DEF-08）。
 type GatherDef struct {
-	// 拾う場所が戻る秒数（DES-DEF-10、DES-VAL-28）。
+	// 拾う場所が戻る秒数（DES-PCK-02、DES-VAL-28）。
 	RespawnSeconds  int
 	ID              string
 	Rank            int

@@ -79,25 +79,27 @@ min_quality = 150
 count = 2
 reward = 180
 
-# 反復 6 の検証を満たす最小の追加。依頼の本調整は #106。
+# DES-IT06 5.2 の追加依頼（既存の製品で作れるもの）。
 [[quest]]
-id = "q_burger_extra"
-rank = 1
-reputation = 2
-item = "burger"
-min_quality = 20
-count = 2
-reward = 120
-
-[[quest]]
-id = "q_bread_extra"
+id = "q_flour"
 rank = 1
 reputation = 1
-item = "bread"
+item = "flour"
 min_quality = 20
 count = 3
-reward = 65
+reward = 45
 
+[[quest]]
+id = "q_potion_easy"
+rank = 1
+reputation = 1
+item = "potion"
+min_quality = 20
+count = 2
+reward = 50
+
+# 薬草の縄はまだ定義にないため、q_rope の代わりの 1 件だけ仮置きする。
+# #106 で DES-IT06 5.2 の q_rope（薬草の縄 Q20×2、報酬55）に差し替える。
 [[quest]]
 id = "q_cheese_extra"
 rank = 1

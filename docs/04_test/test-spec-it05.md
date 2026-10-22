@@ -35,10 +35,10 @@
 | TC-FR-FLD-01-03 | FR-FLD-01、DES-DEF-09 | 反復 6 で変更: test-spec-it06.md の置き換え一覧を参照 | 固定文字表を引く | D/M/Q:設備、a〜i:区画、*/o:拾う場所、E:敵、~:壁、K/S/G/F:未知 | 正常 |
 | TC-FR-FLD-01-04 | FR-FLD-01、DES-DEF-09 | 反復 6 で変更: test-spec-it06.md の置き換え一覧を参照 | D/M/Q の設備名を引く | 工房の扉・店・依頼板 | 正常 |
 | TC-FR-FLD-01-05 | FR-FLD-01、DES-DEF-09 | 反復 6 で変更: test-spec-it06.md の置き換え一覧を参照 | IDで地図を引く | town は取得でき、未登録の workshop は取得できない | 正常 |
-| TC-FR-FLD-01-06 | FR-FLD-01、DES-VAL-20 | 反復 6 で変更: test-spec-it06.md の置き換え一覧を参照 | 街の開始位置の座標省略または範囲外 | map[id=town].start と理由を診断 | 異常 |
-| TC-FR-FLD-01-07 | FR-FLD-01、DES-VAL-20 | 反復 6 で変更: test-spec-it06.md の置き換え一覧を参照 | 街の開始位置の座標省略または範囲外 | map[id=town].start と理由を診断 | 異常 |
-| TC-FR-FLD-01-08 | FR-FLD-01、DES-VAL-20 | 反復 6 で変更: test-spec-it06.md の置き換え一覧を参照 | 街の開始位置の座標省略または範囲外 | map[id=town].start と理由を診断 | 境界 |
-| TC-FR-FLD-01-09 | FR-FLD-01、DES-VAL-20 | 反復 6 で変更: test-spec-it06.md の置き換え一覧を参照 | 街の start.x を -1 にする | map[id=town].start と理由を診断 | 異常・境界 |
+| TC-FR-FLD-01-06 | FR-FLD-01、DES-VAL-20 | town の start=(1,2) | start の x を省略 | `map[id=town].start`: 開始位置が書かれていない | 異常 |
+| TC-FR-FLD-01-07 | FR-FLD-01、DES-VAL-20 | town の start=(1,2) | start の y を省略 | `map[id=town].start`: 開始位置が書かれていない | 異常 |
+| TC-FR-FLD-01-08 | FR-FLD-01、DES-VAL-20 | town の幅は 7 | start=(7,2) にする | `map[id=town].start`: 開始位置 (7, 2) が地図の外 | 境界 |
+| TC-FR-FLD-01-09 | FR-FLD-01、DES-VAL-20 | validMaps の town と meadow | 両地図の出口行に数字 3/2/1 を置き、20 回 Load | 診断全体が毎回 DeepEqual。先頭は meadow.rows[4][3]、meadow.rows[4][1]、town.rows[4][2]、town.rows[4][1]（いずれも map[id=... ] の完全な経路で比較） | 異常・境界 |
 | TC-FR-FLD-01-30 | FR-FLD-01、DES-DAT-03 | 反復 6 で変更: test-spec-it06.md の置き換え一覧を参照 | 工房の地図がないことと全採取地の地図を確認 | 工房地図なし。全採取地に town 行き出口がある | 正常 |
 | TC-FR-FLD-01-31 | FR-FLD-01、DES-DAT-03 | 反復 6 で変更: test-spec-it06.md の置き換え一覧を参照 | 街の設備・区画・出口を確認 | D/M/Q と全施設の区画、gather 行き出口 1 つ | 正常 |
 | TC-FR-FLD-01-40 | FR-FLD-01、DES-UI-15〜16 | Windows 版を新規起動 | 工房の地図を見て、各設備と南の扉に近づく | 帯の下に 20×12 マスの工房が中央配置され、幅 960 px、高さ 576 px。土色の床と石の壁の上に棚・錬金釜・作業台が描かれ、各マスの上側に暗い下地付きで「在庫の棚」「錬金釜」「ゴーレムの作業台」、南の扉の上側に「街へ」が末尾・下端まで欠けずに出る。主人公が設備の下で上を向いても「E: 錬金釜」などが頭に隠れない | 手動・正常 |
@@ -119,48 +119,48 @@
 
 | ID | 対象 | 前提 | 入力・操作 | 期待結果 | 種別 |
 |---|---|---|---|---|---|
-| TC-FR-FLD-04-01 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | TestMaps の同 ID の入力を読み込む（地図集合・行数などを変更） | 正常に読み込める | 正常 |
-| TC-FR-FLD-04-02 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | TestMaps の同 ID の入力を読み込む（地図集合・行数などを変更） | 正常に読み込める | 正常 |
-| TC-FR-FLD-04-03 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `id = "town"` を `id = "market"` に変更 | ファイル名・位置・理由を含み `.id: 地図の ID` を診断 | 異常 |
-| TC-FR-FLD-04-04 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | TestMaps の同 ID の入力を読み込む（地図集合・行数などを変更） | ファイル名・位置・理由を含み `重複` を診断 | 異常 |
-| TC-FR-FLD-04-05 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | TestMaps の同 ID の入力を読み込む（地図集合・行数などを変更） | ファイル名・位置・理由を含み `map[id=meadow]: 地図がない` を診断 | 異常 |
-| TC-FR-FLD-04-06 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `#DMQ..#` を `` に変更 | ファイル名・位置・理由を含み `行の長さは 1〜100` を診断 | 異常 |
-| TC-FR-FLD-04-07 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `#DMQ..#` を `#DMQ.#` に変更 | ファイル名・位置・理由を含み `行の長さが` を診断 | 異常 |
-| TC-FR-FLD-04-08 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `#DMQ..#` を `#DXQ..#` に変更 | ファイル名・位置・理由を含み `rows[1][2]: 知らない文字` を診断 | 異常 |
-| TC-FR-FLD-04-09 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `#DMQ..#` を `#DあX..#` に変更 | ファイル名・位置・理由を含み `rows[1][2]: 知らない文字` を診断 | 異常 |
-| TC-FR-FLD-04-10 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `start = { x = 1, y = 2 }` を `` に変更 | ファイル名・位置・理由を含み `開始位置が書かれていない` を診断 | 異常 |
-| TC-FR-FLD-04-11 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `x = 1, y = 2` を `x = 0, y = 0` に変更 | ファイル名・位置・理由を含み `床ではない` を診断 | 異常 |
-| TC-FR-FLD-04-12 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `#DMQ..#` を `#DM...#` に変更 | ファイル名・位置・理由を含み `依頼板（Q）がない` を診断 | 異常 |
-| TC-FR-FLD-04-13 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `mark = "1"` を `mark = "0"` に変更 | ファイル名・位置・理由を含み `mark は 1〜9` を診断 | 異常 |
-| TC-FR-FLD-04-14 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `###1###` を `###3###` に変更 | ファイル名・位置・理由を含み `定義がない` を診断 | 異常 |
-| TC-FR-FLD-04-15 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `to = "gather"` を `to = "missing"` に変更 | ファイル名・位置・理由を含み `行き先がない` を診断 | 異常 |
-| TC-FR-FLD-04-16 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `dir = "up"` を `dir = "north"` に変更 | ファイル名・位置・理由を含み `向きは` を診断 | 異常 |
-| TC-FR-FLD-04-17 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `look = "stone_door"` を `look = "none"` に変更 | ファイル名・位置・理由を含み `絵は` を診断 | 異常 |
-| TC-FR-FLD-04-18 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `"#.....#", "#.....#"` を `"#.....#", "#..#..#"` に変更 | ファイル名・位置・理由を含み `到着のマス (3, 3) が床ではない` を診断 | 異常 |
-| TC-FR-FLD-04-19 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | TestMaps の同 ID の入力を読み込む（地図集合・行数などを変更） | ファイル名・位置・理由を含み `同じ行き先が重複` を診断 | 異常 |
-| TC-FR-FLD-04-20 | FR-FLD-04、DES-VAL-23 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `"#DMQ..#", "#.....#"` を `"#DMQ#.#", "#..#..#"` に変更 | ファイル名・位置・理由を含み `開始位置から行けない` を診断 | 異常 |
-| TC-FR-FLD-04-21 | FR-FLD-04、DES-VAL-23 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `"#.....#", "#.....#"` を `"#..#..#", "#.#...#"` に変更 | ファイル名・位置・理由を含み `開始位置から到着のマス` を診断 | 異常 |
-| TC-FR-FLD-04-22 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `###1###` を `##11###` に変更 | ファイル名・位置・理由を含み `2 マスある` を診断 | 異常 |
-| TC-FR-FLD-04-23 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `to = "gather"` を `to = "town"` に変更 | ファイル名・位置・理由を含み `自分の地図` を診断 | 異常 |
-| TC-FR-FLD-04-24 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `to = "town"` を `to = "gather"` に変更 | ファイル名・位置・理由を含み `行き先がない` を診断 | 異常 |
-| TC-FR-FLD-04-25 | FR-FLD-04、DES-VAL-23 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `#DMQ..#` を `#DMQ.#` に変更 | ファイル名・位置・理由を含み `行の長さが` を診断 | 異常 |
-| TC-FR-FLD-04-26 | FR-FLD-04、DES-VAL-23 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `x = 1, y = 2` を `x = 0, y = 0` に変更 | ファイル名・位置・理由を含み `床ではない` を診断 | 異常 |
-| TC-FR-FLD-04-27 | FR-FLD-04、DES-VAL-18 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | TestMaps の同 ID の入力を読み込む（地図集合・行数などを変更） | ファイル名・位置・理由を含み `行数は` を診断 | 境界 |
-| TC-FR-FLD-04-28 | FR-FLD-04、DES-VAL-18 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | TestMaps の同 ID の入力を読み込む（地図集合・行数などを変更） | ファイル名・位置・理由を含み `行の長さは` を診断 | 境界 |
-| TC-FR-FLD-04-29 | FR-FLD-04、DES-VAL-18 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | TestMaps の同 ID の入力を読み込む（地図集合・行数などを変更） | ファイル名・位置・理由を含み `行数は` を診断 | 境界 |
-| TC-FR-FLD-04-30 | FR-FLD-04、DES-VAL-18 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | TestMaps の同 ID の入力を読み込む（地図集合・行数などを変更） | ファイル名・位置・理由を含み `行の長さが` を診断 | 異常 |
-| TC-FR-FLD-04-31 | FR-FLD-04、DES-VAL-21 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `#DMQ..#` を `#DM...#` に変更 | ファイル名・位置・理由を含み `依頼板` を診断 | 異常 |
-| TC-FR-FLD-04-32 | FR-FLD-04、DES-VAL-22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `to = "town"` を `to = "gather"` に変更 | ファイル名・位置・理由を含み `town 行きがちょうど` を診断 | 異常 |
-| TC-FR-FLD-04-33 | FR-FLD-04、DES-VAL-22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `to = "gather"` を `to = "town"` に変更 | ファイル名・位置・理由を含み `gather 行きがちょうど` を診断 | 異常 |
-| TC-FR-FLD-04-34 | FR-FLD-04、DES-VAL-22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `to = "gather"` を `to = "meadow"` に変更 | ファイル名・位置・理由を含み `gather 行きがちょうど` を診断 | 異常 |
-| TC-FR-FLD-04-35 | FR-FLD-04、DES-VAL-22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | TestMaps の同 ID の入力を読み込む（地図集合・行数などを変更） | ファイル名・位置・理由を含み `mark が重複` を診断 | 異常 |
-| TC-FR-FLD-04-36 | FR-FLD-04、DES-VAL-22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `mark = "2"` を `mark = "12"` に変更 | ファイル名・位置・理由を含み `mark は` を診断 | 異常 |
-| TC-FR-FLD-04-37 | FR-FLD-04、DES-VAL-22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `"#.....#", "#.....#"` を `"#.....#", "#..D..#"` に変更 | ファイル名・位置・理由を含み `到着のマス` を診断 | 異常 |
-| TC-FR-FLD-04-38 | FR-FLD-04、DES-VAL-18〜23 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `#DMQ..#` を `#DXQ..#` に変更 | ファイル名・位置・理由を含み `知らない文字` を診断 | 異常 |
-| TC-FR-FLD-04-39 | FR-FLD-04、DES-VAL-23 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | TestMaps の同 ID の入力を読み込む（地図集合・行数などを変更） | ファイル名・位置・理由を含み `開始位置から到着のマス` を診断 | 異常 |
-| TC-FR-FLD-04-40 | FR-FLD-04、DES-DAT-03、DES-VAL-17〜23 | 反復 6 で変更: test-spec-it06.md の置き換え一覧を参照 | defload で全データを読む | 反復 6 の文字表・出口の規則を満たす（test-spec-it06.md 参照） | 正常 |
-| TC-FR-FLD-04-41 | FR-FLD-04、DES-FLD-06 | 反復 6 で変更: test-spec-it06.md の置き換え一覧を参照 | 工房地図の廃止と全採取地の地図を確認 | 工房地図なし、全採取地に地図あり（旧工房距離の規則は廃止） | 境界 |
-| TC-FR-FLD-04-42 | FR-FLD-04、DES-FLD-06 | 反復 6 で変更: test-spec-it06.md の置き換え一覧を参照 | 街の設備と出口を確認 | D/M/Q、区画と gather 行き出口 1 つ（旧距離の規則は廃止） | 境界 |
+| TC-FR-FLD-04-01 | FR-FLD-04、DES-VAL-17〜22 | map 節のない空の定義 | 空の TOML を Load | 成功。地図の規則は適用しない | 正常 |
+| TC-FR-FLD-04-02 | FR-FLD-04、DES-VAL-17〜22 | town（名前=街、開始=(1,2)、5行×7文字）と meadow（名前=草原、出口到着=(3,3)、5行×9文字）、設備 D/M/Q、出口 1/2 | 変更せず Load | Maps の全項目（ID・Name・Rows・StartX/Y・Lots・Exits の Mark/To/Dir/Look/X/Y）が期待値と DeepEqual | 正常 |
+| TC-FR-FLD-04-03 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `id = "town"` を `id = "market"` に変更して Load | `map[id=market].id`: 地図の ID は town または採取地の ID（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-04-04 | FR-FLD-04、DES-VAL-17〜22 | validMaps の town と meadow | town の map 節をもう 1 回追加 | `map[id=town].id`: ID が重複 | 異常 |
+| TC-FR-FLD-04-05 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | meadow の map 節だけを除去して Load | `map[id=meadow]`: 地図がない（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-04-06 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | town.rows[1] を空文字に変更して Load | `map[id=town].rows[1]`: 行の長さは 1〜100 文字（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-04-07 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `#DMQ..#` を `#DMQ.#` に変更して Load | `map[id=town].rows[1]`: 行の長さが rows[0] と違う（6 文字。rows[0] は 7 文字）（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-04-08 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `#DMQ..#` を `#DXQ..#` に変更して Load | `map[id=town].rows[1][2]`: 知らない文字 "X"（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-04-09 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `#DMQ..#` を `#DあX..#` に変更して Load | `map[id=town].rows[1][2]`: 知らない文字 "あ"（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-04-10 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | town の start を省略して Load | `map[id=town].start`: 開始位置が書かれていない（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-04-11 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `x = 1, y = 2` を `x = 0, y = 0` に変更して Load | `map[id=town].start`: 開始位置 (0, 0) が床ではない（"#"）（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-04-12 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `#DMQ..#` を `#DM...#` に変更して Load | `map[id=town]`: 依頼板（Q）がない（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-04-13 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `mark = "1"` を `mark = "0"` に変更して Load | `map[id=town].exits[0].mark`: mark は 1〜9 の 1 文字（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-04-14 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `###1###` を `###3###` に変更して Load | `map[id=town].rows[4][3]`: 出入り口 "3" の定義がない（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-04-15 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `to = "gather"` を `to = "missing"` に変更して Load | `map[id=town].exits[0].to`: 行き先がない: missing（必要な行き先は gather）（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-04-16 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `dir = "up"` を `dir = "north"` に変更して Load | `map[id=town].exits[0].dir`: 向きは up・down・left・right（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-04-17 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `look = "stone_door"` を `look = "none"` に変更して Load | `map[id=town].exits[0].look`: 絵は stone_door・wood_door・road（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-04-18 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `"#.....#", "#.....#"` を `"#.....#", "#..#..#"` に変更して Load | `map[id=town].exits[0].dir`: 到着のマス (3, 3) が床ではない（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-04-19 | FR-FLD-04、DES-VAL-17〜22 | town に gather 行き出口 1 が 1 個 | mark=3、to=gather、dir=up、look=road の出口定義を追加（rows に 3 はない） | `map[id=town].exits[1].to`: 同じ行き先が重複（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-04-20 | FR-FLD-04、DES-VAL-23 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `"#DMQ..#", "#.....#"` を `"#DMQ#.#", "#..#..#"` に変更して Load | `map[id=town].rows[1][3]`: 開始位置から行けない: 依頼板（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-04-21 | FR-FLD-04、DES-VAL-23 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `"#.....#", "#.....#"` を `"#..#..#", "#.#...#"` に変更して Load | `map[id=town].exits[0]`: 開始位置から到着のマス (3, 3) へ行けない（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-04-22 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `###1###` を `##11###` に変更して Load | `map[id=town].rows[4][3]`: 出入り口 "1" が 2 マスある（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-04-23 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `to = "gather"` を `to = "town"` に変更して Load | `map[id=town].exits[0].to`: 自分の地図には行けない（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-04-24 | FR-FLD-04、DES-VAL-17〜22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `to = "town"` を `to = "gather"` に変更して Load | `map[id=meadow].exits[0].to`: 行き先がない: gather（必要な行き先は town）（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-04-25 | FR-FLD-04、DES-VAL-23 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `#DMQ..#` を `#DMQ.#` に変更して Load | `map[id=town].rows[1]`: 行の長さが rows[0] と違う（6 文字。rows[0] は 7 文字）（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-04-26 | FR-FLD-04、DES-VAL-23 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `x = 1, y = 2` を `x = 0, y = 0` に変更して Load | `map[id=town].start`: 開始位置 (0, 0) が床ではない（"#"）（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-04-27 | FR-FLD-04、DES-VAL-18 | town の rows は 5 行 | town.rows=[] にする | `map[id=town].rows`: 行数は 1〜100 | 境界 |
+| TC-FR-FLD-04-28 | FR-FLD-04、DES-VAL-18 | town の rows は各 7 文字 | rows[1] を床 101 文字にする | `map[id=town].rows[1]`: 行の長さは 1〜100 文字。行長不一致も診断 | 境界 |
+| TC-FR-FLD-04-29 | FR-FLD-04、DES-VAL-18 | town の rows は 5 行 | 出口行の前に床の行を 97 行追加して 102 行にする | `map[id=town].rows`: 行数は 1〜100 | 境界 |
+| TC-FR-FLD-04-30 | FR-FLD-04、DES-VAL-18 | 地図を持つ定義 | town.rows=["..", "."] のみを書く | `map[id=town].rows[1]`: 行の長さが rows[0] と違う（1 文字。rows[0] は 2 文字） | 異常 |
+| TC-FR-FLD-04-31 | FR-FLD-04、DES-VAL-21 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `#DMQ..#` を `#DM...#` に変更して Load | `map[id=town]`: 依頼板（Q）がない（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-04-32 | FR-FLD-04、DES-VAL-22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `to = "town"` を `to = "gather"` に変更して Load | `map[id=meadow].exits`: town 行きがちょうど 1 つ必要（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-04-33 | FR-FLD-04、DES-VAL-22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `to = "gather"` を `to = "town"` に変更して Load | `map[id=town].exits`: gather 行きがちょうど 1 つ必要（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-04-34 | FR-FLD-04、DES-VAL-22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `to = "gather"` を `to = "meadow"` に変更して Load | `map[id=town].exits`: gather 行きがちょうど 1 つ必要（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-04-35 | FR-FLD-04、DES-VAL-22 | town に出口 1 が 1 個 | mark=1、to=gather、dir=up、look=road の出口定義をもう 1 件追加 | `map[id=town].exits[1].mark`: mark が重複（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-04-36 | FR-FLD-04、DES-VAL-22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `mark = "2"` を `mark = "12"` に変更して Load | `map[id=meadow].exits[0].mark`: mark は 1〜9 の 1 文字（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-04-37 | FR-FLD-04、DES-VAL-22 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | town の行 3 の (3,3) を設備 D または別出口 2 に変更して Load | `map[id=town].exits[0].dir`: 到着のマス (3, 3) が床ではない（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-04-38 | FR-FLD-04、DES-VAL-18〜23 | 反復 6 で変更: maps_test.go の validMaps（街と採取地） | `#DMQ..#` を `#DXQ..#` に変更して Load。別の各入力では town の行 2/3 を #..#..# / #.#...# にし、(a) 行 1 を #.MQ#.#（D 不足・Q に行けない）、(b) mark=12、(c) start=(0,0) と行 1 を #DMQ.#、(d) start=(0,0) と行 1 を #DXQ..# にする | `map[id=town].rows[1][2]`: 知らない文字 "X"（ファイル: maps.toml）。(a) map[id=town]: 工房の扉（D）がない、(b) map[id=town].exits[0].mark: mark は 1〜9 の 1 文字、(c) map[id=town].rows[1]: 行の長さが rows[0] と違う（6 文字。rows[0] は 7 文字）、(d) map[id=town].rows[1][2]: 知らない文字 "X"。開始位置から行けない／開始位置から到着のマスを出さない。行長・未知文字では .start と設備不足も出さない | 異常 |
+| TC-FR-FLD-04-39 | FR-FLD-04、DES-VAL-23 | town の start=(1,2)、設備 D/M/Q | rows=["#######","#DMQ..#","#.#...#","#.#...#","#.1...#","#.#...#","#.#...#"]、出口 dir=right にする | `map[id=town].exits[0]`: 開始位置から到着のマス (3, 4) へ行けない | 異常 |
+| TC-FR-FLD-04-40 | FR-FLD-04、DES-DAT-03、DES-VAL-17〜23 | 反復 6 で変更: test-spec-it06.md の置き換え一覧を参照 | defload で全データを読む | 読み込みに成功し、地図は 5 枚（街 1 枚と採取地 4 枚。件数は採取地の数 + 1）。反復 6 の文字表・出口の規則を満たす | 正常 |
+| TC-FR-FLD-04-41 | FR-FLD-04、DES-FLD-06 | 反復 6 で廃止（工房の地図がない。街の距離は #106） | 実施しない | 旧距離試験。ID を再利用しない | 廃止 |
+| TC-FR-FLD-04-42 | FR-FLD-04、DES-FLD-06 | 反復 6 で廃止（工房の地図がない。街の距離は #106） | 実施しない | 旧距離試験。ID を再利用しない | 廃止 |
 
 ### IF-08 主人公を動かし、設備を使う
 

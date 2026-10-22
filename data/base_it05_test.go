@@ -23,7 +23,7 @@ func TestBaseMapsIT05(t *testing.T) {
 	if err != nil {
 		return
 	}
-	t.Run("TC-FR-FLD-01-30 / TC-FR-FLD-04-41", func(t *testing.T) {
+	t.Run("TC-FR-FLD-01-30 / TC-FR-FLD-04-58", func(t *testing.T) {
 		if _, ok := c.Maps["workshop"]; ok {
 			t.Fatal("工房地図が残っている")
 		}
@@ -34,7 +34,7 @@ func TestBaseMapsIT05(t *testing.T) {
 			}
 		}
 	})
-	t.Run("TC-FR-FLD-01-31 / TC-FR-FLD-04-42", func(t *testing.T) {
+	t.Run("TC-FR-FLD-01-31 / TC-FR-FLD-04-59", func(t *testing.T) {
 		m := c.Maps[defs.MapTown]
 		if len(m.Lots) != len(c.Facilities) || len(m.Exits) != 1 || m.Exits[0].To != defs.ExitGather {
 			t.Fatal(m)

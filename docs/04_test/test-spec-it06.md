@@ -10,16 +10,16 @@
 
 | Issue | 担当と予約範囲 |
 |---|---|
-| #102 | 予備のケース: 新規要求の未使用の 01〜09（過去に使った番号は再利用しない） |
+| #102 | テストケースなし（反復 5 の exe を残すだけ） |
 | #103 | defs・defload: FR-FLD-01・04 は 50〜79、FR-TWN-02・07、FR-FLD-05、FR-ECO-07、FR-PRG-05 は 30〜49、FR-MOD-04 は 80〜89、NFR-08 は 10〜29 |
-| #104 | core の日・依頼: FR-PRG-05・FR-ECO-05〜07 は 01〜29（ユーザー指定の予約。過去のケースと重複する ID は #104 側で整理） |
+| #104 | core の日・依頼: FR-PRG-05 は 01〜07、FR-ECO-05 は 14〜19、FR-ECO-06 は 01〜11、FR-ECO-07 は 01〜06（実装済み） |
 | #105 | core の地図・採取・敵: FR-FLD-01〜04 は 80〜89、FR-FLD-05 は 01〜29、FR-MAT-01・FR-BTL-10 は 50〜69、IF-08 は 70〜89 |
-| #106 | 本体データ: FR-MOD-02 は 60〜79、FR-FLD-01・04 は 43〜49、FR-TWN-02・07 は 50〜59 |
+| #106 | 本体データ: FR-MOD-02 は 60〜79、FR-FLD-01 は 44〜49、FR-FLD-04 は 43〜49、FR-TWN-02・07 は 50〜59 |
 | #107 | 画面: IF-06 は 40〜69、IF-08 は 61〜69、FR-TWN-07・FR-FLD-05・FR-PRG-05 は 60〜79 |
 | #108 | 画像: CST-04 は 10〜29 |
 | #109 | 結合・手動: 関連要求の未使用の 90〜99（FR-FLD-01〜04 も 90〜99。過去に使用済みの ID は再利用しない） |
 
-FR-PRG-05・FR-ECO-05〜07 の 01〜29 は #103 では使わない。#104 が作成する節と行は同担当だけが更新する。
+上表の #104 の実使用番号と #103 の 30 番以降は重複しない。#105〜#109 の予約範囲も test-spec-it01〜05 の使用済み番号と照合済み（#109 は要求ごとに未使用の 90〜99 のみ）。#104 の節と行は同担当だけが更新する。
 
 ## #103 定義と検証
 
@@ -27,70 +27,82 @@ FR-PRG-05・FR-ECO-05〜07 の 01〜29 は #103 では使わない。#104 が作
 
 | ID | 対象（要求・設計） | 前提 | 入力・操作 | 期待結果 | 種別 |
 |---|---|---|---|---|---|
-| TC-FR-FLD-04-50 | FR-FLD-04 / DES-DEF-09〜11、DES-VAL-17・25・29 | 上記の正常定義（「地図なし」は map 節を除去） | 正常な街・採取地・区画を読むを Load する | 読み込み成功。秒数・見た目と区画の左上 (2,1) を保持 | 正常・境界 |
-| TC-FR-FLD-04-51 | FR-FLD-04 / DES-DEF-09〜11、DES-VAL-17・25・29 | 上記の正常定義（「地図なし」は map 節を除去） | 未知の地図 IDを Load する | ファイル名・位置・理由を持つ診断を返す | 異常 |
-| TC-FR-FLD-04-52 | FR-FLD-04 / DES-DEF-09〜11、DES-VAL-17・25・29 | 上記の正常定義（「地図なし」は map 節を除去） | 地図 ID の重複を Load する | ファイル名・位置・理由を持つ診断を返す | 異常 |
-| TC-FR-FLD-04-53 | FR-FLD-04 / DES-DEF-09〜11、DES-VAL-17・25・29 | 上記の正常定義（「地図なし」は map 節を除去） | 採取地の地図不足を Load する | ファイル名・位置・理由を持つ診断を返す | 異常 |
-| TC-FR-FLD-04-54 | FR-FLD-04 / DES-DEF-09〜11、DES-VAL-17・25・29 | 上記の正常定義（「地図なし」は map 節を除去） | 採取地 ID gather は予約済みを Load する | ファイル名・位置・理由を持つ診断を返す | 異常 |
-| TC-FR-FLD-04-55 | FR-FLD-04 / DES-DEF-09〜11、DES-VAL-17・25・29 | 上記の正常定義（「地図なし」は map 節を除去） | 採取地 ID town は予約済みを Load する | ファイル名・位置・理由を持つ診断を返す | 異常 |
-| TC-FR-FLD-04-56 | FR-FLD-04 / DES-DEF-09〜11、DES-VAL-17・25・29 | 上記の正常定義（「地図なし」は map 節を除去） | 地図あり・game なしを Load する | ファイル名・位置・理由を持つ診断を返す | 異常 |
-| TC-FR-FLD-04-57 | FR-FLD-04 / DES-DEF-09〜11、DES-VAL-17・25・29 | 上記の正常定義（「地図なし」は map 節を除去） | 採取地に空の lots を明記を Load する | ファイル名・位置・理由を持つ診断を返す | 異常 |
-| TC-FR-FLD-01-50 | FR-FLD-01 / DES-VAL-20・21 | 上記の正常定義（「地図なし」は map 節を除去） | 街の start 省略を Load する | ファイル名・位置・理由を持つ診断を返す | 異常 |
-| TC-FR-FLD-01-51 | FR-FLD-01 / DES-VAL-20・21 | 上記の正常定義（「地図なし」は map 節を除去） | 採取地の start 指定を Load する | ファイル名・位置・理由を持つ診断を返す | 異常 |
-| TC-FR-FLD-01-52 | FR-FLD-01 / DES-VAL-20・21 | 上記の正常定義（「地図なし」は map 節を除去） | 街の工房の扉不足を Load する | ファイル名・位置・理由を持つ診断を返す | 異常 |
-| TC-FR-FLD-01-53 | FR-FLD-01 / DES-VAL-20・21 | 上記の正常定義（「地図なし」は map 節を除去） | 採取地に区画文字を配置を Load する | ファイル名・位置・理由を持つ診断を返す | 異常 |
-| TC-FR-FLD-01-54 | FR-FLD-01 / DES-VAL-20・21 | 上記の正常定義（「地図なし」は map 節を除去） | 街に拾う場所を配置を Load する | ファイル名・位置・理由を持つ診断を返す | 異常 |
-| TC-FR-TWN-02-30 | FR-TWN-02 / DES-DEF-12、DES-VAL-26 | 上記の正常定義（「地図なし」は map 節を除去） | 施設の段階の見た目を読むを Load する | 読み込み成功。秒数・見た目と区画の左上 (2,1) を保持 | 正常・境界 |
-| TC-FR-TWN-02-31 | FR-TWN-02 / DES-DEF-12、DES-VAL-26 | 上記の正常定義（「地図なし」は map 節を除去） | 同じ見た目 house が続く段階を Load する | 読み込み成功。秒数・見た目と区画の左上 (2,1) を保持 | 正常・境界 |
-| TC-FR-TWN-02-32 | FR-TWN-02 / DES-DEF-12、DES-VAL-26 | 上記の正常定義（「地図なし」は map 節を除去） | 第 2 段階に未知の見た目を Load する | ファイル名・位置・理由を持つ診断を返す | 異常 |
-| TC-FR-TWN-07-30 | FR-TWN-07 / DES-DEF-11・12、DES-VAL-23・25・26 | 上記の正常定義（「地図なし」は map 節を除去） | 区画が 8 マスを Load する | ファイル名・位置・理由を持つ診断を返す | 異常 |
-| TC-FR-TWN-07-31 | FR-TWN-07 / DES-DEF-11・12、DES-VAL-23・25・26 | 上記の正常定義（「地図なし」は map 節を除去） | rows の区画と lots の mark が不一致を Load する | ファイル名・位置・理由を持つ診断を返す | 異常 |
-| TC-FR-TWN-07-32 | FR-TWN-07 / DES-DEF-11・12、DES-VAL-23・25・26 | 上記の正常定義（「地図なし」は map 節を除去） | 存在しない施設 IDを Load する | ファイル名・位置・理由を持つ診断を返す | 異常 |
-| TC-FR-TWN-07-33 | FR-TWN-07 / DES-DEF-11・12、DES-VAL-23・25・26 | 上記の正常定義（「地図なし」は map 節を除去） | mark が範囲外 jを Load する | ファイル名・位置・理由を持つ診断を返す | 異常 |
-| TC-FR-TWN-07-34 | FR-TWN-07 / DES-DEF-11・12、DES-VAL-23・25・26 | 上記の正常定義（「地図なし」は map 節を除去） | mark の重複を Load する | ファイル名・位置・理由を持つ診断を返す | 異常 |
-| TC-FR-TWN-07-35 | FR-TWN-07 / DES-DEF-11・12、DES-VAL-23・25・26 | 上記の正常定義（「地図なし」は map 節を除去） | 未知の見た目 castleを Load する | ファイル名・位置・理由を持つ診断を返す | 異常 |
-| TC-FR-TWN-07-36 | FR-TWN-07 / DES-DEF-11・12、DES-VAL-23・25・26 | 上記の正常定義（「地図なし」は map 節を除去） | 地図あり・look の省略を Load する | ファイル名・位置・理由を持つ診断を返す | 異常 |
-| TC-FR-TWN-07-37 | FR-TWN-07 / DES-DEF-11・12、DES-VAL-23・25・26 | 上記の正常定義（「地図なし」は map 節を除去） | 目録の施設に対応する区画がないを Load する | ファイル名・位置・理由を持つ診断を返す | 異常 |
-| TC-FR-TWN-07-38 | FR-TWN-07 / DES-DEF-11・12、DES-VAL-23・25・26 | 上記の正常定義（「地図なし」は map 節を除去） | 同じ施設に 2 区画を Load する | ファイル名・位置・理由を持つ診断を返す | 異常 |
-| TC-FR-TWN-07-39 | FR-TWN-07 / DES-DEF-11・12、DES-VAL-23・25・26 | 上記の正常定義（「地図なし」は map 節を除去） | 9 マスだが離れた区画を Load する | ファイル名・位置・理由を持つ診断を返す | 異常 |
-| TC-FR-TWN-07-40 | FR-TWN-07 / DES-DEF-11・12、DES-VAL-23・25・26 | 上記の正常定義（「地図なし」は map 節を除去） | 区画文字が 0 マスを Load する | ファイル名・位置・理由を持つ診断を返す | 異常 |
-| TC-FR-TWN-07-41 | FR-TWN-07 / DES-DEF-11・12、DES-VAL-23・25・26 | 上記の正常定義（「地図なし」は map 節を除去） | 周囲を壁で囲んだ区画を Load する | ファイル名・位置・理由を持つ診断を返す | 異常 |
-| TC-FR-TWN-07-42 | FR-TWN-07 / DES-DEF-11・12、DES-VAL-23・25・26 | 上記の正常定義（「地図なし」は map 節を除去） | 地図なし・manor の明示を Load する | 読み込み成功。Maps は空で、指定した manor を保持 | 正常・境界 |
-| TC-FR-TWN-07-43 | FR-TWN-07 / DES-DEF-11・12、DES-VAL-23・25・26 | 上記の正常定義（「地図なし」は map 節を除去） | 地図なし・未知の lookを Load する | ファイル名・位置・理由を持つ診断を返す | 異常 |
-| TC-FR-TWN-07-44 | FR-TWN-07 / DES-DEF-11・12、DES-VAL-23・25・26 | 上記の正常定義（「地図なし」は map 節を除去） | 地図なし・look の省略を Load する | 読み込み成功。Maps は空で、各段階の Look は空文字 | 正常・境界 |
-| TC-FR-TWN-07-45 | FR-TWN-07 / DES-DEF-11・12、DES-VAL-23・25・26 | 上記の正常定義（「地図なし」は map 節を除去） | cottage の明示を Load する | 読み込み成功。秒数・見た目と区画の左上 (2,1) を保持 | 正常・境界 |
-| TC-FR-TWN-07-46 | FR-TWN-07 / DES-DEF-11・12、DES-VAL-23・25・26 | 上記の正常定義（「地図なし」は map 節を除去） | 空文字の lookを Load する | ファイル名・位置・理由を持つ診断を返す | 異常 |
-| TC-FR-FLD-05-30 | FR-FLD-05 / DES-VAL-23・27・28 | 上記の正常定義（「地図なし」は map 節を除去） | 拾う場所が 3 個から 2 個になるを Load する | 読み込み成功。秒数・見た目と区画の左上 (2,1) を保持 | 正常・境界 |
-| TC-FR-FLD-05-31 | FR-FLD-05 / DES-VAL-23・27・28 | 上記の正常定義（「地図なし」は map 節を除去） | 戦闘のない採取地に敵を配置を Load する | ファイル名・位置・理由を持つ診断を返す | 異常 |
-| TC-FR-FLD-05-32 | FR-FLD-05 / DES-VAL-23・27・28 | 上記の正常定義（「地図なし」は map 節を除去） | 再出現時間 0を Load する | ファイル名・位置・理由を持つ診断を返す | 異常 |
-| TC-FR-FLD-05-33 | FR-FLD-05 / DES-VAL-23・27・28 | 上記の正常定義（「地図なし」は map 節を除去） | 再出現時間 86400を Load する | 読み込み成功。秒数・見た目と区画の左上 (2,1) を保持 | 正常・境界 |
-| TC-FR-FLD-05-34 | FR-FLD-05 / DES-VAL-23・27・28 | 上記の正常定義（「地図なし」は map 節を除去） | 再出現時間 86401を Load する | ファイル名・位置・理由を持つ診断を返す | 異常 |
-| TC-FR-FLD-05-35 | FR-FLD-05 / DES-VAL-23・27・28 | 上記の正常定義（「地図なし」は map 節を除去） | 地図あり・再出現時間なしを Load する | ファイル名・位置・理由を持つ診断を返す | 異常 |
-| TC-FR-FLD-05-36 | FR-FLD-05 / DES-VAL-23・27・28 | 上記の正常定義（「地図なし」は map 節を除去） | 拾う場所が 0 マスを Load する | ファイル名・位置・理由を持つ診断を返す | 異常 |
-| TC-FR-FLD-05-37 | FR-FLD-05 / DES-VAL-23・27・28 | 上記の正常定義（「地図なし」は map 節を除去） | 再出現時間 1を Load する | 読み込み成功。秒数・見た目と区画の左上 (2,1) を保持 | 正常・境界 |
-| TC-FR-FLD-05-38 | FR-FLD-05 / DES-VAL-23・27・28 | 上記の正常定義（「地図なし」は map 節を除去） | 地図なし・再出現時間 -1を Load する | ファイル名・位置・理由を持つ診断を返す | 異常 |
-| TC-FR-FLD-05-39 | FR-FLD-05 / DES-VAL-23・27・28 | 上記の正常定義（「地図なし」は map 節を除去） | 地図なし・再出現時間の省略を Load する | 読み込み成功。Maps は空で、RespawnSeconds は 0 | 正常・境界 |
-| TC-FR-FLD-05-40 | FR-FLD-05 / DES-VAL-23・27・28 | 上記の正常定義（「地図なし」は map 節を除去） | 戦闘あり・敵 1 マスを Load する | 読み込み成功。秒数・見た目と区画の左上 (2,1) を保持 | 正常・境界 |
-| TC-FR-FLD-05-41 | FR-FLD-05 / DES-VAL-23・27・28 | 上記の正常定義（「地図なし」は map 節を除去） | 戦闘あり・敵 0 マスを Load する | ファイル名・位置・理由を持つ診断を返す | 異常 |
-| TC-FR-FLD-05-42 | FR-FLD-05 / DES-VAL-23・27・28 | 上記の正常定義（「地図なし」は map 節を除去） | 戦闘あり・敵 2 マスを Load する | ファイル名・位置・理由を持つ診断を返す | 異常 |
-| TC-FR-FLD-05-43 | FR-FLD-05 / DES-VAL-23・27・28 | 上記の正常定義（「地図なし」は map 節を除去） | 拾う場所の前の床に到達できないを Load する | ファイル名・位置・理由を持つ診断を返す | 異常 |
-| TC-FR-FLD-05-44 | FR-FLD-05 / DES-VAL-23・27・28 | 上記の正常定義（「地図なし」は map 節を除去） | 敵数不正と拾う場所の到達不能を併発を Load する | 敵数不正と到達不能の両方を診断する（DES-IT06 6 章の検証順） | 異常 |
-| TC-FR-PRG-05-30 | FR-PRG-05 / DES-VAL-29 | 上記の正常定義（「地図なし」は map 節を除去） | 日の長さ 1を Load する | 読み込み成功。秒数・見た目と区画の左上 (2,1) を保持 | 正常・境界 |
-| TC-FR-PRG-05-31 | FR-PRG-05 / DES-VAL-29 | 上記の正常定義（「地図なし」は map 節を除去） | 日の長さ 86400を Load する | 読み込み成功。秒数・見た目と区画の左上 (2,1) を保持 | 正常・境界 |
-| TC-FR-PRG-05-32 | FR-PRG-05 / DES-VAL-29 | 上記の正常定義（「地図なし」は map 節を除去） | 日の長さ 0を Load する | ファイル名・位置・理由を持つ診断を返す | 異常 |
-| TC-FR-PRG-05-33 | FR-PRG-05 / DES-VAL-29 | 上記の正常定義（「地図なし」は map 節を除去） | 日の長さ 86401を Load する | ファイル名・位置・理由を持つ診断を返す | 異常 |
-| TC-FR-PRG-05-34 | FR-PRG-05 / DES-VAL-29 | 上記の正常定義（「地図なし」は map 節を除去） | 地図あり・日の長さの省略を Load する | ファイル名・位置・理由を持つ診断を返す | 異常 |
-| TC-FR-PRG-05-35 | FR-PRG-05 / DES-VAL-29 | 上記の正常定義（「地図なし」は map 節を除去） | 地図なし・日の長さの省略を Load する | 読み込み成功。Maps は空で、DaySeconds は 0 | 正常・境界 |
-| TC-FR-PRG-05-36 | FR-PRG-05 / DES-VAL-29 | 上記の正常定義（「地図なし」は map 節を除去） | 地図なし・日の長さ -1を Load する | ファイル名・位置・理由を持つ診断を返す | 異常 |
-| TC-FR-PRG-05-37 | FR-PRG-05 / DES-VAL-29 | 上記の正常定義（「地図なし」は map 節を除去） | 地図なし・日の長さ 0を Load する | ファイル名・位置・理由を持つ診断を返す | 異常 |
-| TC-FR-ECO-07-30 | FR-ECO-07 / DES-VAL-15 | it04_test.go の rankData から依頼を置換。ランク 2・3 には評判 1 の依頼を各 1 件用意 | ランク 1 の依頼が 0 件を Load する | ランク 1 の依頼が 0 件しかない（6 件以上が必要）を含む診断 | 異常 |
-| TC-FR-ECO-07-31 | FR-ECO-07 / DES-VAL-15 | it04_test.go の rankData から依頼を置換。ランク 2・3 には評判 1 の依頼を各 1 件用意 | ランク 1 の依頼が 5 件を Load する | ランク 1 の依頼が 5 件しかない（6 件以上が必要）を含む診断 | 異常 |
+| TC-FR-FLD-04-50 | FR-FLD-04 / DES-DEF-09〜11、DES-VAL-17・25・29 | town.start=(5,5)、区画 a は 3×3、meadow は拾う場所 3 個・敵なし | maps.toml を変更せず Load | DaySeconds=300、meadow.RespawnSeconds=2、market の見た目 stall/house、区画 a の左上 (2,1) を保持 | 正常・境界 |
+| TC-FR-FLD-04-51 | FR-FLD-04 / DES-DEF-09〜11、DES-VAL-17・25・29 | 正常定義の対象値: `id = "meadow" / rows` | `id = "meadow" / rows` を `id = "unknown" / rows` に置換して Load | `map[id=unknown].id`: 地図の ID は town または採取地の ID（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-04-52 | FR-FLD-04 / DES-DEF-09〜11、DES-VAL-17・25・29 | 正常定義の対象値: `id = "meadow" / rows` | `id = "meadow" / rows` を `id = "town" / rows` に置換して Load | `map[id=town].id`: ID が重複（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-04-53 | FR-FLD-04 / DES-DEF-09〜11、DES-VAL-17・25・29 | 正常定義の対象値: `[[map]] / id = "meadow"` | `[[map]] / id = "meadow"` を `[[map]] / id = "missing"` に置換して Load | `map[id=meadow]`: 地図がない（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-04-54 | FR-FLD-04 / DES-DEF-09〜11、DES-VAL-17・25・29 | 採取地 meadow と同 ID の地図がある | 採取地と地図の ID meadow を両方 gather に変更 | `gather[id=gather].id`: 採取地の ID に town・gather は使えない（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-04-55 | FR-FLD-04 / DES-DEF-09〜11、DES-VAL-17・25・29 | 採取地 meadow と地図 town/meadow がある | 採取地と地図の ID meadow を両方 town に変更 | `gather[id=town].id`: 採取地の ID に town・gather は使えない（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-04-56 | FR-FLD-04 / DES-DEF-09〜11、DES-VAL-17・25・29 | game.day_seconds=300、town と meadow の地図がある | [game] と day_seconds の行を削除 | `game.day_seconds`: 書かれていない（地図を使うときは必須）（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-04-57 | FR-FLD-04 / DES-DEF-09〜11、DES-VAL-17・25・29 | 採取地 meadow は lots を省略 | meadow の map 節に lots=[] を追加 | `map[id=meadow].lots`: lots は街にだけ書く（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-01-50 | FR-FLD-01 / DES-VAL-20・21 | 正常定義の対象値: `start = {x=5,y=5}` | `start = {x=5,y=5}` を `` に置換して Load | `map[id=town].start`: 開始位置が書かれていない（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-01-51 | FR-FLD-01 / DES-VAL-20・21 | 正常定義の対象値: `id = "meadow" / rows` | `id = "meadow" / rows` を `id = "meadow" / start={x=1,y=1} / rows` に置換して Load | `map[id=meadow].start`: 採取地の地図には開始位置を書かない（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-01-52 | FR-FLD-01 / DES-VAL-20・21 | 正常定義の対象値: `T,aaa,,DT` | `T,aaa,,DT` を `T,aaa,,,T` に置換して Load | `map[id=town]`: 工房の扉（D）がない（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-01-53 | FR-FLD-01 / DES-VAL-20・21 | 正常定義の対象値: `T*,,,,T` | `T*,,,,T` を `Ta,,,,T` に置換して Load | `map[id=meadow].rows[1][1]`: 区画（a）は街にしか置けない（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-01-54 | FR-FLD-01 / DES-VAL-20・21 | 正常定義の対象値: `T,,,,,,MT` | `T,,,,,,MT` を `T*,,,,,MT` に置換して Load | `map[id=town].rows[4][1]`: 拾う場所（*）は採取地にしか置けない（ファイル: maps.toml） | 異常 |
+| TC-FR-TWN-02-30 | FR-TWN-02 / DES-DEF-12、DES-VAL-26 | market は stall/house の 2 段階、town の区画 a に対応 | maps.toml を変更せず Load | market の見た目 stall/house と区画の左上 (2,1) を保持 | 正常・境界 |
+| TC-FR-TWN-02-31 | FR-TWN-02 / DES-DEF-12、DES-VAL-26 | market の第 1 段階は stall、第 2 段階は house | 第 1 段階を house に変更 | market の両段階の Look=house を保持して成功 | 正常・境界 |
+| TC-FR-TWN-02-32 | FR-TWN-02 / DES-DEF-12、DES-VAL-26 | market の第 2 段階は house | 第 2 段階の look を castle に変更 | `facility[id=market].levels[1].look`: 知らない見た目 "castle"（stall・cottage・house・manor が必要）（ファイル: maps.toml） | 異常 |
+| TC-FR-TWN-07-30 | FR-TWN-07 / DES-DEF-11・12、DES-VAL-23・25・26 | 正常定義の対象値: `T,aaa,,,T` | 対象値を `T,aa,,,,T` に置換して Load（空欄は省略） | `map[id=town].lots[0]`: 区画 "a" が 3 × 3 の四角になっていない（ファイル: maps.toml） | 異常 |
+| TC-FR-TWN-07-31 | FR-TWN-07 / DES-DEF-11・12、DES-VAL-23・25・26 | 正常定義の対象値: `mark="a",facility="market"` | 対象値を `mark="b",facility="market"` に置換して Load（空欄は省略） | `map[id=town].rows[1][2]`: 区画の定義がない（ファイル: maps.toml） | 異常 |
+| TC-FR-TWN-07-32 | FR-TWN-07 / DES-DEF-11・12、DES-VAL-23・25・26 | 正常定義の対象値: `facility="market"` | 対象値を `facility="missing"` に置換して Load（空欄は省略） | `map[id=town].lots[0].facility`: 存在しない施設: missing（ファイル: maps.toml） | 異常 |
+| TC-FR-TWN-07-33 | FR-TWN-07 / DES-DEF-11・12、DES-VAL-23・25・26 | 正常定義の対象値: `mark="a",facility="market"` | 対象値を `mark="j",facility="market"` に置換して Load（空欄は省略） | `map[id=town].lots[0].mark`: mark は a〜i の 1 文字（ファイル: maps.toml） | 異常 |
+| TC-FR-TWN-07-34 | FR-TWN-07 / DES-DEF-11・12、DES-VAL-23・25・26 | 正常定義の対象値: `lots = [{mark="a",facility="market"}]` | 対象値を `lots = [{mark="a",facility="market"},{mark="a",facility="market"}]` に置換して Load（空欄は省略） | `map[id=town].lots[1].mark`: mark が重複（ファイル: maps.toml） | 異常 |
+| TC-FR-TWN-07-35 | FR-TWN-07 / DES-DEF-11・12、DES-VAL-23・25・26 | 正常定義の対象値: `look="stall"` | 対象値を `look="castle"` に置換して Load（空欄は省略） | `facility[id=market].levels[0].look`: 知らない見た目 "castle"（stall・cottage・house・manor が必要）（ファイル: maps.toml） | 異常 |
+| TC-FR-TWN-07-36 | FR-TWN-07 / DES-DEF-11・12、DES-VAL-23・25・26 | 正常定義の対象値: `look="stall"` | 対象値を `money=1` に置換して Load（空欄は省略） | `facility[id=market].levels[0].look`: 書かれていない（地図を使うときは必須）（ファイル: maps.toml） | 異常 |
+| TC-FR-TWN-07-37 | FR-TWN-07 / DES-DEF-11・12、DES-VAL-23・25・26 | town.lots=[{mark="a",facility="market"}]、market が目録にある | town.lots=[] にする（rows の a は残す） | `map[id=town].lots`: 施設 market の区画がない（ファイル: maps.toml） | 異常 |
+| TC-FR-TWN-07-38 | FR-TWN-07 / DES-DEF-11・12、DES-VAL-23・25・26 | market の区画 a が 1 つある | 街の行 4 を T,bbb,,MT にし、区画 b も facility=market として追加 | `map[id=town].lots[1].facility`: 同じ施設の区画が重複（ファイル: maps.toml） | 異常 |
+| TC-FR-TWN-07-39 | FR-TWN-07 / DES-DEF-11・12、DES-VAL-23・25・26 | 街の区画 a は 9 マスで 3×3 | 行 1 を T,aaa,aQT、行 2 を T,aa,,,,T にして 9 マスを離す | `map[id=town].lots[0]`: 区画 "a" が 3 × 3 の四角になっていない（ファイル: maps.toml） | 異常 |
+| TC-FR-TWN-07-40 | FR-TWN-07 / DES-DEF-11・12、DES-VAL-23・25・26 | 街の区画 a は 9 マス | rows の a をすべて # にし、lots の定義は残す | `map[id=town].lots[0]`: 区画 "a" が 3 × 3 の四角になっていない（ファイル: maps.toml） | 異常 |
+| TC-FR-TWN-07-41 | FR-TWN-07 / DES-DEF-11・12、DES-VAL-23・25・26 | town の区画 a の周りは床 | 行 1 を T#aaa#,QT、行 2 を T#aaa#,,T、行 3 を T#aaa#,DT、行 4 を T,###,,MT にして区画を壁で囲む | `map[id=town].lots[0]`: 開始位置から行けない: 区画（ファイル: maps.toml） | 異常 |
+| TC-FR-TWN-07-42 | FR-TWN-07 / DES-DEF-11・12、DES-VAL-23・25・26 | map 節なし、market.levels[0].look=stall | 第 1 段階の look を manor に変更して Load | 読み込み成功。Maps は空で、指定した manor を保持 | 正常・境界 |
+| TC-FR-TWN-07-43 | FR-TWN-07 / DES-DEF-11・12、DES-VAL-23・25・26 | map 節なし、market.levels[0].look=stall | 第 1 段階の look を castle に変更して Load | `facility[id=market].levels[0].look`: 知らない見た目 "castle"（stall・cottage・house・manor が必要）（ファイル: maps.toml） | 異常 |
+| TC-FR-TWN-07-44 | FR-TWN-07 / DES-DEF-11・12、DES-VAL-23・25・26 | map 節なし、market は stall/house の 2 段階 | 両段階の look を省略（money=1/2 に置換）して Load | 読み込み成功。Maps は空で、各段階の Look は空文字 | 正常・境界 |
+| TC-FR-TWN-07-45 | FR-TWN-07 / DES-DEF-11・12、DES-VAL-23・25・26 | 地図あり、market.levels[0].look=stall | 第 1 段階の look を cottage に変更して Load | market.levels[0].Look=cottage を保持して成功 | 正常・境界 |
+| TC-FR-TWN-07-46 | FR-TWN-07 / DES-DEF-11・12、DES-VAL-23・25・26 | 地図あり、market.levels[0].look=stall | 第 1 段階の look に空文字を明記して Load | `facility[id=market].levels[0].look`: 知らない見た目 ""（stall・cottage・house・manor が必要）（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-05-30 | FR-FLD-05 / DES-VAL-23・27・28 | 正常定義の対象値: `T*,,,,T` | 対象値を `T,,,,,T` に置換して Load（空欄は省略） | meadow の拾う場所が 2 マス、RespawnSeconds=2 を保持して成功 | 正常・境界 |
+| TC-FR-FLD-05-31 | FR-FLD-05 / DES-VAL-23・27・28 | 正常定義の対象値: `T*,,,,T` | 対象値を `TE,,,,T` に置換して Load（空欄は省略） | `map[id=meadow].rows`: 敵（E）が 1 マスある（必要なマス数は 0）（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-05-32 | FR-FLD-05 / DES-VAL-23・27・28 | 正常定義の対象値: `respawn_seconds = 2` | 対象値を `respawn_seconds = 0` に置換して Load（空欄は省略） | `gather[id=meadow].respawn_seconds`: 1 以上 86400 以下にする（0）（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-05-33 | FR-FLD-05 / DES-VAL-23・27・28 | 正常定義の対象値: `respawn_seconds = 2` | 対象値を `respawn_seconds = 86400` に置換して Load（空欄は省略） | meadow.RespawnSeconds=86400 を保持して成功 | 正常・境界 |
+| TC-FR-FLD-05-34 | FR-FLD-05 / DES-VAL-23・27・28 | 正常定義の対象値: `respawn_seconds = 2` | 対象値を `respawn_seconds = 86401` に置換して Load（空欄は省略） | `gather[id=meadow].respawn_seconds`: 1 以上 86400 以下にする（86401）（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-05-35 | FR-FLD-05 / DES-VAL-23・27・28 | 正常定義の対象値: `respawn_seconds = 2` | 対象値を 省略して Load | `gather[id=meadow].respawn_seconds`: 書かれていない（地図を使うときは必須）（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-05-36 | FR-FLD-05 / DES-VAL-23・27・28 | meadow には * が 2 マス、o が 1 マス | * と o のすべてを床に変更 | `map[id=meadow].rows`: 拾う場所は 1 マス以上必要（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-05-37 | FR-FLD-05 / DES-VAL-23・27・28 | 地図あり、meadow.respawn_seconds=2 | respawn_seconds=1 に変更 | meadow.RespawnSeconds=1 を保持して成功 | 正常・境界 |
+| TC-FR-FLD-05-38 | FR-FLD-05 / DES-VAL-23・27・28 | map 節なし、meadow.respawn_seconds=2 | respawn_seconds=-1 に変更 | `gather[id=meadow].respawn_seconds`: 1 以上 86400 以下にする（-1）（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-05-39 | FR-FLD-05 / DES-VAL-23・27・28 | map 節なし、meadow.respawn_seconds=2 | respawn_seconds の行を省略 | 読み込み成功。Maps は空で、RespawnSeconds は 0 | 正常・境界 |
+| TC-FR-FLD-05-40 | FR-FLD-05 / DES-VAL-23・27・28 | battle.toml と同じ hero/foe の戦闘定義、meadow に敵 E が 1 マス | 戦闘ありの定義を変更せず Load | meadow に戦闘定義と敵 E がちょうど 1 マスある目録を返す | 正常・境界 |
+| TC-FR-FLD-05-41 | FR-FLD-05 / DES-VAL-23・27・28 | hero/foe の戦闘定義あり、meadow の行 1 は T*,,,ET | 行 1 を T*,,,,T にし、敵を 0 マスにする | `map[id=meadow].rows`: 敵（E）が 0 マスある（必要なマス数は 1）（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-05-42 | FR-FLD-05 / DES-VAL-23・27・28 | hero/foe の戦闘定義あり、meadow の行 1 は T*,,,ET | 行 1 を T*,,EET にし、敵を 2 マスにする | `map[id=meadow].rows`: 敵（E）が 2 マスある（必要なマス数は 1）（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-05-43 | FR-FLD-05 / DES-VAL-23・27・28 | 敵なしの meadow。拾う場所 (1,1) の前は床 | 行 1・3 を T*#,,,T、行 2 を T#,#,,T にし、拾う場所を囲む | `map[id=meadow].rows[1][1]`: 開始位置から行けない: 拾う場所（ファイル: maps.toml） | 異常 |
+| TC-FR-FLD-05-44 | FR-FLD-05 / DES-VAL-23・27・28 | meadow は戦闘なし・敵なし、拾う場所は 3 個 | 行 1・3 を T*#,,ET、行 2 を T#,#,,T にし、敵 2 マスと拾う場所の到達不能を併発 | `map[id=meadow].rows`: 敵（E）が 2 マスある（必要なマス数は 0）。`map[id=meadow].rows[1][1]`: 開始位置から行けない: 拾う場所。敵数不正でも到達性を検査する | 異常 |
+| TC-FR-PRG-05-30 | FR-PRG-05 / DES-VAL-29 | 正常定義の対象値: `day_seconds = 300` | 対象値を `day_seconds = 1` に置換して Load（空欄は省略） | Game.DaySeconds=1 を保持して成功 | 正常・境界 |
+| TC-FR-PRG-05-31 | FR-PRG-05 / DES-VAL-29 | 正常定義の対象値: `day_seconds = 300` | 対象値を `day_seconds = 86400` に置換して Load（空欄は省略） | Game.DaySeconds=86400 を保持して成功 | 正常・境界 |
+| TC-FR-PRG-05-32 | FR-PRG-05 / DES-VAL-29 | 正常定義の対象値: `day_seconds = 300` | 対象値を `day_seconds = 0` に置換して Load（空欄は省略） | `game.day_seconds`: 1 以上 86400 以下にする（0）（ファイル: maps.toml） | 異常 |
+| TC-FR-PRG-05-33 | FR-PRG-05 / DES-VAL-29 | 正常定義の対象値: `day_seconds = 300` | 対象値を `day_seconds = 86401` に置換して Load（空欄は省略） | `game.day_seconds`: 1 以上 86400 以下にする（86401）（ファイル: maps.toml） | 異常 |
+| TC-FR-PRG-05-34 | FR-PRG-05 / DES-VAL-29 | 正常定義の対象値: `day_seconds = 300` | 対象値を 省略して Load | `game.day_seconds`: 書かれていない（地図を使うときは必須）（ファイル: maps.toml） | 異常 |
+| TC-FR-PRG-05-35 | FR-PRG-05 / DES-VAL-29 | map 節なし、day_seconds=300 | day_seconds の行を省略 | 読み込み成功。Maps は空で、DaySeconds は 0 | 正常・境界 |
+| TC-FR-PRG-05-36 | FR-PRG-05 / DES-VAL-29 | map 節なし、day_seconds=300 | day_seconds=-1 に変更 | `game.day_seconds`: 1 以上 86400 以下にする（-1）（ファイル: maps.toml） | 異常 |
+| TC-FR-PRG-05-37 | FR-PRG-05 / DES-VAL-29 | map 節なし、day_seconds=300 | day_seconds=0 を明記 | `game.day_seconds`: 1 以上 86400 以下にする（0）（ファイル: maps.toml） | 異常 |
+| TC-FR-ECO-07-30 | FR-ECO-07 / DES-VAL-15 | it04_test.go の rankData から依頼を置換。ランク 2・3 には評判 1 の依頼を各 1 件用意 | ランク 1 の依頼が 0 件を Load する | `quest`: ランク 1 の依頼が 0 件しかない（6 件以上が必要）（maps.toml） | 異常 |
+| TC-FR-ECO-07-31 | FR-ECO-07 / DES-VAL-15 | it04_test.go の rankData から依頼を置換。ランク 2・3 には評判 1 の依頼を各 1 件用意 | ランク 1 の依頼が 5 件を Load する | `quest`: ランク 1 の依頼が 5 件しかない（6 件以上が必要）（maps.toml） | 異常 |
 | TC-FR-ECO-07-32 | FR-ECO-07 / DES-VAL-15 | it04_test.go の rankData から依頼を置換。ランク 2・3 には評判 1 の依頼を各 1 件用意 | ランク 1 の依頼が 6 件を Load する | 読み込み成功 | 正常・境界 |
 | TC-FR-ECO-07-33 | FR-ECO-07 / DES-VAL-15 | it04_test.go の rankData から依頼を置換。ランク 2・3 には評判 1 の依頼を各 1 件用意 | ランク 1 の依頼が 7 件を Load する | 読み込み成功 | 正常・境界 |
-| TC-FR-MOD-04-80 | FR-MOD-04 / DES-VAL-26〜29 | 上記の正常定義（「地図なし」は map 節を除去） | definitions.toml の未知の lookを Load する | ファイル名 definitions.toml、対象の正確なキー経路、空でない理由を持つ診断が 1 件 | 異常 |
-| TC-FR-MOD-04-81 | FR-MOD-04 / DES-VAL-26〜29 | 上記の正常定義（「地図なし」は map 節を除去） | definitions.toml の再出現時間 0を Load する | ファイル名 definitions.toml、対象の正確なキー経路、空でない理由を持つ診断が 1 件 | 異常 |
-| TC-FR-MOD-04-82 | FR-MOD-04 / DES-VAL-26〜29 | 上記の正常定義（「地図なし」は map 節を除去） | definitions.toml の日の長さ 0を Load する | ファイル名 definitions.toml、対象の正確なキー経路、空でない理由を持つ診断が 1 件 | 異常 |
+| TC-FR-MOD-04-80 | FR-MOD-04 / DES-VAL-26〜29 | 施設・採取地・game は definitions.toml、地図は maps.toml | definitions.toml の未知の lookを Load する | 診断が 1 件。File=definitions.toml、Path=`facility[id=market].levels[0].look`、Reason=知らない見た目 "castle"（stall・cottage・house・manor が必要） | 異常 |
+| TC-FR-MOD-04-81 | FR-MOD-04 / DES-VAL-26〜29 | 施設・採取地・game は definitions.toml、地図は maps.toml | definitions.toml の再出現時間 0を Load する | 診断が 1 件。File=definitions.toml、Path=`gather[id=meadow].respawn_seconds`、Reason=1 以上 86400 以下にする（0） | 異常 |
+| TC-FR-MOD-04-82 | FR-MOD-04 / DES-VAL-26〜29 | 施設・採取地・game は definitions.toml、地図は maps.toml | definitions.toml の日の長さ 0を Load する | 診断が 1 件。File=definitions.toml、Path=`game.day_seconds`、Reason=1 以上 86400 以下にする（0） | 異常 |
 | TC-NFR-08-10 | NFR-08 / DES-VAL-24 | validMaps、testdata/it06/maps.toml・battle.toml、および各規則を壊した種 | 区画・拾う場所・敵と各規則の異常種、任意バイト列を FuzzLoadMaps に渡す | 異常終了しない。成功時は採取地との地図の対応、文字、区画、敵数、秒数、出口と到達性を満たす | 正常・境界 |
+| TC-FR-FLD-04-58 | FR-FLD-04 / DES-VAL-17・22 | 本体の街と採取地 4 枚 | 全採取地の地図と出口を調べる | 工房の地図なし、全採取地に town 行き出口が 1 つ | 正常 |
+| TC-FR-FLD-04-59 | FR-FLD-04 / DES-VAL-21・22・25 | 本体の街と施設 2 件 | 街の設備・区画・出口を調べる | D/M/Q があり、全施設に区画、gather 行き出口が 1 つ | 正常 |
+| TC-FR-FLD-04-60 | FR-FLD-04 / DES-VAL-17 | 正常定義の town と meadow | town の map 節だけを除去 | `map[id=town]`: 地図がない | 異常 |
+| TC-FR-FLD-04-61 | FR-FLD-04 / DES-VAL-22 | 正常定義の街。gather 行き出口 2 がある | 街に mark=3、to=meadow、dir=up、look=road の出口と対応するマスを追加 | `map[id=town].exits[1].to`: 行き先がない: meadow（必要な行き先は gather） | 異常 |
+| TC-FR-FLD-01-58 | FR-FLD-01 / DES-VAL-21 | 街の (1,4) は床 | 街の (1,4) を E に変更 | `map[id=town].rows[4][1]`: 敵（E）は採取地にしか置けない | 異常 |
+| TC-FR-FLD-01-59 | FR-FLD-01 / DES-VAL-21 | 街の (1,4) は床 | 街の (1,4) を o に変更 | `map[id=town].rows[4][1]`: 拾う場所（o）は採取地にしか置けない | 異常 |
+| TC-FR-FLD-01-60 | FR-FLD-01 / DES-VAL-21 | 街の店 M は (7,4) の 1 個 | M を床に変更 | `map[id=town]`: 店（M）がない | 異常 |
+| TC-FR-FLD-01-61 | FR-FLD-01 / DES-VAL-21・23 | 敵なしの meadow。拾う場所は 3 個 | 行 1 を T*DMQ,T、行 2 を T,,,,,T にする | 成功。meadow.Rows[1]=T*DMQ,T を保持（全設備の前の床に到達できる） | 正常 |
+| TC-FR-FLD-04-62 | FR-FLD-04 / DES-VAL-25・23 | 街の区画 a は 3×3、依頼板 Q は (7,1) | 行 1 を T,aaa,#QT、行 2 を T,aa,,,#T にし、区画を欠けさせて Q も囲む | `map[id=town].lots[0]`: 区画 "a" が 3 × 3 の四角になっていない。開始位置から行けない／到着のマスの診断は出ない | 異常 |
+| TC-FR-FLD-04-63 | FR-FLD-04 / DES-VAL-23 | battle.toml。meadow に敵 E が 1 マス | 行 1 を T*,,#ET、行 2 を T,,o,#T にして E を囲む | `map[id=meadow].rows[1][5]`: 開始位置から行けない: 敵 | 異常 |
+| TC-FR-FLD-04-64 | FR-FLD-04 / DES-VAL-23 | 敵なしの meadow | 行 1・3 を T*,,#DT、行 2 を T,,o,#T にする | `map[id=meadow].rows[1][5]`: 開始位置から行けない: 工房の扉 | 異常 |
+| TC-FR-FLD-01-62 | FR-FLD-01 / DES-VAL-20 | 街の start=(5,5) | start.x=-1 にする | `map[id=town].start`: 開始位置 (-1, 5) が地図の外。到達性診断は出ない | 境界・異常 |
 
 ## 既存ケースの置き換え（反復 6 で変更）
 
@@ -99,9 +111,9 @@ FR-PRG-05・FR-ECO-05〜07 の 01〜29 は #103 では使わない。#104 が作
 | 既存のケース | 反復 6 で変更する内容 |
 |---|---|
 | TC-FR-FLD-01-03〜04 | 固定文字表と設備名を D/M/Q、区画、拾う場所、敵、水に変更 |
-| TC-FR-FLD-01-05〜09 | 工房の定数を除去し、街の start と地図外の検証に変更 |
+| TC-FR-FLD-01-05〜09 | 街の start の座標省略・地図外と、診断順序（20 回の DeepEqual と先頭キー経路）を検証 |
 | TC-FR-FLD-04-01〜39 | 正常定義を街・採取地に変更。必須設備、start、行き先と到達性は DES-IT06 6 章を適用 |
-| TC-FR-FLD-01-30〜31、TC-FR-FLD-04-40〜42 | 工房地図と設備間距離は廃止。本体の最小移行データの地図集合・設備・出入り口を確認（完成データは #106） |
+| TC-FR-FLD-01-30〜31、TC-FR-FLD-04-40〜42 | 工房地図を廃止。04-41・42 の距離試験は廃止し、最小移行データの地図集合・設備・出入り口は 04-58・59 で確認（街の距離と完成データは #106） |
 | TC-FR-MOD-04-54 | ランク 1 の依頼の最小件数を 3 から 6 に変更（5 件は誤り） |
 | TC-NFR-08-01〜09 | 新しい文字表、街から一覧・採取地から街への出口、採取地の到着位置からの到達性に変更 |
 
@@ -109,9 +121,10 @@ core の移動・設備テストは、同じマス位置の設備文字だけを
 
 ## 移行中の扱い
 
-- `GameDef.DaySeconds` は #103 で追加した（読み込み・DES-VAL-29）。日の処理は #104 が実装する。
+- `GameDef.DaySeconds` は #103 で追加した（読み込み・DES-VAL-29）。日の処理は #104 で実装済み。
+- 本体の工房の地図がなくなるので、#105（街から始める）がマージされるまで、起動直後に主人公が地図に出ず操作できない。工房の作業は #107 まで画面からできない。Issue の分け方で想定した途中の状態として開発者が承認した（REV-056 F-01、2026-10-22）。
 - `defs.MapWorkshop` は設計どおり削除した。core の起動処理と ui に残る参照は文字列 `"workshop"` に置換するだけとし、場面の移行は #105・画面の Issue で行う。依頼・日の処理は変更していない。
-- 本体は街と採取地 4 枚、既存施設 2 区画、ランク 1 の既存依頼の複製 3 件を持つ最小の移行データ。施設 4 件・依頼 17 件・景色の完成は #106。
+- 本体は街と採取地 4 枚、既存施設 2 区画、設計 5.2 の q_flour・q_potion_easy と q_rope 代用の仮依頼 1 件を持つ最小の移行データ。施設 4 件・依頼 17 件・景色の完成は #106。
 - core の設備テスト（TC-IF-08-01〜03・06・17〜18・20〜21）は、設備位置と選択規則を維持して D/M/Q の期待値へ変更した。
 - 本体件数の TC-FR-MOD-02-04・42 は、依頼 12 件、地図 5 枚という最小移行データに更新した。
 

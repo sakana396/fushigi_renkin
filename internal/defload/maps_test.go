@@ -3,11 +3,13 @@ package defload
 import (
 	"errors"
 	"fmt"
-	"github.com/sakana396/fushigi_renkin/internal/defs"
 	"os"
+	"reflect"
 	"strings"
 	"testing"
 	"testing/fstest"
+
+	"github.com/sakana396/fushigi_renkin/internal/defs"
 )
 
 const validMaps = `[game]
@@ -22,11 +24,13 @@ cooldown_seconds=1
 drops=[{item="herb",weight=1,quality_min=1,quality_max=1}]
 [[map]]
 id = "town"
+name = "街"
 start = { x = 1, y = 2 }
 rows = ["#######", "#DMQ..#", "#.....#", "#.....#", "###1###"]
 exits = [{ mark = "1", to = "gather", dir = "up", look = "stone_door" }]
 [[map]]
 id = "meadow"
+name = "草原"
 rows = ["#########", "#*...o..#", "#.......#", "#.......#", "###2#####"]
 exits = [{ mark = "2", to = "town", dir = "up", look = "road" }]
 `
@@ -43,12 +47,16 @@ func mapDiagnostics(t *testing.T, err error, want string) Errors {
 	if !errors.As(err, &ds) {
 		t.Fatalf("診断がない: %v", err)
 	}
+	path, reason, ok := strings.Cut(want, ": ")
+	if !ok {
+		t.Fatalf("期待診断には完全なキー経路と理由が必要: %q", want)
+	}
 	found := false
 	for _, d := range ds {
 		if d.File == "" || d.Path == "" || d.Reason == "" {
 			t.Fatalf("不完全な診断: %+v", d)
 		}
-		if d.File == "maps.toml" && strings.Contains(d.Path+": "+d.Reason, want) {
+		if d.File == "maps.toml" && d.Path == path && d.Reason == reason {
 			found = true
 		}
 	}
@@ -63,43 +71,43 @@ func TestMaps(t *testing.T) {
 	cases := []struct{ id, old, new, want string }{
 		{"TC-FR-FLD-04-01", "", "", ""},
 		{"TC-FR-FLD-04-02", "", "", ""},
-		{"TC-FR-FLD-04-03", "id = \"town\"", "id = \"market\"", ".id: 地図の ID"},
-		{"TC-FR-FLD-04-04", "", "", "重複"},
+		{"TC-FR-FLD-04-03", "id = \"town\"", "id = \"market\"", "map[id=market].id: 地図の ID は town または採取地の ID"},
+		{"TC-FR-FLD-04-04", "", "", "map[id=town].id: ID が重複"},
 		{"TC-FR-FLD-04-05", "", "", "map[id=meadow]: 地図がない"},
-		{"TC-FR-FLD-04-06", "#DMQ..#", "", "行の長さは 1〜100"},
-		{"TC-FR-FLD-04-07", "#DMQ..#", "#DMQ.#", "行の長さが"},
-		{"TC-FR-FLD-04-08", "#DMQ..#", "#DXQ..#", "rows[1][2]: 知らない文字"},
-		{"TC-FR-FLD-04-09", "#DMQ..#", "#DあX..#", "rows[1][2]: 知らない文字"},
-		{"TC-FR-FLD-04-10", "start = { x = 1, y = 2 }", "", "開始位置が書かれていない"},
-		{"TC-FR-FLD-04-11", "x = 1, y = 2", "x = 0, y = 0", "床ではない"},
-		{"TC-FR-FLD-04-12", "#DMQ..#", "#DM...#", "依頼板（Q）がない"},
-		{"TC-FR-FLD-04-13", "mark = \"1\"", "mark = \"0\"", "mark は 1〜9"},
-		{"TC-FR-FLD-04-14", "###1###", "###3###", "定義がない"},
-		{"TC-FR-FLD-04-15", "to = \"gather\"", "to = \"missing\"", "行き先がない"},
-		{"TC-FR-FLD-04-16", "dir = \"up\"", "dir = \"north\"", "向きは"},
-		{"TC-FR-FLD-04-17", "look = \"stone_door\"", "look = \"none\"", "絵は"},
-		{"TC-FR-FLD-04-18", "\"#.....#\", \"#.....#\"", "\"#.....#\", \"#..#..#\"", "到着のマス (3, 3) が床ではない"},
-		{"TC-FR-FLD-04-19", "", "", "同じ行き先が重複"},
-		{"TC-FR-FLD-04-20", "\"#DMQ..#\", \"#.....#\"", "\"#DMQ#.#\", \"#..#..#\"", "開始位置から行けない"},
-		{"TC-FR-FLD-04-21", "\"#.....#\", \"#.....#\"", "\"#..#..#\", \"#.#...#\"", "開始位置から到着のマス"},
-		{"TC-FR-FLD-04-22", "###1###", "##11###", "2 マスある"},
-		{"TC-FR-FLD-04-23", "to = \"gather\"", "to = \"town\"", "自分の地図"},
-		{"TC-FR-FLD-04-24", "to = \"town\"", "to = \"gather\"", "行き先がない"},
-		{"TC-FR-FLD-04-25", "#DMQ..#", "#DMQ.#", "行の長さが"},
-		{"TC-FR-FLD-04-26", "x = 1, y = 2", "x = 0, y = 0", "床ではない"},
-		{"TC-FR-FLD-04-27", "", "", "行数は"},
-		{"TC-FR-FLD-04-28", "", "", "行の長さは"},
-		{"TC-FR-FLD-04-29", "", "", "行数は"},
-		{"TC-FR-FLD-04-30", "", "", "行の長さが"},
-		{"TC-FR-FLD-04-31", "#DMQ..#", "#DM...#", "依頼板"},
-		{"TC-FR-FLD-04-32", "to = \"town\"", "to = \"gather\"", "town 行きがちょうど"},
-		{"TC-FR-FLD-04-33", "to = \"gather\"", "to = \"town\"", "gather 行きがちょうど"},
-		{"TC-FR-FLD-04-34", "to = \"gather\"", "to = \"meadow\"", "gather 行きがちょうど"},
-		{"TC-FR-FLD-04-35", "", "", "mark が重複"},
-		{"TC-FR-FLD-04-36", "mark = \"2\"", "mark = \"12\"", "mark は"},
-		{"TC-FR-FLD-04-37", "\"#.....#\", \"#.....#\"", "\"#.....#\", \"#..D..#\"", "到着のマス"},
-		{"TC-FR-FLD-04-38", "#DMQ..#", "#DXQ..#", "知らない文字"},
-		{"TC-FR-FLD-04-39", "", "", "開始位置から到着のマス"},
+		{"TC-FR-FLD-04-06", "#DMQ..#", "", "map[id=town].rows[1]: 行の長さは 1〜100 文字"},
+		{"TC-FR-FLD-04-07", "#DMQ..#", "#DMQ.#", "map[id=town].rows[1]: 行の長さが rows[0] と違う（6 文字。rows[0] は 7 文字）"},
+		{"TC-FR-FLD-04-08", "#DMQ..#", "#DXQ..#", "map[id=town].rows[1][2]: 知らない文字 \"X\""},
+		{"TC-FR-FLD-04-09", "#DMQ..#", "#DあX..#", "map[id=town].rows[1][2]: 知らない文字 \"あ\""},
+		{"TC-FR-FLD-04-10", "start = { x = 1, y = 2 }", "", "map[id=town].start: 開始位置が書かれていない"},
+		{"TC-FR-FLD-04-11", "x = 1, y = 2", "x = 0, y = 0", "map[id=town].start: 開始位置 (0, 0) が床ではない（\"#\"）"},
+		{"TC-FR-FLD-04-12", "#DMQ..#", "#DM...#", "map[id=town]: 依頼板（Q）がない"},
+		{"TC-FR-FLD-04-13", "mark = \"1\"", "mark = \"0\"", "map[id=town].exits[0].mark: mark は 1〜9 の 1 文字"},
+		{"TC-FR-FLD-04-14", "###1###", "###3###", "map[id=town].rows[4][3]: 出入り口 \"3\" の定義がない"},
+		{"TC-FR-FLD-04-15", "to = \"gather\"", "to = \"missing\"", "map[id=town].exits[0].to: 行き先がない: missing（必要な行き先は gather）"},
+		{"TC-FR-FLD-04-16", "dir = \"up\"", "dir = \"north\"", "map[id=town].exits[0].dir: 向きは up・down・left・right"},
+		{"TC-FR-FLD-04-17", "look = \"stone_door\"", "look = \"none\"", "map[id=town].exits[0].look: 絵は stone_door・wood_door・road"},
+		{"TC-FR-FLD-04-18", "\"#.....#\", \"#.....#\"", "\"#.....#\", \"#..#..#\"", "map[id=town].exits[0].dir: 到着のマス (3, 3) が床ではない"},
+		{"TC-FR-FLD-04-19", "", "", "map[id=town].exits[1].to: 同じ行き先が重複"},
+		{"TC-FR-FLD-04-20", "\"#DMQ..#\", \"#.....#\"", "\"#DMQ#.#\", \"#..#..#\"", "map[id=town].rows[1][3]: 開始位置から行けない: 依頼板"},
+		{"TC-FR-FLD-04-21", "\"#.....#\", \"#.....#\"", "\"#..#..#\", \"#.#...#\"", "map[id=town].exits[0]: 開始位置から到着のマス (3, 3) へ行けない"},
+		{"TC-FR-FLD-04-22", "###1###", "##11###", "map[id=town].rows[4][3]: 出入り口 \"1\" が 2 マスある"},
+		{"TC-FR-FLD-04-23", "to = \"gather\"", "to = \"town\"", "map[id=town].exits[0].to: 自分の地図には行けない"},
+		{"TC-FR-FLD-04-24", "to = \"town\"", "to = \"gather\"", "map[id=meadow].exits[0].to: 行き先がない: gather（必要な行き先は town）"},
+		{"TC-FR-FLD-04-25", "#DMQ..#", "#DMQ.#", "map[id=town].rows[1]: 行の長さが rows[0] と違う（6 文字。rows[0] は 7 文字）"},
+		{"TC-FR-FLD-04-26", "x = 1, y = 2", "x = 0, y = 0", "map[id=town].start: 開始位置 (0, 0) が床ではない（\"#\"）"},
+		{"TC-FR-FLD-04-27", "", "", "map[id=town].rows: 行数は 1〜100"},
+		{"TC-FR-FLD-04-28", "", "", "map[id=town].rows[1]: 行の長さは 1〜100 文字"},
+		{"TC-FR-FLD-04-29", "", "", "map[id=town].rows: 行数は 1〜100"},
+		{"TC-FR-FLD-04-30", "", "", "map[id=town].rows[1]: 行の長さが rows[0] と違う（1 文字。rows[0] は 2 文字）"},
+		{"TC-FR-FLD-04-31", "#DMQ..#", "#DM...#", "map[id=town]: 依頼板（Q）がない"},
+		{"TC-FR-FLD-04-32", "to = \"town\"", "to = \"gather\"", "map[id=meadow].exits: town 行きがちょうど 1 つ必要"},
+		{"TC-FR-FLD-04-33", "to = \"gather\"", "to = \"town\"", "map[id=town].exits: gather 行きがちょうど 1 つ必要"},
+		{"TC-FR-FLD-04-34", "to = \"gather\"", "to = \"meadow\"", "map[id=town].exits: gather 行きがちょうど 1 つ必要"},
+		{"TC-FR-FLD-04-35", "", "", "map[id=town].exits[1].mark: mark が重複"},
+		{"TC-FR-FLD-04-36", "mark = \"2\"", "mark = \"12\"", "map[id=meadow].exits[0].mark: mark は 1〜9 の 1 文字"},
+		{"TC-FR-FLD-04-37", "\"#.....#\", \"#.....#\"", "\"#.....#\", \"#..D..#\"", "map[id=town].exits[0].dir: 到着のマス (3, 3) が床ではない"},
+		{"TC-FR-FLD-04-38", "#DMQ..#", "#DXQ..#", "map[id=town].rows[1][2]: 知らない文字 \"X\""},
+		{"TC-FR-FLD-04-39", "", "", "map[id=town].exits[0]: 開始位置から到着のマス (3, 4) へ行けない"},
 	}
 	for _, tc := range cases {
 		t.Run(tc.id, func(t *testing.T) {
@@ -134,12 +142,33 @@ func TestMaps(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				if tc.id == "TC-FR-FLD-04-02" && len(c.Maps) != 2 {
-					t.Fatal(c.Maps)
+				if tc.id == "TC-FR-FLD-04-02" {
+					want := map[string]defs.MapDef{
+						"town":   {ID: "town", Name: "街", StartX: 1, StartY: 2, Rows: []string{"#######", "#DMQ..#", "#.....#", "#.....#", "###1###"}, Exits: []defs.ExitDef{{Mark: '1', To: "gather", Dir: defs.DirUp, Look: "stone_door", X: 3, Y: 4}}},
+						"meadow": {ID: "meadow", Name: "草原", StartX: 3, StartY: 3, Rows: []string{"#########", "#*...o..#", "#.......#", "#.......#", "###2#####"}, Exits: []defs.ExitDef{{Mark: '2', To: "town", Dir: defs.DirUp, Look: "road", X: 3, Y: 4}}},
+					}
+					if !reflect.DeepEqual(c.Maps, want) {
+						t.Fatalf("地図全項目: got=%+v want=%+v", c.Maps, want)
+					}
 				}
 				return
 			}
 			ds := mapDiagnostics(t, err, tc.want)
+			// REV-047: キー経路の完全一致に加え、前段が不正なら到達性診断を出さない。
+			if tc.id >= "TC-FR-FLD-04-31" && tc.id <= "TC-FR-FLD-04-38" {
+				absent := []string{"開始位置から行けない", "開始位置から到着のマス"}
+				if tc.id == "TC-FR-FLD-04-38" {
+					absent = append(absent, ".start", "店（M）がない")
+				}
+				for _, d := range ds {
+					for _, a := range absent {
+						if strings.Contains(d.Path+": "+d.Reason, a) {
+							t.Fatalf("不要な診断 %q: %v", a, ds)
+						}
+					}
+				}
+			}
+
 			if tc.id == "TC-FR-FLD-04-25" || tc.id == "TC-FR-FLD-04-26" || tc.id == "TC-FR-FLD-04-38" {
 				for _, d := range ds {
 					if strings.Contains(d.Reason, "開始位置から") {
@@ -362,8 +391,8 @@ func checkIT06Catalog(t *testing.T, c defs.Catalog, m defs.MapDef) {
 			if kind == defs.CellPick || kind == defs.CellEnemy {
 				t.Fatal("街に拾う場所・敵")
 			}
-		} else if kind == defs.CellLot || kind == defs.CellFixture {
-			t.Fatal("採取地に区画・設備")
+		} else if kind == defs.CellLot {
+			t.Fatal("採取地に区画")
 		}
 	}
 	if m.ID != defs.MapTown {
