@@ -144,7 +144,23 @@ func (g *Game) Update() error {
 		}
 		if inpututil.IsKeyJustPressed(ebiten.KeyE) || inpututil.IsKeyJustPressed(ebiten.KeySpace) {
 			if fixture, ok := g.world.FacingTarget(); ok {
-				g.window, g.windowFacility = uimodel.WindowForTarget(fixture)
+				switch uimodel.GatherAction(fixture) {
+				case "pick":
+					stacks, err := g.world.PickFacing()
+					g.result(uimodel.PickedText(stacks, g.itemName), err)
+				case "battle":
+					err := g.world.StartBattleFacing()
+					g.result("戦闘を始めました", err)
+					if err == nil {
+						g.battleAction = moveAction
+						g.battleItem = core.ItemKey{}
+						g.battleItemPage, g.battleLogPage = 0, 0
+						g.battleError = ""
+						g.startBattleEvents(0)
+					}
+				default:
+					g.window, g.windowFacility = uimodel.WindowForTarget(fixture)
+				}
 			}
 		}
 	} else if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
@@ -186,7 +202,6 @@ func (g *Game) Draw(screen *ebiten.Image) {
 		g.drawBattle(screen)
 	} else if g.world.Player.Scene == core.SceneGather {
 		g.drawGather(screen)
-		g.drawBattleResult(screen)
 		g.button(screen, uimodel.ReturnX, uimodel.ReturnY, uimodel.ReturnWidth, uimodel.ReturnHeight, "街へ戻る", false, func() { g.result("街へ戻りました", g.world.LeaveGather()) })
 	} else {
 		g.drawMap(screen)
@@ -685,39 +700,22 @@ func (g *Game) drawShop(dst *ebiten.Image) {
 func (g *Game) drawGather(dst *ebiten.Image) {
 	const x, y, w = 10, uimodel.GatherTop, 775
 	g.box(dst, x, y, w, 420, "採取地")
-	ids := g.availableGathers()
+	ids := keys(g.catalog.Gathers)
 	const rows = 6
 	g.pageControls(dst, x+8, y+382, len(ids), rows, &g.gatherPage)
+	if g.world.Now < g.world.InjuredUntil {
+		g.label(dst, x+250, y+8, uimodel.InjuryText(g.world.InjuredUntil-g.world.Now), muted)
+	}
 	for i := g.gatherPage * rows; i < len(ids) && i < (g.gatherPage+1)*rows; i++ {
 		id := ids[i]
 		site := g.catalog.Gathers[id]
-		gatherID := id
-		yy := y + 34 + (i%rows)*58
+		yy := y + 40 + (i%rows)*54
 		g.label(dst, x+8, yy, site.Name, white)
-		g.button(dst, x+250, yy-4, 170, 28, "行く", false, func() { g.result("採取地に入りました", g.world.EnterGather(gatherID)) })
-		if site.Battle != nil {
-			var action func()
-			reason := ""
-			if g.world.Now < g.world.InjuredUntil {
-				reason = fmt.Sprintf("負傷中: 残り %d 秒", (g.world.InjuredUntil-g.world.Now+59)/60)
-			} else {
-				action = func() {
-					err := g.world.StartBattle(gatherID)
-					g.result("探索を始めました", err)
-					if err == nil {
-						g.battleAction = moveAction
-						g.battleItem = core.ItemKey{}
-						g.battleItemPage = 0
-						g.battleLogPage = 0
-						g.battleError = ""
-						g.startBattleEvents(0)
-					}
-				}
-			}
-			g.button(dst, x+430, yy-4, 170, 28, "探索する", false, action)
-			if reason != "" {
-				g.label(dst, x+605, yy+3, reason, muted)
-			}
+		reason, enter := uimodel.GatherEntry(site.Rank, g.world.Rank())
+		if enter {
+			g.button(dst, x+250, yy-4, 170, 28, "行く", false, func() { g.result("採取地に入りました", g.world.EnterGather(id)) })
+		} else {
+			g.label(dst, x+250, yy, reason, muted)
 		}
 	}
 }

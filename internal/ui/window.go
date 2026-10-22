@@ -19,6 +19,8 @@ func (g *Game) drawWindow(screen *ebiten.Image) {
 	panel.Clear()
 	g.windowDrawing = true
 	switch g.window {
+	case "battle_result":
+		g.drawBattleResult(panel)
 	case defs.FixtureWorkshopDoor:
 		g.workshopTab = uimodel.WorkshopTab(g.workshopTab)
 		switch g.workshopTab {
@@ -50,6 +52,8 @@ func (g *Game) drawWindow(screen *ebiten.Image) {
 	g.button(screen, 10, 76, 120, 28, "閉じる", false, func() { g.window = "" })
 	name := ""
 	switch g.window {
+	case "battle_result":
+		name = "戦闘の結果"
 	case defs.FixtureWorkshopDoor:
 		name = "工房"
 	case defs.FixtureShop:
