@@ -122,3 +122,16 @@ stages = [
   { min_quality = 50, radius = 1 },
   { min_quality = 100, effects = [{ kind = "damage", value = 20 }] },
 ]
+
+# 施設の建設・強化に使う製品（DES-DAT-04）。
+[[item]]
+id = "iron_ingot"
+name = "鉄の延べ棒"
+attributes = ["金属", "硬質"]
+base_price = 30
+
+[[item]]
+id = "herb_rope"
+name = "薬草の縄"
+attributes = ["繊維", "しなやか"]
+base_price = 20

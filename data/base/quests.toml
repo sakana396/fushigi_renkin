@@ -79,7 +79,7 @@ min_quality = 150
 count = 2
 reward = 180
 
-# DES-IT06 5.2 の追加依頼（既存の製品で作れるもの）。
+# DES-IT06 5.2 の追加依頼。
 [[quest]]
 id = "q_flour"
 rank = 1
@@ -98,13 +98,56 @@ min_quality = 20
 count = 2
 reward = 50
 
-# 薬草の縄はまだ定義にないため、q_rope の代わりの 1 件だけ仮置きする。
-# #106 で DES-IT06 5.2 の q_rope（薬草の縄 Q20×2、報酬55）に差し替える。
 [[quest]]
-id = "q_cheese_extra"
+id = "q_rope"
 rank = 1
 reputation = 1
-item = "cheese"
+item = "herb_rope"
 min_quality = 20
 count = 2
-reward = 80
+reward = 55
+
+[[quest]]
+id = "q_ingot"
+rank = 2
+reputation = 3
+item = "iron_ingot"
+min_quality = 50
+count = 2
+reward = 90
+
+[[quest]]
+id = "q_rope_fine"
+rank = 3
+reputation = 4
+item = "herb_rope"
+min_quality = 100
+count = 3
+reward = 120
+
+[[quest]]
+id = "q_ingot_fine"
+rank = 3
+reputation = 4
+item = "iron_ingot"
+min_quality = 100
+count = 2
+reward = 140
+
+[[quest]]
+id = "q_bomb_master"
+rank = 4
+reputation = 0
+item = "bomb"
+min_quality = 150
+count = 2
+reward = 200
+
+[[quest]]
+id = "q_lantern_master"
+rank = 4
+reputation = 0
+item = "lantern"
+min_quality = 150
+count = 1
+reward = 220

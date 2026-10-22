@@ -22,7 +22,7 @@ func TestBaseDataIT04(t *testing.T) {
 		}
 	})
 	t.Run("TC-FR-MOD-02-41 レシピの解放ランク", func(t *testing.T) {
-		want := map[string]int{"flour": 1, "bread_flour": 1, "bread_whole_wheat": 1, "cheese": 1, "burger_cheese": 1, "burger_double": 1, "potion_herb": 1, "potion_moss": 2, "glow_crystal": 1, "bomb": 2, "tonic": 3, "lantern": 3, "deluxe_burger": 4}
+		want := map[string]int{"flour": 1, "bread_flour": 1, "bread_whole_wheat": 1, "cheese": 1, "burger_cheese": 1, "burger_double": 1, "potion_herb": 1, "potion_moss": 2, "glow_crystal": 1, "bomb": 2, "tonic": 3, "lantern": 3, "deluxe_burger": 4, "iron_ingot": 1, "herb_rope": 1}
 		if len(c.Recipes) != len(want) {
 			t.Errorf("レシピ件数 = %d", len(c.Recipes))
 		}
@@ -46,9 +46,16 @@ func TestBaseDataIT04(t *testing.T) {
 		}
 		want["q_flour"] = defs.QuestDef{ID: "q_flour", Rank: 1, Reputation: 1, Item: "flour", MinQuality: 20, Count: 3, Reward: 45}
 		want["q_potion_easy"] = defs.QuestDef{ID: "q_potion_easy", Rank: 1, Reputation: 1, Item: "potion", MinQuality: 20, Count: 2, Reward: 50}
-		q := want["q_cheese"]
-		q.ID = "q_cheese_extra"
-		want[q.ID] = q
+		for _, q := range []defs.QuestDef{
+			{ID: "q_rope", Rank: 1, Reputation: 1, Item: "herb_rope", MinQuality: 20, Count: 2, Reward: 55},
+			{ID: "q_ingot", Rank: 2, Reputation: 3, Item: "iron_ingot", MinQuality: 50, Count: 2, Reward: 90},
+			{ID: "q_rope_fine", Rank: 3, Reputation: 4, Item: "herb_rope", MinQuality: 100, Count: 3, Reward: 120},
+			{ID: "q_ingot_fine", Rank: 3, Reputation: 4, Item: "iron_ingot", MinQuality: 100, Count: 2, Reward: 140},
+			{ID: "q_bomb_master", Rank: 4, Item: "bomb", MinQuality: 150, Count: 2, Reward: 200},
+			{ID: "q_lantern_master", Rank: 4, Item: "lantern", MinQuality: 150, Count: 1, Reward: 220},
+		} {
+			want[q.ID] = q
+		}
 		if !reflect.DeepEqual(c.Quests, want) {
 			t.Errorf("依頼 = %+v、期待 %+v", c.Quests, want)
 		}
