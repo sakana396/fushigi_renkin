@@ -140,8 +140,8 @@ func (g *Game) Update() error {
 			}
 		}
 		if inpututil.IsKeyJustPressed(ebiten.KeyE) || inpututil.IsKeyJustPressed(ebiten.KeySpace) {
-			if fixture, ok := g.world.FacingFixture(); ok {
-				g.window = fixture
+			if fixture, ok := g.world.FacingTarget(); ok {
+				g.window = fixture.ID
 			}
 		}
 	} else if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
@@ -673,18 +673,7 @@ func (g *Game) drawGather(dst *ebiten.Image) {
 		gatherID := id
 		yy := y + 34 + (i%rows)*58
 		g.label(dst, x+8, yy, site.Name, white)
-		g.button(dst, x+250, yy-4, 170, 28, "採取", false, func() {
-			stacks, err := g.world.Gather(gatherID)
-			if err != nil {
-				g.result("", err)
-				return
-			}
-			names := make([]string, 0, len(stacks))
-			for _, s := range stacks {
-				names = append(names, fmt.Sprintf("%s Q%d ×%d", g.itemName(s.Key.ItemID), s.Key.Quality, s.Count))
-			}
-			g.message = "採取: " + strings.Join(names, "、")
-		})
+		g.button(dst, x+250, yy-4, 170, 28, "行く", false, func() { g.result("採取地に入りました", g.world.EnterGather(gatherID)) })
 		if site.Battle != nil {
 			var action func()
 			reason := ""

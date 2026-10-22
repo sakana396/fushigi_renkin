@@ -13,7 +13,10 @@ var (
 	ErrUnknownID        = errors.New("ID が見つかりません")
 	ErrInvalidCount     = errors.New("個数が正しくありません")
 	ErrInvalidQuality   = errors.New("品質は 1〜200 で指定してください")
-	ErrGatherCooldown   = errors.New("採取地は再使用待ちです")
+	ErrNothingToPick    = errors.New("拾える物がありません")
+	ErrPickNotReady     = errors.New("まだ拾えません")
+	ErrNoEnemy          = errors.New("戦う相手がいません")
+	ErrNoGatherMap      = errors.New("この採取地には地図がありません")
 	ErrFacilityMaxLevel = errors.New("施設は最大段階です")
 )
 

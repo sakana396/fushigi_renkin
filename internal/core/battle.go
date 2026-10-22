@@ -315,3 +315,15 @@ func (w *World) finishBattle() bool {
 	w.LastBattle, w.Battle = report, nil
 	return true
 }
+
+// StartBattleFacing は向いている敵との戦闘を始める（DES-BTL-07、DES-WLD-01）。
+func (w *World) StartBattleFacing() error {
+	if w.Battle != nil {
+		return ErrInBattle
+	}
+	target, ok := w.FacingTarget()
+	if !ok || target.Kind != TargetEnemy {
+		return ErrNoEnemy
+	}
+	return w.StartBattle(w.Player.Scene)
+}

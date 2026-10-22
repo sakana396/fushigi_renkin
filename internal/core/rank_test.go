@@ -93,6 +93,7 @@ func TestRankLockedOperations(t *testing.T) {
 	c.Items["potion"] = item
 	c.Gathers = map[string]defs.GatherDef{"forest": {ID: "forest", Name: "古い森", Rank: 2, Rolls: 1, Drops: []defs.Drop{{Item: "herb", Weight: 1, QualityMin: 20, QualityMax: 20}}}}
 	w := NewWorld(c, 1)
+	w.Player.Scene = SceneGather
 	buildWorker(t, w)
 	selection := craftSelection([]Stack{craftStack("herb", 40, 2)}, []Stack{craftStack("water", 31, 1)})
 	for _, tc := range []struct {
@@ -103,7 +104,7 @@ func TestRankLockedOperations(t *testing.T) {
 		{"TC-FR-ALC-07-02 PreviewCraft", "回復薬", func() error { _, err := w.PreviewCraft("potion", selection); return err }},
 		{"TC-FR-ALC-07-03 AssignGolem レシピ", "回復薬", func() error { return w.AssignGolem(0, Assignment{RecipeID: "potion"}) }},
 		{"TC-FR-PRG-04-08 AssignGolem 採取地", "古い森", func() error { return w.AssignGolem(0, Assignment{GatherID: "forest"}) }},
-		{"TC-FR-PRG-04-09 Gather", "古い森", func() error { _, err := w.Gather("forest"); return err }},
+		{"TC-FR-PRG-04-09 EnterGather", "古い森", func() error { return w.EnterGather("forest") }},
 		{"TC-FR-PRG-04-10 StartBattle", "古い森", func() error { return w.StartBattle("forest") }},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -112,7 +113,7 @@ func TestRankLockedOperations(t *testing.T) {
 			if !errors.Is(err, ErrLocked) || !strings.Contains(err.Error(), tc.display) || !strings.Contains(err.Error(), "ランク 2") {
 				t.Fatalf("ErrLocked と表示名・ランク = %v", err)
 			}
-			if !reflect.DeepEqual(w.Inventory.Stacks(), beforeStock) || !reflect.DeepEqual(w.Golems[0], beforeGolem) || w.Battle != nil || len(w.gatherReady) != 0 {
+			if !reflect.DeepEqual(w.Inventory.Stacks(), beforeStock) || !reflect.DeepEqual(w.Golems[0], beforeGolem) || w.Battle != nil || len(w.pickReady) != 0 {
 				t.Fatal("失敗で状態が変化")
 			}
 		})
@@ -127,6 +128,7 @@ func TestRankCheckOrderAndUnlock(t *testing.T) {
 	c.Recipes["potion"] = r
 	c.Gathers = map[string]defs.GatherDef{"forest": {ID: "forest", Name: "古い森", Rank: 2, Rolls: 1, Drops: []defs.Drop{{Item: "herb", Weight: 1, QualityMin: 20, QualityMax: 20}}}}
 	w := NewWorld(c, 1)
+	w.Player.Scene = SceneGather
 	buildWorker(t, w)
 	for _, tc := range []struct {
 		name string
@@ -137,7 +139,7 @@ func TestRankCheckOrderAndUnlock(t *testing.T) {
 		{"TC-FR-ALC-07-04 未知のレシピが先 PreviewCraft", func() error { _, err := w.PreviewCraft("missing", Selection{}); return err }, ErrUnknownID},
 		{"TC-FR-ALC-07-04 未知のレシピが先 AssignGolem", func() error { return w.AssignGolem(0, Assignment{RecipeID: "missing"}) }, ErrUnknownID},
 		{"TC-FR-PRG-04-11 未知の採取地が先 AssignGolem", func() error { return w.AssignGolem(0, Assignment{GatherID: "missing"}) }, ErrUnknownID},
-		{"TC-FR-PRG-04-11 未知の採取地が先 Gather", func() error { _, err := w.Gather("missing"); return err }, ErrUnknownID},
+		{"TC-FR-PRG-04-11 未知の採取地が先 EnterGather", func() error { return w.EnterGather("missing") }, ErrUnknownID},
 		{"TC-FR-PRG-04-11 未知の採取地が先 StartBattle", func() error { return w.StartBattle("missing") }, ErrUnknownID},
 		{"TC-FR-ALC-07-05 入力枠数より解放検査が先", func() error { _, err := w.Craft("potion", Selection{}); return err }, ErrLocked},
 		{"TC-FR-ALC-07-05 入力枠数より解放検査が先 PreviewCraft", func() error { _, err := w.PreviewCraft("potion", Selection{}); return err }, ErrLocked},
@@ -178,7 +180,8 @@ func TestRankCheckOrderAndUnlock(t *testing.T) {
 	})
 	t.Run("TC-FR-PRG-04-13 ランク到達で採取地を使用", func(t *testing.T) {
 		w.Reputation = 3
-		if _, err := w.Gather("forest"); err != nil {
+		w.catalog.Maps = map[string]defs.MapDef{"forest": {ID: "forest", Exits: []defs.ExitDef{{To: "town", Dir: defs.DirUp, X: 1, Y: 3}}}}
+		if err := w.EnterGather("forest"); err != nil {
 			t.Fatal(err)
 		}
 		if err := w.StartBattle("forest"); !errors.Is(err, ErrNoBattle) {

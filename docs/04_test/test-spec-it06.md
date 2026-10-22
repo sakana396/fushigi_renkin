@@ -122,8 +122,8 @@ core の移動・設備テストは、同じマス位置の設備文字だけを
 ## 移行中の扱い
 
 - `GameDef.DaySeconds` は #103 で追加した（読み込み・DES-VAL-29）。日の処理は #104 で実装済み。
-- 本体の工房の地図がなくなるので、#105（街から始める）がマージされるまで、起動直後に主人公が地図に出ず操作できない。工房の作業は #107 まで画面からできない。Issue の分け方で想定した途中の状態として開発者が承認した（REV-056 F-01、2026-10-22）。
-- `defs.MapWorkshop` は設計どおり削除した。core の起動処理と ui に残る参照は文字列 `"workshop"` に置換するだけとし、場面の移行は #105・画面の Issue で行う。依頼・日の処理は変更していない。
+- #105 のあとは街から始まり、歩ける。工房の扉と区画では中身のない窓が開き、採取地の地図では拾えず戦えない。採取地の一覧には「探索」が残る。これらの画面の移行は #107・#108 で行う。REV-056 F-01 で開発者が承認したのは #103 のあとの状態（起動直後に操作できない）で、#105 で解消した。#105 のあとの上の状態は、Issue の分け方で想定した途中の状態で、#107・#108 で解消する。
+- `defs.MapWorkshop` は設計どおり削除した。#105 で core の起動処理は街に移行済み。ui に残る工房の場面は #107・#108 で移行する。
 - 本体は街と採取地 4 枚、既存施設 2 区画、設計 5.2 の q_flour・q_potion_easy と q_rope 代用の仮依頼 1 件を持つ最小の移行データ。施設 4 件・依頼 17 件・景色の完成は #106。
 - core の設備テスト（TC-IF-08-01〜03・06・17〜18・20〜21）は、設備位置と選択規則を維持して D/M/Q の期待値へ変更した。
 - 本体件数の TC-FR-MOD-02-04・42 は、依頼 12 件、地図 5 枚という最小移行データに更新した。
@@ -194,6 +194,76 @@ ID の重複定義を避け、既存の定義行は元の仕様書で更新す�
 | TC-NFR-06-40 | ランク上昇の直後は補充せず、翌日の全候補を ID 順・同じ依頼乱数列で引くことへ置き換え |
 
 画面の既存手動テスト（TC-FR-ECO-05-20〜24）は過去の実施記録として保持する。反復 6 の画面・手動試験は後続の UI Issue で扱う。
+
+## #105 core の向いている物・拾う場所・敵・場面
+
+`internal/core/pick_test.go` の目録は設計 3.7 節の街（9×7、開始 (5,5)、区画 a=market）と草原（meadow、7×5）をそのまま組み立てる。本体の `data/` は使用しない。草原は Rolls=3、RespawnSeconds=2、薬草 Q40 のみの採取表と戦闘定義を持つ。位置は 1 マス=96 単位。異常系は誤りの種類・文の完全一致と、操作前後の World（在庫・戻る tick・主人公・戦闘を含む）および本体乱数の保持を確認する。
+
+| ID | 対象（要求・設計） | 前提 | 入力・操作 | 期待結果 | 種別 |
+|---|---|---|---|---|---|
+| TC-FR-FLD-03-80 | FR-FLD-03 / DES-FLD-05 | F-1、街の開始マス (5,5) | NewWorld | 街、(528,512)、上向き（E-110） | 正常 |
+| TC-IF-08-70 | IF-08 / DES-FLD-07 | F-2、街 (512,240)、左 | FacingTarget | TargetLot、market、マス (4,2)、true、位置不変 | 正常 |
+| TC-IF-08-71 | IF-08 / DES-FLD-07 | F-3、街 (640,336)、右 | FacingTarget | TargetFixture、workshop_door、(7,3)、true、位置不変 | 正常 |
+| TC-FR-FLD-03-81 | FR-FLD-03 / DES-FLD-05 | F-4、採取地の一覧 | EnterGather("meadow") | 草原 (336,336)、上向き | 正常 |
+| TC-FR-FLD-03-82 | FR-FLD-03 / DES-FLD-05、DES-WLD-01 | F-5、街にいる | EnterGather("meadow") | ErrNotInGather、主人公不変 | 異常 |
+| TC-FR-FLD-03-83 | FR-FLD-03 / DES-FLD-05、DES-PRG-02 | F-6、一覧、ランク1、草原はランク2 | EnterGather("meadow") | ErrLocked、主人公不変 | 異常 |
+| TC-FR-FLD-02-80 | FR-FLD-02 / DES-FLD-02・03 | F-7、草原 (336,336)、上 | MovePlayer(0,-1) を3回 | 岩に止まり、草原 (336,320)、上向き | 境界 |
+| TC-IF-08-72 | IF-08 / DES-FLD-07 | F-8、草原 (336,320)、上 | FacingTarget | TargetPick、IDは空、(3,2)、true、位置不変 | 正常 |
+| TC-FR-MAT-01-50 | FR-MAT-01 / DES-PCK-01・02 | F-9、草原 (336,320)、上、Now=0、空の在庫 | PickFacing | 戻り値と在庫が薬草 Q40×3、(meadow,3,2) の戻る tick=120 | 正常 |
+| TC-FR-MAT-01-51 | FR-MAT-01 / DES-PCK-01・02 | F-10、F-9後、Now=50 | PickFacing | ErrPickNotReady、全文「あと 2 秒で拾えます: まだ拾えません」、在庫と戻る tick=120 は不変 | 境界・異常 |
+| TC-FR-MAT-01-52 | FR-MAT-01 / DES-PCK-01・02 | F-11、F-9後、Now=120 | PickFacing | 薬草 Q40×3、合計6個、戻る tick=240 | 境界 |
+| TC-FR-MAT-01-53 | FR-MAT-01 / DES-PCK-01 | F-12、草原 (336,336)、上 | PickFacing | 床を向いているため ErrNothingToPick | 異常 |
+| TC-IF-08-73 | IF-08 / DES-FLD-07 | F-13、草原 (528,224)、上 | FacingTarget | TargetEnemy、IDは空、(5,1)、true、位置不変 | 正常 |
+| TC-FR-BTL-10-50 | FR-BTL-10 / DES-BTL-07、DES-FLD-05 | F-14、草原 (528,224)、上 | StartBattleFacing | Battle.GatherID=meadow、主人公の場面・座標・向きは不変 | 正常 |
+| TC-FR-BTL-10-51 | FR-BTL-10 / DES-BTL-07 | F-15、F-14の敵全員のHPを0にして勝利 | 戦闘終了後 StartBattleFacing | 同じ位置・場面で meadow の戦闘が再開 | 正常 |
+| TC-FR-MAT-01-54 | FR-MAT-01 / DES-PCK-01 | F-16、敵に向いて戦闘中 | PickFacing | 向いている物の種類より戦闘検査が先で ErrInBattle | 異常 |
+| TC-FR-FLD-03-84 | FR-FLD-03 / DES-FLD-05 | F-17、草原 (336,336)、下 | MovePlayer(0,1) を7回 | 1〜6回目は (336,343)〜(336,378)、7回目は街 (432,528)、上向き | 境界 |
+| TC-FR-FLD-05-01 | FR-FLD-05 / DES-PCK-02、DES-FLD-05 | F-18、(meadow,3,2) を拾い戻る tick=120 | 草原の出口から街へ戻り、一覧から再入場、上へ3回移動、Now=50で拾う | 草原 (336,320)、上、残り70 tick、ErrPickNotReady | 正常 |
+| TC-FR-MAT-01-55 | FR-MAT-01 / DES-PCK-01、DES-WLD-01 | 一覧かつ戦闘中／一覧かつ採取地定義なし／空の拾う場所かつ採取地定義なし | PickFacing | 順に ErrInBattle／ErrNothingToPick／ErrPickNotReady（あと2秒）、全状態と乱数不変 | 異常 |
+| TC-FR-MAT-01-56 | FR-MAT-01 / DES-PCK-01、DES-WLD-01 | 草原 (336,320)、上、meadow の採取地定義を削除 | PickFacing | ErrUnknownID、全文「採取地 meadow: ID が見つかりません」、全状態と乱数不変 | 異常 |
+| TC-FR-MAT-01-57 | FR-MAT-01 / DES-PCK-01、DES-WLD-01 | 拾える岩、RespawnSeconds=0／-1／int最大値、または Now=uint64最大値-119（秒数2） | PickFacing | 4条件とも ErrInvalidCount、全文「個数が正しくありません」、全状態と乱数不変 | 境界・異常 |
+| TC-FR-MAT-01-58 | FR-MAT-01 / DES-PCK-01、DES-WLD-01 | 薬草Q40をint最大値-2個持ち、3個拾える岩 | PickFacing | ErrInvalidCount、全文「追加後の個数が範囲外: 個数が正しくありません」、在庫・乱数・戻る tick を含む全状態不変 | 境界・異常 |
+| TC-FR-MAT-01-59 | FR-MAT-01 / DES-PCK-01、DES-WLD-01 | 草原の採取表の QualityMax=201 | PickFacing | ErrInvalidQuality、全文「品質は 1〜200 で指定してください」、全状態と乱数不変 | 異常 |
+| TC-FR-FLD-03-85 | FR-FLD-03 / DES-FLD-05、DES-WLD-01 | 街かつ戦闘中／一覧かつ戦闘中、どちらも未知IDを指定 | EnterGather("missing") | 順に ErrNotInGather／ErrInBattle、全状態と乱数不変 | 異常 |
+| TC-FR-FLD-03-86 | FR-FLD-03 / DES-FLD-05、DES-PRG-02、DES-WLD-01 | 一覧、未知ID／ランク1でランク2の草原の地図なし | EnterGather("missing")／EnterGather("meadow") | 順に ErrUnknownID（IDを文に残す）／ErrLocked（草原・ランク2を文に残す）、全状態と乱数不変 | 異常 |
+| TC-FR-FLD-03-87 | FR-FLD-03 / DES-FLD-05、DES-WLD-01 | 一覧、meadow の採取地定義あり、地図なし／未検証の地図で街への出口なし | EnterGather("meadow") | ErrNoGatherMap、全文「この採取地には地図がありません」、全状態と乱数不変 | 異常 |
+| TC-FR-BTL-10-52 | FR-BTL-10 / DES-BTL-07、DES-WLD-01 | 一覧かつ戦闘中／草原の拾う岩を向く | StartBattleFacing | 順に ErrInBattle／ErrNoEnemy（「戦う相手がいません」）、全状態と乱数不変 | 異常 |
+| TC-FR-BTL-10-53 | FR-BTL-10 / DES-BTL-07、DES-PRG-02、DES-WLD-01 | 敵の前で負傷中、戦闘定義なし。草原は未解放／解放済み | StartBattleFacing | 順に ErrLocked／ErrNoBattle、負傷検査より先、全状態と乱数不変 | 異常 |
+| TC-FR-BTL-10-54 | FR-BTL-10 / DES-BTL-07、DES-WLD-01 | 草原の敵を向き、Now=0、InjuredUntil=100 | StartBattleFacing | ErrInjured、全文「負傷中です」、全状態と乱数不変 | 異常 |
+| TC-FR-BTL-10-55 | FR-BTL-10 / DES-BTL-07 | 草原 (528,240)、上 | 上に移動して Tick を10回 | 敵の前 (528,224)、上で止まる。Battle=nil | 正常 |
+| TC-FR-BTL-10-56 | FR-BTL-10、IF-06 / DES-BTL-07、DES-FLD-02・05 | 草原 (528,224)、上、戦闘開始済み | 右へ移動を試み、味方HPを0にして敗北、下へ移動 | 戦闘中は ErrInBattle、全状態と乱数不変。敗北後は同じ場面・位置、InjuredUntil=3600、続く移動で (528,231)、下 | 正常・異常 |
+| TC-FR-FLD-05-02 | FR-FLD-05 / DES-PCK-02 | Now=0、空の在庫、草原と同じ配置の other 地図と採取地 | meadow (3,2)、meadow (1,1)、other (3,2) で順に拾う | 3操作とも成功、薬草Q40が9個、戻る tick 表はこの3キーだけ各120 | 正常 |
+| TC-FR-FLD-05-03 | FR-FLD-05 / DES-PCK-02 | DaySeconds=1、(meadow,3,2) の戻る tick=120、Now=59。敵 (meadow,5,1)・壁 (meadow,0,0)・未知の地図 (missing,3,2) にも照会前に戻る tick=120 を設定 | Tick、PickRemaining、Nowを120・121にして再照会 | 2日目、残り60 tick、未知の地図・壁・敵は表に未来の tick があっても0、拾う場所は120以降に0。表の戻る tick=120 は照会・日替わりで不変 | 境界 |
+| TC-FR-FLD-03-88 | FR-FLD-03、FR-MAT-01 / DES-FLD-05、DES-PCK-01 | 一覧、Now=0、InjuredUntil=100 | 草原に入る、上へ3回、岩で拾う | 入場と採取が成功、薬草Q40×3、負傷期限は100のまま | 正常 |
+| TC-FR-MAT-01-60 | FR-MAT-01、NFR-06 / DES-PCK-01、DES-GAT-01・03 | 同一シード42の2世界、herb重み3（Q1〜2）、potion重み1（Q50）、Rolls=3 | 同じ拾う場所で PickFacing | 両方の戻り値・在庫が herb Q2×1、potion Q50×2 と完全一致し、乱数状態も一致 | 正常 |
+| TC-IF-08-74 | IF-08 / DES-FLD-07 | mixed 地図 (2,1)=拾う場所、(3,1)=敵、主人公 (288,224)／(290,224)、上 | FacingTarget | 同面積では TargetPick (2,1)、面積差では TargetEnemy (3,1)。IDは空、true、位置不変 | 境界 |
+| TC-IF-08-75 | IF-08 / DES-FLD-07 | mixed 地図 (3,1)=敵、(3,2)=依頼板、主人公 (256,192)／(256,194)、右 | FacingTarget | 同面積では上の TargetEnemy (3,1)、面積差では TargetFixture quest_board (3,2)、true、位置不変 | 境界 |
+| TC-IF-08-76 | IF-08 / DES-FLD-07 | mixed 地図 (2,2)=区画 a、施設market、主人公 (240,320)、上 | FacingTarget | TargetLot market (2,2)、true、位置不変 | 正常 |
+| TC-IF-08-77 | IF-08 / DES-FLD-07 | 未知の地図／一覧／向きbad／左の壁だけを向く | FacingTarget | すべて Target{}、false、主人公不変 | 異常 |
+| TC-FR-FLD-02-81 | FR-FLD-02 / DES-FLD-02・03 | 草原 (144,224)、上で草を向く／(528,224)、上で敵を向く | MovePlayer(0,-1)、施設建設済みでも繰り返す | それぞれ草・敵に遮られ座標・向き不変 | 境界 |
+| TC-FR-FLD-02-82 | FR-FLD-02 / DES-FLD-02・03 | 街 (512,240)、左で区画marketを向く | MovePlayer(-1,0)、market段階1にして再実行 | 建設前後とも街 (512,240)、左のまま | 境界 |
+| TC-IF-08-78 | IF-08 / DES-FLD-07、DES-PCK-01・02、DES-BTL-07、DES-WLD-01 | mixed 地図の (2,1)=拾う場所、(3,1)=敵、主人公は上向き | (290,224) で FacingTarget・PickFacing、(288,224) で FacingTarget・StartBattleFacing・PickFacing | (290,224) は敵 (3,1)、PickFacing は ErrNothingToPick で全状態と乱数不変。(288,224) は拾う場所 (2,1)、StartBattleFacing は ErrNoEnemy で全状態と乱数不変、PickFacing は薬草Q40×3、戻る tick の表は (mixed,2,1)=120 だけ | 境界 |
+| TC-FR-FLD-03-89 | FR-FLD-03 / DES-FLD-05、DES-IT05 1.4 節、DES-IT06 3.6 節 | 街への出口を持つ採取地／通常地図。街に元の地図への戻り道あり／なし。戻り道がある場合は gather 行きとの並び順を入れ替える | 出口の手前 (336,378) から MovePlayer(0,1) | 並び順にかかわらず戻り道の到着マス (144,144)、上を優先。戻り道がない採取地だけ街の gather 行きの到着マス (432,528)、上へ移る。通常地図に戻り道がなければ元の地図 (336,385)、下のまま | 境界 |
+| TC-IF-08-80 | IF-08 / DES-FLD-05・07 | data.Base を defload.Load で読んだ本体目録 | NewWorld 直後に FacingTarget | TargetFixture、workshop_door、(10,14)、true、主人公不変（E-110） | 正常 |
+
+### #105 による既存の試験の置き換え（反復 6 で変更）
+
+元の仕様書の該当行にも「（反復 6 で変更）」を記す。抽選の回数・品質・在庫あふれ・乱数の保持・当たり判定の検証は維持し、抽選の既知シードの個数と待ち時間の全文も厳密に検証する。
+
+| 既存 ID | 変更内容 |
+|---|---|
+| TC-FR-MAT-01-01〜02 | GatherをPickFacingへ移行。シード42・1000回は herb Q1×353、Q2×397、potion Q50×250。シード1・100回のQ1〜2はQ1×54、Q2×46。反復 5 の Gather と同じ結果（10ef801 の Gather で同じシード・同じ表から照合した）。herb が potion より多いこと、品質の両端が出ることも検査する |
+| TC-FR-MAT-01-03〜07 | 採取地の再使用待ちを、同じ拾うマスの再出現待ちへ変更。未知の採取地・在庫あふれの検証を維持。待ちの誤りはErrPickNotReady、切り上げ秒数を含む全文一致 |
+| TC-FR-GOL-04-05〜06、TC-FR-GOL-04-08 | プレイヤーをPickFacingへ移行。06はRespawnSeconds=12として待ちが820 tickまで続き、ゴーレム採取720 tick・合計6個・待ち不干渉を維持。08は拾うマスの待ちを設定しない |
+| TC-IF-02-14〜15 | 廃止したGatherからEnterGatherへ変更。14は未解放の誤りで採取地の表示名を検証、15は未知IDを文に残す検証を維持 |
+| TC-FR-PRG-04-09、TC-FR-PRG-04-11、TC-FR-PRG-04-13 | Gatherの解放検査をEnterGatherへ移行。未知ID・未解放の検査順序を維持し、ランク到達後は採取地の入口に入れる |
+| TC-FR-FLD-02-01 | NewWorldの初期位置を既存テスト用の街の開始位置 (336,224)、上向きへ変更（Y を当たり判定の上端に合わせる。E-110） |
+| TC-IF-08-01〜06、TC-IF-08-11、TC-IF-08-17〜21 | FacingFixtureをFacingTargetへ変更。従来の設備ID・選択規則・不変条件を維持。地図外はTarget{}、false |
+| TC-IF-08-13 | 街から始まるため、右3回の期待位置を (357,224) に変更（E-110）。Tickは位置を変えず、移動はNow=10を変えない |
+
+ui は API 置換と一覧の「行く」への接続だけを行う。画面の完成と手動試験は #107・#108・#109 が担当する。
+
+#105 の検証補足: 再出現の境界・戻る tick・Rolls・面積の比較・開始時の向き・戦闘時の場面・在庫あふれ時の乱数復元・解放検査に、それぞれ意図的な誤りを入れた8種類すべてでテストが失敗することを確認し、元に戻した。設計が前提とする検証済みの地図以外への防御として、街への出口のない採取地の地図も EnterGather で ErrNoGatherMap とする（状態不変）。この未検証データの誤りの種類は設計に明記されていない。SRS・設計書は変更していない。
 
 ## #106 本体データ（DES-DAT-04）
 
@@ -268,3 +338,5 @@ ID の重複定義を避け、既存の定義行は元の仕様書で更新す�
 | TC-FR-MOD-02-42 | 仮依頼q_cheese_extraをq_ropeへ置換し、ランク2〜4の正式5件を追加。全17件の完全比較を維持し、ランク別件数を6/3/4/4へ変更 |
 
 新レシピの手作りボーナスは設計5.1がデータ担当に委ねた範囲で、鉄の延べ棒を硬質3個で+10、薬草の縄を草2個で+10とした。設計・SRSの変更なし。異常データの拒否は #103 の既存defload試験で扱い、#106は完成データの正常値と距離の境界を検証する。
+
+F-03 の検証補足: TC-FR-FLD-05-03 は、拾う場所でないマスにも未来の戻る tick を設定した上で 0 を確認する。PickRemaining から拾う場所の種類の判定を外す変異で、壁 (meadow,0,0) が残り60 tickを返して試験が失敗することを確認し、実装を元に戻した。

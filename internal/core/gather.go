@@ -6,31 +6,53 @@ import (
 	"github.com/sakana396/fushigi_renkin/internal/defs"
 )
 
-// Gather は重み付きで素材を抽選し、品質を一様に決める（DES-GAT-01、DES-GAT-02、DES-WLD-01）。
-func (w *World) Gather(gatherID string) ([]Stack, error) {
-	site, ok := w.catalog.Gather(gatherID)
+// PickKey は拾う場所の地図とマスを識別する（DES-PCK-02）。
+type PickKey struct {
+	MapID string
+	X, Y  int
+}
+
+// PickRemaining は拾う場所が戻るまでの tick を状態を変えずに返す（DES-PCK-02）。
+func (w *World) PickRemaining(mapID string, x, y int) uint64 {
+	m, ok := w.catalog.Map(mapID)
+	if !ok || defs.TileInfo(m.Cell(x, y)).Kind != defs.CellPick {
+		return 0
+	}
+	ready := w.pickReady[PickKey{mapID, x, y}]
+	if ready <= w.Now {
+		return 0
+	}
+	return ready - w.Now
+}
+
+// PickFacing は向いている場所で抽選し、再出現 tick を記録する（DES-PCK-01・02、DES-WLD-01）。
+func (w *World) PickFacing() ([]Stack, error) {
+	if w.Battle != nil {
+		return nil, ErrInBattle
+	}
+	target, ok := w.FacingTarget()
+	if !ok || target.Kind != TargetPick {
+		return nil, ErrNothingToPick
+	}
+	if remaining := w.PickRemaining(w.Player.Scene, target.X, target.Y); remaining > 0 {
+		return nil, fmt.Errorf("あと %d 秒で拾えます: %w", 1+(remaining-1)/60, ErrPickNotReady)
+	}
+	site, ok := w.catalog.Gather(w.Player.Scene)
 	if !ok {
-		return nil, fmt.Errorf("採取地 %s: %w", gatherID, ErrUnknownID)
+		return nil, fmt.Errorf("採取地 %s: %w", w.Player.Scene, ErrUnknownID)
 	}
-	if w.locked(site.Rank) {
-		return nil, lockedError(site.Name, site.Rank)
-	}
-	if ready, used := w.gatherReady[gatherID]; used && w.Now < ready {
-		remaining := ready - w.Now
-		return nil, fmt.Errorf("採取地 %s は残り %d 秒: %w", w.gatherName(gatherID), 1+(remaining-1)/60, ErrGatherCooldown)
-	}
-	cooldown := uint64(site.CooldownSeconds) * 60
-	if site.CooldownSeconds < 0 || cooldown/60 != uint64(site.CooldownSeconds) || w.Now > ^uint64(0)-cooldown {
+	duration := uint64(site.RespawnSeconds) * 60
+	if site.RespawnSeconds < 1 || duration/60 != uint64(site.RespawnSeconds) || w.Now > ^uint64(0)-duration {
 		return nil, ErrInvalidCount
 	}
 	stacks, err := w.gatherIntoInventory(site)
 	if err != nil {
 		return nil, err
 	}
-	if w.gatherReady == nil {
-		w.gatherReady = make(map[string]uint64)
+	if w.pickReady == nil {
+		w.pickReady = make(map[PickKey]uint64)
 	}
-	w.gatherReady[gatherID] = w.Now + cooldown
+	w.pickReady[PickKey{w.Player.Scene, target.X, target.Y}] = w.Now + duration
 	return stacks, nil
 }
 

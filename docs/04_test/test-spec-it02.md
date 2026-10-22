@@ -30,10 +30,10 @@
 | TC-FR-GOL-04-02 | DES-GOL-07 | ゴーレム 1 体 | 番号範囲外、混合割り当て、未知の採取地を指定する | この順に `ErrUnknownID`、`ErrInvalidSelection`、`ErrUnknownID`。状態は変わらない | 異常 |
 | TC-FR-GOL-04-03 | DES-GOL-07 | レシピを作業中のゴーレム | 採取地に割り当て直す | 取り出し済み素材は戻らず、保持素材と進捗を消して採取を開始する | 境界 |
 | TC-FR-GOL-04-04 | DES-GOL-08 | 採取中のゴーレム | 途中で割り当てを外す | 採取品を得ず、未割り当てになる | 境界 |
-| TC-FR-GOL-04-05 | DES-GAT-03 | 同じ目録とシードの 2 世界 | 一方はプレイヤー、他方はゴーレムで 1 回採取する | 抽選結果と次の乱数が一致する | 正常 |
-| TC-FR-GOL-04-06 | DES-GAT-03 | ゴーレムを割り当てて 100 tick 後にプレイヤーが採取（待ちは 820 tick まで）。ゴーレムの採取が終わる 720 tick の時点で、まだプレイヤーの再使用待ちが続いている | さらに 620 tick 進める | ゴーレムは採取し（合計 6 個）、プレイヤーの待ち時刻は 820 のまま。プレイヤーの採取は `ErrGatherCooldown` | 境界 |
+| TC-FR-GOL-04-05 | DES-GAT-03 | 同じ目録とシードの 2 世界（反復 6 で変更） | 一方はPickFacingでプレイヤー、他方はゴーレムで 1 回採取する | 抽選結果と次の乱数が一致する | 正常 |
+| TC-FR-GOL-04-06 | DES-GAT-03 | RespawnSeconds=12。ゴーレムを割り当てて 100 tick 後にプレイヤーが採取（待ちは 820 tick まで）。ゴーレムの採取が終わる 720 tick の時点で、まだ拾うマスの再出現待ちが続いている（反復 6 で変更） | さらに 620 tick 進める | ゴーレムは採取し（合計 6 個）、プレイヤーの待ち時刻は 820 のまま。プレイヤーの採取は `ErrPickNotReady` | 境界 |
 | TC-FR-GOL-04-07 | DES-GAT-03 | ゴーレム採取品の在庫が上限 | 所要 tick まで進め、空きを作って次の tick を進める | 失敗時は在庫・乱数不変で進捗を保持し、次 tick に同じ抽選で採取する | 異常 |
-| TC-FR-GOL-04-08 | DES-GAT-03 | 同じ採取地にゴーレム 2 体 | 両方を割り当て、所要 tick 進める | 2 体とも採取し、プレイヤーの再使用待ちは設定されない | 正常 |
+| TC-FR-GOL-04-08 | DES-GAT-03 | 同じ採取地にゴーレム 2 体（反復 6 で変更） | 両方を割り当て、所要 tick 進める | 2 体とも採取し、拾うマスの再出現待ちは設定されない | 正常 |
 | TC-FR-GOL-04-20 | DES-GOL-09 | 未割り当てのゴーレム 1 体 | `GolemDuration(0)` | 0 を返し、状態は変わらない | 境界 |
 | TC-FR-GOL-04-21 | DES-GOL-09、DES-GOL-08 | 速度 100、再使用待ち 12 秒の採取地を割り当て済み | `GolemDuration(0)` | 720 tick を返し、状態は変わらない | 正常 |
 | TC-FR-GOL-04-22 | DES-GOL-09、DES-GOL-02 | 速度 100、所要 1 秒のレシピを割り当て済み | `GolemDuration(0)` | 60 tick を返し、状態は変わらない | 正常 |
@@ -129,8 +129,8 @@
 | TC-IF-02-11 | DES-WLD-02 | 商品 1 件 | 範囲外の商品番号 1 を購入する | `ErrUnknownID`、誤り文は「商品番号 2」と書く | 異常 |
 | TC-IF-02-12 | DES-WLD-02 | 水の表示名が「水」 | 合わない入力枠に水を指定して錬金する | `ErrInvalidSelection`、誤り文に「水」があり `water` がない | 異常 |
 | TC-IF-02-13 | DES-WLD-02 | 水の表示名が「水」 | 合わない入力枠に水を指定してゴーレムに割り当てる | `ErrInvalidSelection`、誤り文に「水」があり `water` がない | 異常 |
-| TC-IF-02-14 | DES-WLD-02 | 採取地の表示名が「風の草原」 | 採取後、再使用待ち中に再採取する | `ErrGatherCooldown`、誤り文に「風の草原」があり `meadow` がない | 異常 |
-| TC-IF-02-15 | DES-WLD-02 | `missing` は目録にない | `Gather("missing")` | `ErrUnknownID`、表示名のない `missing` は誤り文に残る | 異常 |
+| TC-IF-02-14 | DES-WLD-02、DES-FLD-05 | 採取地の表示名が「風の草原」、ランク1、解放はランク2（反復 6 で変更） | 一覧からEnterGather("meadow") | ErrLocked、誤り文に「風の草原」がありmeadowがない | 異常 |
+| TC-IF-02-15 | DES-WLD-02 | `missing` は目録にない（反復 6 で変更） | 一覧から `EnterGather("missing")` | `ErrUnknownID`、表示名のない `missing` は誤り文に残る | 異常 |
 | TC-IF-02-16 | DES-WLD-02 | 薬草の表示名が「薬草」、在庫不足 | 薬草を使って錬金する | `ErrNotEnoughItems`、誤り文に「薬草」があり `herb` がない | 異常 |
 | TC-IF-02-17 | DES-WLD-02 | ゴーレム材料の表示名が「薬」、材料在庫なし | ゴーレムを作る | `ErrNotEnoughItems`、誤り文に「薬」があり `potion` がない | 異常 |
 | TC-IF-02-18 | DES-WLD-02 | 目録を持たない在庫、`herb` は在庫なし | `Inventory.Remove` する | `ErrNotEnoughItems`、誤り文に内部 ID の `herb` がない | 異常 |
