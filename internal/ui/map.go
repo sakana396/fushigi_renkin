@@ -60,7 +60,7 @@ func (g *Game) drawMap(screen *ebiten.Image) {
 
 // drawMapNames は全タイルと主人公の上に設備・出口の名を描く（DES-UI-15）。
 func (g *Game) drawMapNames(dst *ebiten.Image, m defs.MapDef, ox, oy, x0, x1, y0, y1 int) {
-	fixture, facing := g.world.FacingFixture()
+	fixture, facing := g.world.FacingTarget()
 	for y := y0; y < y1; y++ {
 		for x := x0; x < x1; x++ {
 			ch := m.Cell(x, y)
@@ -78,7 +78,7 @@ func (g *Game) drawMapNames(dst *ebiten.Image, m defs.MapDef, ox, oy, x0, x1, y0
 				continue
 			}
 			ink := white
-			if facing && info.Fixture != "" && info.Fixture == fixture {
+			if facing && info.Fixture != "" && info.Fixture == fixture.ID {
 				name = "E: " + name
 				ink = color.RGBA{255, 235, 93, 255}
 			}

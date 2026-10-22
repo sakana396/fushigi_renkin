@@ -80,14 +80,14 @@ func TestWorldErrorMessages(t *testing.T) {
 			return w.AssignGolem(0, Assignment{RecipeID: "potion", SlotItems: []string{"water", "water"}})
 		}, "水", "\"water\"", ErrInvalidSelection},
 		{"TC-IF-02-14 採取地名", func(w *World) error {
-			_, err := w.Gather("meadow")
-			if err != nil {
-				return err
-			}
-			_, err = w.Gather("meadow")
-			return err
-		}, "風の草原", "meadow", ErrGatherCooldown},
-		{"TC-IF-02-15 未知の ID", func(w *World) error { _, err := w.Gather("missing"); return err }, "missing", "", ErrUnknownID},
+			s := w.catalog.Gathers["meadow"]
+			w.catalog.Game.RankReputation = []int{3}
+			s.Rank = 2
+			w.catalog.Gathers["meadow"] = s
+			w.Player.Scene = SceneGather
+			return w.EnterGather("meadow")
+		}, "風の草原", "meadow", ErrLocked},
+		{"TC-IF-02-15 未知の ID", func(w *World) error { w.Player.Scene = SceneGather; return w.EnterGather("missing") }, "missing", "", ErrUnknownID},
 		{"TC-IF-02-16 在庫不足", func(w *World) error {
 			w.Inventory = Inventory{}
 			if err := w.Inventory.Add(ItemKey{ItemID: "water", Quality: 40}, 1); err != nil {

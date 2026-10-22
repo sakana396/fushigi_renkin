@@ -34,7 +34,7 @@ func TestPlayerExamples(t *testing.T) {
 		noMaps        bool
 	}
 	cases := []example{
-		{1, "TC-FR-FLD-02-01", Player{}, "new", 0, 0, 0, Player{workshop, 432, 336, down}, "", false, nil, false, false},
+		{1, "TC-FR-FLD-02-01", Player{}, "new", 0, 0, 0, Player{town, 336, 240, up}, "", false, nil, false, false},
 		{2, "TC-FR-FLD-02-02", Player{workshop, 432, 336, down}, "move", 1, 0, 1, Player{workshop, 439, 336, right}, "", false, nil, false, false},
 		{3, "TC-FR-FLD-02-03", Player{workshop, 432, 336, down}, "move", 1, 1, 1, Player{workshop, 437, 341, down}, "", false, nil, false, false},
 		{4, "TC-FR-FLD-02-04", Player{workshop, 432, 336, down}, "move", -1, -1, 1, Player{workshop, 427, 331, left}, "", false, nil, false, false},
@@ -91,8 +91,15 @@ func TestPlayerExamples(t *testing.T) {
 			case "leave":
 				err = w.LeaveGather()
 			case "fixture":
-				got, ok := w.FacingFixture()
-				if got != tc.fixture || ok != tc.found {
+				got, ok := w.FacingTarget()
+				want := Target{}
+				switch tc.number {
+				case 10, 11, 15:
+					want = Target{TargetFixture, defs.FixtureWorkshopDoor, 2, 1}
+				case 12:
+					want = Target{TargetFixture, defs.FixtureShop, 3, 1}
+				}
+				if got != want || ok != tc.found {
 					t.Errorf("設備=(%q,%v), 期待=(%q,%v)", got, ok, tc.fixture, tc.found)
 				}
 			}
@@ -202,8 +209,8 @@ func TestPlayerAdditionalRules(t *testing.T) {
 		w := NewWorld(playerCatalog(), 1)
 		w.Player.Scene = SceneGather
 		before := w.Player
-		got, ok := w.FacingFixture()
-		if got != "" || ok || w.Player != before {
+		got, ok := w.FacingTarget()
+		if got != (Target{}) || ok || w.Player != before {
 			t.Fatalf("設備=(%q,%v), 主人公=%+v", got, ok, w.Player)
 		}
 	})
@@ -226,7 +233,7 @@ func TestPlayerAdditionalRules(t *testing.T) {
 				t.Fatal(err)
 			}
 		}
-		if w.Player != (Player{"workshop", 453, 336, defs.DirRight}) || w.Now != 10 {
+		if w.Player != (Player{"town", 357, 240, defs.DirRight}) || w.Now != 10 {
 			t.Fatalf("移動後: %+v, Now=%d", w.Player, w.Now)
 		}
 	})
@@ -293,7 +300,7 @@ func TestLeaveGatherReview(t *testing.T) {
 	})
 }
 
-func TestFacingFixtureReview(t *testing.T) {
+func TestFacingTargetReview(t *testing.T) {
 	cases := []struct {
 		id      string
 		player  Player
@@ -309,8 +316,16 @@ func TestFacingFixtureReview(t *testing.T) {
 		t.Run(tc.id, func(t *testing.T) {
 			w := NewWorld(playerCatalog(), 1)
 			w.Player = tc.player
-			got, found := w.FacingFixture()
-			if got != tc.fixture || found != tc.found {
+			got, found := w.FacingTarget()
+			want := Target{}
+			if tc.found {
+				x := 6
+				if tc.fixture == defs.FixtureShop {
+					x = 3
+				}
+				want = Target{TargetFixture, tc.fixture, x, 1}
+			}
+			if got != want || found != tc.found {
 				t.Errorf("設備=(%q,%v), 期待=(%q,%v)", got, found, tc.fixture, tc.found)
 			}
 			if w.Player != tc.player {
@@ -326,8 +341,8 @@ func TestFacingFixtureReview(t *testing.T) {
 		c.Maps["workshop"] = m
 		w := NewWorld(c, 1)
 		w.Player = Player{"workshop", 256, 192, defs.DirRight}
-		got, found := w.FacingFixture()
-		if got != defs.FixtureWorkshopDoor || !found {
+		got, found := w.FacingTarget()
+		if got != (Target{TargetFixture, defs.FixtureWorkshopDoor, 3, 1}) || !found {
 			t.Errorf("設備=(%q,%v), 期待=(%q,true)", got, found, defs.FixtureWorkshopDoor)
 		}
 	})

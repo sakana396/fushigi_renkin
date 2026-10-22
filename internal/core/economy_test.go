@@ -3,7 +3,7 @@ package core
 import (
 	"errors"
 	"reflect"
-	"strings"
+
 	"testing"
 
 	"github.com/sakana396/fushigi_renkin/internal/defs"
@@ -14,7 +14,7 @@ func economyCatalog() defs.Catalog {
 		Game:  defs.GameDef{StartMoney: 100, BaseGolemSlots: 1, Shop: []defs.ShopOffer{{Item: "herb", Quality: 40, Price: 12}}},
 		Items: map[string]defs.ItemDef{"herb": {ID: "herb", BasePrice: 10}, "potion": {ID: "potion", BasePrice: 101}},
 		Gathers: map[string]defs.GatherDef{
-			"field": {ID: "field", Rolls: 3, CooldownSeconds: 1, Drops: []defs.Drop{{Item: "herb", Weight: 3, QualityMin: 1, QualityMax: 2}, {Item: "potion", Weight: 1, QualityMin: 50, QualityMax: 50}}},
+			"field": {ID: "field", Rolls: 3, CooldownSeconds: 1, RespawnSeconds: 1, Drops: []defs.Drop{{Item: "herb", Weight: 3, QualityMin: 1, QualityMax: 2}, {Item: "potion", Weight: 1, QualityMin: 50, QualityMax: 50}}},
 		},
 		Facilities: map[string]defs.FacilityDef{
 			"lab": {ID: "lab", Levels: []defs.FacilityLevel{
@@ -28,9 +28,9 @@ func economyCatalog() defs.Catalog {
 func TestGather(t *testing.T) {
 	t.Run("TC-FR-MAT-01-01 同じシードで重み付き抽選", func(t *testing.T) {
 		a, b := NewWorld(economyCatalog(), 42), NewWorld(economyCatalog(), 42)
-		x, e1 := a.Gather("field")
-		y, e2 := b.Gather("field")
-		if e1 != nil || e2 != nil || len(x) == 0 || !reflect.DeepEqual(x, y) || !reflect.DeepEqual(a.Inventory.Stacks(), b.Inventory.Stacks()) {
+		x, e1 := pickAtTestSite(a, "field")
+		y, e2 := pickAtTestSite(b, "field")
+		if e1 != nil || e2 != nil || !reflect.DeepEqual(x, []Stack{{ItemKey{"herb", 2}, 1}, {ItemKey{"potion", 50}, 2}}) || !reflect.DeepEqual(x, y) || !reflect.DeepEqual(a.Inventory.Stacks(), b.Inventory.Stacks()) {
 			t.Fatalf("採取結果: %v %v, %v %v", x, e1, y, e2)
 		}
 		total := 0
@@ -42,34 +42,31 @@ func TestGather(t *testing.T) {
 		}
 		c := economyCatalog()
 		c.Gathers["field"] = defs.GatherDef{ID: "field", Rolls: 1000, Drops: c.Gathers["field"].Drops}
-		weighted, err := NewWorld(c, 42).Gather("field")
+		weighted, err := pickAtTestSite(NewWorld(c, 42), "field")
 		if err != nil {
 			t.Fatal(err)
 		}
-		counts := map[string]int{}
-		for _, stack := range weighted {
-			counts[stack.Key.ItemID] += stack.Count
-		}
-		if counts["herb"] <= counts["potion"] || counts["potion"] == 0 {
-			t.Fatalf("重み付き抽選 = %v", counts)
+		want := []Stack{{ItemKey{"herb", 1}, 353}, {ItemKey{"herb", 2}, 397}, {ItemKey{"potion", 50}, 250}}
+		if !reflect.DeepEqual(weighted, want) {
+			t.Fatalf("重み付き抽選=%v want=%v", weighted, want)
 		}
 	})
 	t.Run("TC-FR-MAT-01-02 品質の両端", func(t *testing.T) {
 		c := economyCatalog()
 		c.Gathers["field"] = defs.GatherDef{ID: "field", Rolls: 100, CooldownSeconds: 0, Drops: []defs.Drop{{Item: "herb", Weight: 1, QualityMin: 1, QualityMax: 2}}}
 		w := NewWorld(c, 1)
-		got, err := w.Gather("field")
-		if err != nil || len(got) != 2 || got[0].Key.Quality != 1 || got[1].Key.Quality != 2 {
+		got, err := pickAtTestSite(w, "field")
+		if err != nil || !reflect.DeepEqual(got, []Stack{{ItemKey{"herb", 1}, 54}, {ItemKey{"herb", 2}, 46}}) {
 			t.Fatalf("結果 = %v, %v", got, err)
 		}
 	})
 	t.Run("TC-FR-MAT-01-03 再使用待ち", func(t *testing.T) {
 		w := NewWorld(economyCatalog(), 1)
-		if _, err := w.Gather("field"); err != nil {
+		if _, err := pickAtTestSite(w, "field"); err != nil {
 			t.Fatal(err)
 		}
 		before := w.Inventory.Stacks()
-		if _, err := w.Gather("field"); !errors.Is(err, ErrGatherCooldown) {
+		if _, err := pickAtTestSite(w, "field"); !errors.Is(err, ErrPickNotReady) {
 			t.Fatalf("error = %v", err)
 		}
 		if !reflect.DeepEqual(before, w.Inventory.Stacks()) {
@@ -78,37 +75,37 @@ func TestGather(t *testing.T) {
 	})
 	t.Run("TC-FR-MAT-01-04 未知の採取地", func(t *testing.T) {
 		w := NewWorld(economyCatalog(), 1)
-		if _, err := w.Gather("unknown"); !errors.Is(err, ErrUnknownID) {
+		if _, err := pickAtTestSite(w, "unknown"); !errors.Is(err, ErrUnknownID) {
 			t.Fatalf("error = %v", err)
 		}
 	})
 	t.Run("TC-FR-MAT-01-05 待ち終了 tick", func(t *testing.T) {
 		w := NewWorld(economyCatalog(), 1)
-		w.Gather("field")
+		pickAtTestSite(w, "field")
 		for i := 0; i < 59; i++ {
 			w.Tick()
 		}
-		if _, err := w.Gather("field"); !errors.Is(err, ErrGatherCooldown) {
+		if _, err := pickAtTestSite(w, "field"); !errors.Is(err, ErrPickNotReady) {
 			t.Fatalf("error = %v", err)
 		}
 		w.Tick()
-		if _, err := w.Gather("field"); err != nil {
+		if _, err := pickAtTestSite(w, "field"); err != nil {
 			t.Fatal(err)
 		}
 	})
 	t.Run("TC-FR-MAT-01-06 在庫あふれは乱数も保つ", func(t *testing.T) {
 		c := economyCatalog()
-		c.Gathers["field"] = defs.GatherDef{ID: "field", Rolls: 1, CooldownSeconds: 1, Drops: []defs.Drop{{Item: "herb", Weight: 1, QualityMin: 1, QualityMax: 1}}}
+		c.Gathers["field"] = defs.GatherDef{ID: "field", Rolls: 1, CooldownSeconds: 1, RespawnSeconds: 1, Drops: []defs.Drop{{Item: "herb", Weight: 1, QualityMin: 1, QualityMax: 1}}}
 		w, other := NewWorld(c, 7), NewWorld(c, 7)
 		max := int(^uint(0) >> 1)
 		w.Inventory.Add(ItemKey{"herb", 1}, max)
-		if _, err := w.Gather("field"); !errors.Is(err, ErrInvalidCount) {
+		if _, err := pickAtTestSite(w, "field"); !errors.Is(err, ErrInvalidCount) {
 			t.Fatalf("error = %v", err)
 		}
 		if w.Inventory.Count(ItemKey{"herb", 1}) != max || w.rng.Uint64() != other.rng.Uint64() {
 			t.Fatal("失敗後に状態が変化")
 		}
-		if _, used := w.gatherReady["field"]; used {
+		if _, used := w.pickReady[PickKey{"field", 1, 1}]; used {
 			t.Fatal("失敗後に再使用待ちが設定された")
 		}
 	})
@@ -121,26 +118,26 @@ func TestGatherCooldownRemaining(t *testing.T) {
 		ticks   int
 		want    string
 	}{
-		{"TC-FR-MAT-01-07 開始直後は二秒", 2, 0, "残り 2 秒"},
-		{"TC-FR-MAT-01-07 一 tick 後も切り上げ", 2, 1, "残り 2 秒"},
-		{"TC-FR-MAT-01-07 一秒経過後は一秒", 2, 60, "残り 1 秒"},
-		{"TC-FR-MAT-01-07 終了直前も一秒", 2, 119, "残り 1 秒"},
+		{"TC-FR-MAT-01-07 開始直後は二秒", 2, 0, "あと 2 秒で拾えます: まだ拾えません"},
+		{"TC-FR-MAT-01-07 一 tick 後も切り上げ", 2, 1, "あと 2 秒で拾えます: まだ拾えません"},
+		{"TC-FR-MAT-01-07 一秒経過後は一秒", 2, 60, "あと 1 秒で拾えます: まだ拾えません"},
+		{"TC-FR-MAT-01-07 終了直前も一秒", 2, 119, "あと 1 秒で拾えます: まだ拾えません"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			catalog := economyCatalog()
 			site := catalog.Gathers["field"]
-			site.CooldownSeconds = tt.seconds
+			site.RespawnSeconds = tt.seconds
 			catalog.Gathers["field"] = site
 			w := NewWorld(catalog, 1)
-			if _, err := w.Gather("field"); err != nil {
+			if _, err := pickAtTestSite(w, "field"); err != nil {
 				t.Fatal(err)
 			}
 			before := w.Inventory.Stacks()
 			for i := 0; i < tt.ticks; i++ {
 				w.Tick()
 			}
-			_, err := w.Gather("field")
-			if !errors.Is(err, ErrGatherCooldown) || !strings.Contains(err.Error(), tt.want) {
+			_, err := pickAtTestSite(w, "field")
+			if !errors.Is(err, ErrPickNotReady) || err.Error() != tt.want {
 				t.Fatalf("error = %v", err)
 			}
 			if !reflect.DeepEqual(before, w.Inventory.Stacks()) {

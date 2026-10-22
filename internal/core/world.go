@@ -6,7 +6,7 @@ import (
 	"github.com/sakana396/fushigi_renkin/internal/defs"
 )
 
-// World はゲームの状態とシード付き乱数、依頼板を保持する（DES-IT01 3.1、DES-TIME-01、DES-QST-04、DES-FLD-01）。
+// World はゲームの状態とシード付き乱数、依頼板を保持する（DES-IT01 3.1、DES-TIME-01、DES-QST-04、DES-FLD-01・05）。
 type World struct {
 	catalog      defs.Catalog
 	Player       Player
@@ -26,15 +26,15 @@ type World struct {
 	rankUps      []int
 	newDays      []int
 	Facilities   map[string]int
-	gatherReady  map[string]uint64
+	pickReady    map[PickKey]uint64
 }
 
-// NewWorld は目録とシードから初期状態と依頼板を作る（DES-IT01 3.1、DES-TIME-01、DES-QST-04、DES-FLD-01）。
+// NewWorld は目録とシードから初期状態と依頼板を作る（DES-IT01 3.1、DES-TIME-01、DES-QST-04、DES-FLD-01・05）。
 func NewWorld(catalog defs.Catalog, seed uint64) *World {
 	source := rand.NewPCG(seed, 0)
 	w := &World{catalog: catalog, rng: rand.New(source), rngSource: source, questRNG: rand.New(rand.NewPCG(seed, 1)), Money: catalog.Game.StartMoney}
-	if m, ok := catalog.Map("workshop"); ok {
-		w.Player = Player{Scene: "workshop", X: m.StartX*playerTile + playerTile/2, Y: m.StartY*playerTile + playerTile/2, Facing: defs.DirDown}
+	if m, ok := catalog.Map(defs.MapTown); ok {
+		w.Player = Player{Scene: defs.MapTown, X: m.StartX*playerTile + playerTile/2, Y: m.StartY*playerTile + playerTile/2, Facing: defs.DirUp}
 	}
 	for i := range w.Quests {
 		w.Quests[i] = w.drawQuest()

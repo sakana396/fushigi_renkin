@@ -106,7 +106,7 @@ func TestGolemGatherRules(t *testing.T) {
 		player, golem := NewWorld(c, 42), NewWorld(c, 42)
 		buildWorker(t, golem)
 		assignMeadow(t, golem, 0)
-		if _, err := player.Gather("meadow"); err != nil {
+		if _, err := pickAtTestSite(player, "meadow"); err != nil {
 			t.Fatal(err)
 		}
 		runTicks(golem, 720)
@@ -115,20 +115,24 @@ func TestGolemGatherRules(t *testing.T) {
 		}
 	})
 	t.Run("TC-FR-GOL-04-06 プレイヤーの再使用待ちに干渉しない", func(t *testing.T) {
-		w := NewWorld(golemGatherCatalog(), 1)
+		c := golemGatherCatalog()
+		site := c.Gathers["meadow"]
+		site.RespawnSeconds = 12
+		c.Gathers["meadow"] = site
+		w := NewWorld(c, 1)
 		buildWorker(t, w)
 		assignMeadow(t, w, 0)
 		runTicks(w, 100)
 		// プレイヤーの再使用待ちは 820 tick まで続く。ゴーレムは 720 回目の Tick() で採取する。
-		if _, err := w.Gather("meadow"); err != nil {
+		if _, err := pickAtTestSite(w, "meadow"); err != nil {
 			t.Fatal(err)
 		}
-		ready := w.gatherReady["meadow"]
+		ready := w.pickReady[PickKey{"meadow", 1, 1}]
 		runTicks(w, 620)
-		if inventoryTotal(w) != 6 || w.gatherReady["meadow"] != ready || ready != 820 {
-			t.Fatalf("採取または再使用待ち: %v %v", w.Inventory.Stacks(), w.gatherReady)
+		if inventoryTotal(w) != 6 || w.pickReady[PickKey{"meadow", 1, 1}] != ready || ready != 820 {
+			t.Fatalf("採取または再使用待ち: %v %v", w.Inventory.Stacks(), w.pickReady)
 		}
-		if _, err := w.Gather("meadow"); !errors.Is(err, ErrGatherCooldown) {
+		if _, err := pickAtTestSite(w, "meadow"); !errors.Is(err, ErrPickNotReady) {
 			t.Fatalf("プレイヤーの再使用待ちが続いていない: %v", err)
 		}
 	})
@@ -162,8 +166,8 @@ func TestGolemGatherRules(t *testing.T) {
 		assignMeadow(t, w, 0)
 		assignMeadow(t, w, 1)
 		runTicks(w, 720)
-		if inventoryTotal(w) != 6 || len(w.gatherReady) != 0 {
-			t.Fatalf("二体の採取: %v %v", w.Inventory.Stacks(), w.gatherReady)
+		if inventoryTotal(w) != 6 || len(w.pickReady) != 0 {
+			t.Fatalf("二体の採取: %v %v", w.Inventory.Stacks(), w.pickReady)
 		}
 	})
 }

@@ -1,6 +1,10 @@
 package core
 
-import "github.com/sakana396/fushigi_renkin/internal/defs"
+import (
+	"fmt"
+
+	"github.com/sakana396/fushigi_renkin/internal/defs"
+)
 
 // SceneGather は採取地の一覧を表す（DES-FLD-01）。
 const SceneGather = defs.ExitGather
@@ -96,7 +100,7 @@ func (w *World) MovePlayer(dx, dy int) error {
 				break
 			}
 			for _, arrival := range dest.Exits {
-				if arrival.To == m.ID {
+				if arrival.To == m.ID || exit.To == defs.MapTown && arrival.To == SceneGather {
 					p = arrivalPlayer(dest, arrival)
 					break
 				}
@@ -201,11 +205,28 @@ func floorTile(v int) int {
 	return (v+1)/playerTile - 1
 }
 
-// FacingFixture は前の帯に最も広く重なる設備を返す（DES-FLD-04）。
-func (w *World) FacingFixture() (string, bool) {
+// TargetKind は向いている物の種類を表す（DES-FLD-07）。
+type TargetKind int
+
+const (
+	TargetFixture TargetKind = iota
+	TargetLot
+	TargetPick
+	TargetEnemy
+)
+
+// Target は向いているマスと設備・施設の ID を表す（DES-FLD-07）。
+type Target struct {
+	Kind TargetKind
+	ID   string
+	X, Y int
+}
+
+// FacingTarget は前の帯との面積、y、x の順で向いている物を選ぶ（DES-FLD-07）。
+func (w *World) FacingTarget() (Target, bool) {
 	m, ok := w.catalog.Map(w.Player.Scene)
 	if !ok || w.Player.Scene == SceneGather {
-		return "", false
+		return Target{}, false
 	}
 	p := w.Player
 	x0, x1, y0, y1 := p.X-playerHalf, p.X+playerHalf, p.Y-playerHalf, p.Y+playerHalf
@@ -223,22 +244,39 @@ func (w *World) FacingFixture() (string, bool) {
 		x0 = x1
 		x1 += 16
 	default:
-		return "", false
+		return Target{}, false
 	}
-	bestArea, bestX, bestY, bestFixture := 0, 0, 0, ""
+	bestArea, bestX, bestY := 0, 0, 0
+	var best Target
 	for y := floorTile(y0); y <= floorTile(y1-1); y++ {
 		for x := floorTile(x0); x <= floorTile(x1-1); x++ {
 			info := defs.TileInfo(m.Cell(x, y))
-			if info.Kind != defs.CellFixture {
+			target := Target{X: x, Y: y}
+			switch info.Kind {
+			case defs.CellFixture:
+				target.Kind, target.ID = TargetFixture, info.Fixture
+			case defs.CellLot:
+				target.Kind = TargetLot
+				for _, lot := range m.Lots {
+					if lot.Mark == m.Cell(x, y) {
+						target.ID = lot.Facility
+						break
+					}
+				}
+			case defs.CellPick:
+				target.Kind = TargetPick
+			case defs.CellEnemy:
+				target.Kind = TargetEnemy
+			default:
 				continue
 			}
 			area := overlap(x0, x1, x*playerTile, (x+1)*playerTile) * overlap(y0, y1, y*playerTile, (y+1)*playerTile)
 			if area > bestArea || area == bestArea && area > 0 && (y < bestY || y == bestY && x < bestX) {
-				bestArea, bestX, bestY, bestFixture = area, x, y, info.Fixture
+				bestArea, bestX, bestY, best = area, x, y, target
 			}
 		}
 	}
-	return bestFixture, bestArea > 0
+	return best, bestArea > 0
 }
 
 func overlap(a0, a1, b0, b1 int) int {
@@ -288,4 +326,32 @@ func arrivalPlayer(m defs.MapDef, e defs.ExitDef) Player {
 		x++
 	}
 	return Player{Scene: m.ID, X: x*playerTile + playerTile/2, Y: y*playerTile + playerTile/2, Facing: e.Dir}
+}
+
+// EnterGather は一覧から解放済み採取地の入口へ移る（DES-FLD-05、DES-WLD-01）。
+func (w *World) EnterGather(gatherID string) error {
+	if w.Player.Scene != SceneGather {
+		return ErrNotInGather
+	}
+	if w.Battle != nil {
+		return ErrInBattle
+	}
+	site, ok := w.catalog.Gather(gatherID)
+	if !ok {
+		return fmt.Errorf("採取地 %s: %w", gatherID, ErrUnknownID)
+	}
+	if w.locked(site.Rank) {
+		return lockedError(site.Name, site.Rank)
+	}
+	m, ok := w.catalog.Map(gatherID)
+	if !ok {
+		return ErrNoGatherMap
+	}
+	for _, e := range m.Exits {
+		if e.To == defs.MapTown {
+			w.Player = arrivalPlayer(m, e)
+			return nil
+		}
+	}
+	return ErrNoGatherMap
 }

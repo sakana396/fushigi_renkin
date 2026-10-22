@@ -53,7 +53,7 @@
 
 | ID | 対象 | 前提 | 入力・操作 | 期待結果 | 種別 |
 |---|---|---|---|---|---|
-| TC-FR-FLD-02-01 | FR-FLD-02、DES-FLD-01 | 目録に例の地図 | 計算例 1: NewWorld | 工房 (432,336)、下 | 正常 |
+| TC-FR-FLD-02-01 | FR-FLD-02、DES-FLD-01 | 目録に例の街と旧工房の地図（反復 6 で変更） | 計算例 1: NewWorld | 街 (336,240)、上 | 正常 |
 | TC-FR-FLD-02-02 | FR-FLD-02、DES-FLD-02 | 工房 (432,336)、下 | 計算例 2: 右 | 工房 (439,336)、右 | 正常 |
 | TC-FR-FLD-02-03 | FR-FLD-02、DES-FLD-02 | 工房 (432,336)、下 | 計算例 3: 右下 | 工房 (437,341)、下 | 正常 |
 | TC-FR-FLD-02-04 | FR-FLD-02、DES-FLD-02 | 工房 (432,336)、下 | 計算例 4: 左上 | 工房 (427,331)、左 | 正常 |
@@ -169,27 +169,27 @@
 
 | ID | 対象 | 前提 | 入力・操作 | 期待結果 | 種別 |
 |---|---|---|---|---|---|
-| TC-IF-08-01 | IF-08、DES-FLD-04 | 反復 6 で変更: 元の地図の設備位置を保ち D/M/Q に置換 | 計算例 10: FacingFixture | workshop_door、true、状態不変 | 正常 |
-| TC-IF-08-02 | IF-08、DES-FLD-04 | 反復 6 で変更: 元の地図の設備位置を保ち D/M/Q に置換 | 計算例 11: FacingFixture | workshop_door、true、状態不変 | 境界 |
-| TC-IF-08-03 | IF-08、DES-FLD-04 | 反復 6 で変更: 元の地図の設備位置を保ち D/M/Q に置換 | 計算例 12: FacingFixture | shop、true、状態不変 | 境界 |
-| TC-IF-08-04 | IF-08、DES-FLD-04 | 工房 (240,224)、下 | 計算例 13: FacingFixture | 空、false | 正常 |
-| TC-IF-08-05 | IF-08、DES-FLD-04 | 工房 (240,240)、上 | 計算例 14: FacingFixture | 隙間 16 では空、false | 境界 |
-| TC-IF-08-06 | IF-08、DES-FLD-04 | 反復 6 で変更: 元の地図の設備位置を保ち D/M/Q に置換 | 計算例 15: FacingFixture | workshop_door、true、状態不変 | 境界 |
+| TC-IF-08-01 | IF-08、DES-FLD-07 | 旧工房 (240,224)、上（反復 6 で変更） | 計算例 10: FacingTarget | TargetFixture、workshop_door、(2,1)、true、状態不変 | 正常 |
+| TC-IF-08-02 | IF-08、DES-FLD-07 | 旧工房 (288,224)、上、DとMが同面積（反復 6 で変更） | 計算例 11: FacingTarget | TargetFixture、workshop_door、(2,1)、true、状態不変 | 境界 |
+| TC-IF-08-03 | IF-08、DES-FLD-07 | 旧工房 (290,224)、上、Mの面積が大きい（反復 6 で変更） | 計算例 12: FacingTarget | TargetFixture、shop、(3,1)、true、状態不変 | 境界 |
+| TC-IF-08-04 | IF-08、DES-FLD-07 | 工房 (240,224)、下（反復 6 で変更） | 計算例 13: FacingTarget | Target{}、false | 正常 |
+| TC-IF-08-05 | IF-08、DES-FLD-07 | 工房 (240,240)、上（反復 6 で変更） | 計算例 14: FacingTarget | 隙間 16 ではTarget{}、false | 境界 |
+| TC-IF-08-06 | IF-08、DES-FLD-07 | 旧工房 (240,239)、上、隙間15（反復 6 で変更） | 計算例 15: FacingTarget | TargetFixture、workshop_door、(2,1)、true、状態不変 | 境界 |
 | TC-IF-08-07 | IF-08、DES-FLD-02、DES-WLD-01 | 工房 (432,336)、下 | 計算例 23: MovePlayer(2,0) | ErrInvalidDirection、状態不変 | 異常 |
 | TC-IF-08-08 | IF-08、DES-FLD-02、DES-WLD-01 | 工房 (432,336)、下、戦闘中 | 計算例 31: 右へ移動 | ErrInBattle、状態不変 | 異常 |
 | TC-IF-08-09 | IF-08、DES-FLD-02、DES-WLD-01 | 地図なし、戦闘中 | MovePlayer(2,0) | ErrInvalidDirection が最初、状態不変 | 異常 |
 | TC-IF-08-10 | IF-08、DES-FLD-02、DES-WLD-01 | 地図なし、戦闘中 | MovePlayer(0,0) | ErrInBattle が地図の誤りより先、状態不変 | 異常 |
-| TC-IF-08-11 | IF-08、DES-FLD-04 | gather にいる | FacingFixture | 空、false、状態不変 | 異常 |
+| TC-IF-08-11 | IF-08、DES-FLD-07 | gather にいる（反復 6 で変更） | FacingTarget | Target{}、false、状態不変 | 異常 |
 | TC-IF-08-12 | IF-08、DES-FLD-01 | 定数 | SceneGather を比較 | defs.ExitGather と同じ値 | 正常 |
-| TC-IF-08-13 | IF-08、DES-TIME-02、NFR-06 | 工房の開始位置 | Tick 10 回、右へ 3 回 | Tick で位置不変・Now=10、移動で (453,336)・Now=10 | 正常 |
+| TC-IF-08-13 | IF-08、DES-TIME-02、NFR-06 | 街の開始位置（反復 6 で変更） | Tick 10 回、右へ 3 回 | Tick で位置不変・Now=10、移動で (357,240)・Now=10 | 正常 |
 | TC-IF-08-14 | IF-08、DES-TIME-02、NFR-06 | 同じ地図とシードの世界を 2 つ | 同じ移動列 | 主人公の最終状態が一致 | 正常 |
 | TC-IF-08-15 | IF-08、DES-FLD-02、DES-WLD-01 | 工房 (432,336)、下 | MovePlayer(0,2) | ErrInvalidDirection、状態不変 | 異常 |
 | TC-IF-08-16 | IF-08、DES-FLD-02、DES-WLD-01 | 工房 (432,336)、下 | MovePlayer(-2,0) | ErrInvalidDirection、状態不変 | 異常 |
-| TC-IF-08-17 | IF-08、DES-FLD-04 | 反復 6 で変更: 元の地図の設備位置を保ち D/M/Q に置換 | FacingFixture | quest_board、true、状態不変 | 正常 |
-| TC-IF-08-18 | IF-08、DES-FLD-04 | 反復 6 で変更: 元の地図の設備位置を保ち D/M/Q に置換 | FacingFixture | shop、true、状態不変 | 正常 |
-| TC-IF-08-19 | IF-08、DES-FLD-04 | 工房 (128,144)、左。前は壁 | FacingFixture | 空、false、状態不変 | 境界 |
-| TC-IF-08-20 | IF-08、DES-FLD-04 | 反復 6 で変更: (3,1) に工房の扉 D、(3,2) に店 M。主人公 (256,192)、右 | FacingFixture | 前の帯の重なりは両方 16×32。同面積なので y が小さい workshop_door、true | 境界 |
-| TC-IF-08-21 | IF-08、DES-FLD-04 | 反復 6 で変更: 元の地図の設備位置を保ち D/M/Q に置換 | FacingFixture | quest_board、true、状態不変 | 境界 |
+| TC-IF-08-17 | IF-08、DES-FLD-07 | 旧工房 (544,144)、右（反復 6 で変更） | FacingTarget | TargetFixture、quest_board、(6,1)、true、状態不変 | 正常 |
+| TC-IF-08-18 | IF-08、DES-FLD-07 | 旧工房 (416,144)、左（反復 6 で変更） | FacingTarget | TargetFixture、shop、(3,1)、true、状態不変 | 正常 |
+| TC-IF-08-19 | IF-08、DES-FLD-07 | 工房 (128,144)、左。前は壁（反復 6 で変更） | FacingTarget | Target{}、false、状態不変 | 境界 |
+| TC-IF-08-20 | IF-08、DES-FLD-07 | 旧工房 (256,192)、右、(3,1)=D、(3,2)=M、重なり各16×32（反復 6 で変更） | FacingTarget | TargetFixture、workshop_door、(3,1)、true、状態不変 | 境界 |
+| TC-IF-08-21 | IF-08、DES-FLD-07 | 旧工房 (529,144)、右、隙間15（反復 6 で変更） | FacingTarget | TargetFixture、quest_board、(6,1)、true、状態不変 | 境界 |
 | TC-IF-08-40 | IF-08、DES-UI-17〜18 | 工房の開始位置 | W/A/S/D と各矢印を順に押す | 主人公は押した方向へ歩き、上下左右の向きの三角が当たり判定の該当側に出る。左向きの絵は右向きの左右反転 | 手動・正常 |
 | TC-IF-08-41 | IF-08、DES-UI-18 | 工房の床で設備を向いていない | E、スペース、地図のクリックを順に行う | 窓は開かず主人公の位置は変わらない。クリックだけでは設備を使えない | 手動・異常 |
 | TC-IF-08-42 | IF-08、DES-UI-18〜19 | 工房で錬金釜の前を向く | E で開き、移動キーとスペースを押し、Esc で閉じる | 「錬金釜」の窓と「閉じる」（x=10、y=76）が出る。窓中は位置・向きが変わらず、Esc 後も開く前と同じ | 手動・正常 |
