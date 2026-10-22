@@ -99,10 +99,22 @@ func (w *World) MovePlayer(dx, dy int) error {
 			if !found {
 				break
 			}
+			// 元の地図への戻り道を先に探す（DES-FLD-05、DES-IT05 1.4 節）。
+			arrived := false
 			for _, arrival := range dest.Exits {
-				if arrival.To == m.ID || exit.To == defs.MapTown && arrival.To == SceneGather {
+				if arrival.To == m.ID {
 					p = arrivalPlayer(dest, arrival)
+					arrived = true
 					break
+				}
+			}
+			// 採取地から街へ戻るときだけ、一覧の出口を代わりに使う（DES-IT06 3.6 節）。
+			if _, isGather := w.catalog.Gather(m.ID); !arrived && isGather && exit.To == defs.MapTown {
+				for _, arrival := range dest.Exits {
+					if arrival.To == SceneGather {
+						p = arrivalPlayer(dest, arrival)
+						break
+					}
 				}
 			}
 			break

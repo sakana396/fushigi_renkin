@@ -673,7 +673,7 @@ func (g *Game) drawGather(dst *ebiten.Image) {
 		gatherID := id
 		yy := y + 34 + (i%rows)*58
 		g.label(dst, x+8, yy, site.Name, white)
-		g.button(dst, x+250, yy-4, 170, 28, "入る", false, func() { g.result("採取地に入りました", g.world.EnterGather(gatherID)) })
+		g.button(dst, x+250, yy-4, 170, 28, "行く", false, func() { g.result("採取地に入りました", g.world.EnterGather(gatherID)) })
 		if site.Battle != nil {
 			var action func()
 			reason := ""

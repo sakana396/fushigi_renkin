@@ -46,6 +46,13 @@ func TestGather(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
+		counts := make(map[string]int)
+		for _, stack := range weighted {
+			counts[stack.Key.ItemID] += stack.Count
+		}
+		if counts["herb"] <= counts["potion"] || counts["potion"] == 0 {
+			t.Fatalf("重み3の薬草が重み1のポーションより多くない: %v", counts)
+		}
 		want := []Stack{{ItemKey{"herb", 1}, 353}, {ItemKey{"herb", 2}, 397}, {ItemKey{"potion", 50}, 250}}
 		if !reflect.DeepEqual(weighted, want) {
 			t.Fatalf("重み付き抽選=%v want=%v", weighted, want)
@@ -56,6 +63,9 @@ func TestGather(t *testing.T) {
 		c.Gathers["field"] = defs.GatherDef{ID: "field", Rolls: 100, CooldownSeconds: 0, Drops: []defs.Drop{{Item: "herb", Weight: 1, QualityMin: 1, QualityMax: 2}}}
 		w := NewWorld(c, 1)
 		got, err := pickAtTestSite(w, "field")
+		if w.Inventory.Count(ItemKey{"herb", 1}) == 0 || w.Inventory.Count(ItemKey{"herb", 2}) == 0 {
+			t.Fatal("品質の両端が出ていない", got)
+		}
 		if err != nil || !reflect.DeepEqual(got, []Stack{{ItemKey{"herb", 1}, 54}, {ItemKey{"herb", 2}, 46}}) {
 			t.Fatalf("結果 = %v, %v", got, err)
 		}

@@ -124,8 +124,8 @@
 
 | ID | 対象 | 前提 | 入力・操作 | 期待結果 | 種別 |
 |---|---|---|---|---|---|
-| TC-FR-MAT-01-01 | DES-GAT-01、DES-PCK-01 | 固定シード42、herb重み3（Q1〜2）、potion重み1（Q50）の拾う場所（反復 6 で変更） | PickFacingで3回／1000回抽選 | 3回はherb Q2×1、potion Q50×2。1000回はherb Q1×353、Q2×397、potion Q50×250。同一シードの在庫・戻り値が一致 | 正常 |
-| TC-FR-MAT-01-02 | DES-GAT-01、DES-PCK-01 | シード1、品質範囲1〜2、Rolls=100の拾う場所（反復 6 で変更） | PickFacing | Q1×54、Q2×46を返す | 境界 |
+| TC-FR-MAT-01-01 | DES-GAT-01、DES-PCK-01 | 固定シード42、herb重み3（Q1〜2）、potion重み1（Q50）の拾う場所（反復 6 で変更） | PickFacingで3回／1000回抽選 | 3回はherb Q2×1、potion Q50×2。1000回はherb Q1×353、Q2×397、potion Q50×250。同一シードの在庫・戻り値が一致し、herb の合計は potion より多い。固定の期待値は反復 5 の Gather と同じ結果（10ef801 の Gather で同じシード・同じ表から照合した） | 正常 |
+| TC-FR-MAT-01-02 | DES-GAT-01、DES-PCK-01 | シード1、品質範囲1〜2、Rolls=100の拾う場所（反復 6 で変更） | PickFacing | Q1×54、Q2×46を返し、品質の両端が出る。固定の期待値は反復 5 の Gather と同じ結果（10ef801 の Gather で同じシード・同じ表から照合した） | 境界 |
 | TC-FR-MAT-01-03 | DES-PCK-01・02、DES-WLD-01 | 同じ拾うマスを拾った直後（反復 6 で変更） | PickFacingで再採取 | ErrPickNotReady、在庫不変 | 異常 |
 | TC-FR-MAT-01-04 | DES-PCK-01、DES-WLD-01 | unknown地図に拾うマスはあるが採取地定義なし（反復 6 で変更） | PickFacing | ErrUnknownID、状態不変 | 異常 |
 | TC-FR-MAT-01-05 | DES-PCK-02 | 再出現1秒の拾うマスをNow=0で拾う（反復 6 で変更） | 59 Tick後と続く1 Tick後にPickFacing | 59ではErrPickNotReady、60で再採取成功 | 境界 |

@@ -2,6 +2,7 @@ package core
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -423,6 +424,7 @@ func TestPickPersistence(t *testing.T) {
 			t.Fatal(w.Now, w.pickReady)
 		}
 		for _, p := range []PickKey{{"meadow", 0, 0}, {"missing", 3, 2}, {"meadow", 5, 1}} {
+			w.pickReady[p] = 120
 			if got := w.PickRemaining(p.MapID, p.X, p.Y); got != 0 {
 				t.Fatal(p, got)
 			}
@@ -522,5 +524,68 @@ func TestGatherMapObstacles(t *testing.T) {
 				t.Fatal(err, w.Player)
 			}
 		})
+	}
+}
+
+func TestFacingMixedActions(t *testing.T) {
+	for _, x := range []int{288, 290} {
+		t.Run(fmt.Sprintf("TC-IF-08-78 混在する対象 x=%d", x), func(t *testing.T) {
+			c := pickCatalog()
+			c.Maps["mixed"] = defs.MapDef{ID: "mixed", Rows: []string{"TTTTT", "T,*ET", "T,aQT", "T,,,T", "TTTTT"}, Lots: []defs.LotDef{{Mark: 'a', Facility: "market", X: 2, Y: 2}}}
+			c.Gathers["mixed"] = c.Gathers["meadow"]
+			w := NewWorld(c, 42)
+			w.Player = Player{"mixed", x, 224, defs.DirUp}
+			if x == 290 {
+				assertTarget(t, w, Target{TargetEnemy, "", 3, 1})
+				assertPickFailure(t, w, func() error { _, err := w.PickFacing(); return err }, ErrNothingToPick, ErrNothingToPick.Error())
+				return
+			}
+			assertTarget(t, w, Target{TargetPick, "", 2, 1})
+			assertPickFailure(t, w, w.StartBattleFacing, ErrNoEnemy, ErrNoEnemy.Error())
+			got, err := w.PickFacing()
+			wantReady := map[PickKey]uint64{{"mixed", 2, 1}: 120}
+			if err != nil || !reflect.DeepEqual(got, []Stack{{ItemKey{"herb", 40}, 3}}) || !reflect.DeepEqual(w.pickReady, wantReady) {
+				t.Fatal(got, err, w.pickReady)
+			}
+		})
+	}
+}
+
+func TestTownArrivalPriority(t *testing.T) {
+	for _, gather := range []bool{false, true} {
+		for _, direct := range []bool{false, true} {
+			for _, gatherFirst := range []bool{false, true} {
+				t.Run(fmt.Sprintf("TC-FR-FLD-03-89 採取地=%t 戻り道=%t 一覧が先=%t", gather, direct, gatherFirst), func(t *testing.T) {
+					c := pickCatalog()
+					m := c.Maps["meadow"]
+					if !gather {
+						m.ID = "path"
+						c.Maps[m.ID] = m
+					}
+					town := c.Maps["town"]
+					if direct {
+						e := defs.ExitDef{Mark: '1', To: m.ID, Dir: defs.DirUp, X: 1, Y: 2}
+						town.Rows[2] = "T1aaa,,,T"
+						if gatherFirst {
+							town.Exits = append(town.Exits, e)
+						} else {
+							town.Exits = append([]defs.ExitDef{e}, town.Exits...)
+						}
+					}
+					c.Maps["town"] = town
+					w := NewWorld(c, 42)
+					w.Player = Player{m.ID, 336, 378, defs.DirDown}
+					want := Player{m.ID, 336, 385, defs.DirDown}
+					if direct {
+						want = Player{"town", 144, 144, defs.DirUp}
+					} else if gather {
+						want = Player{"town", 432, 528, defs.DirUp}
+					}
+					if err := w.MovePlayer(0, 1); err != nil || w.Player != want {
+						t.Fatal(err, w.Player, want)
+					}
+				})
+			}
+		}
 	}
 }
