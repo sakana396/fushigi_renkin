@@ -9,7 +9,7 @@ id = "workshop"
 name = "錬金工房"
 levels = [
   { look = "cottage", money = 60, materials = [{ item = "bread", count = 2 }], effects = [{ kind = "golem_slots", value = 1 }] },
-  { look = "house", money = 140, materials = [{ item = "lantern", count = 1 }], effects = [{ kind = "golem_slots", value = 1 }] },
+  { look = "house", money = 140, materials = [{ item = "iron_ingot", count = 2 }, { item = "lantern", count = 1 }], effects = [{ kind = "golem_slots", value = 1 }] },
 ]
 
 [[facility]]
@@ -17,4 +17,21 @@ id = "market"
 name = "街の市場"
 levels = [
   { look = "stall", money = 70, materials = [{ item = "burger", count = 2 }], effects = [{ kind = "sell_rate", value = 10 }] },
+  { look = "house", money = 150, materials = [{ item = "herb_rope", count = 3 }, { item = "cheese", count = 2 }], effects = [{ kind = "sell_rate", value = 10 }] },
+]
+
+[[facility]]
+id = "golem_shed"
+name = "ゴーレム小屋"
+levels = [
+  { look = "cottage", money = 100, materials = [{ item = "iron_ingot", count = 3 }], effects = [{ kind = "golem_slots", value = 1 }] },
+  { look = "manor", money = 220, materials = [{ item = "iron_ingot", count = 4 }, { item = "glow_crystal", count = 2 }], effects = [{ kind = "golem_slots", value = 1 }] },
+]
+
+[[facility]]
+id = "inn"
+name = "旅人の宿"
+levels = [
+  { look = "cottage", money = 90, materials = [{ item = "herb_rope", count = 2 }, { item = "bread", count = 3 }], effects = [{ kind = "sell_rate", value = 5 }] },
+  { look = "manor", money = 200, materials = [{ item = "burger", count = 3 }, { item = "potion", count = 2 }], effects = [{ kind = "sell_rate", value = 10 }] },
 ]

@@ -123,7 +123,7 @@ func TestBaseDataIT03(t *testing.T) {
 		for _, tc := range []struct {
 			id    string
 			money []int
-		}{{"workshop", []int{60, 140}}, {"market", []int{70}}} {
+		}{{"workshop", []int{60, 140}}, {"market", []int{70, 150}}} {
 			f := c.Facilities[tc.id]
 			if len(f.Levels) != len(tc.money) {
 				t.Errorf("%s の段階数: %d", tc.id, len(f.Levels))
