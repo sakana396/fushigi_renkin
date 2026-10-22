@@ -203,7 +203,7 @@ func (g *Game) drawHeader(screen *ebiten.Image) {
 	}
 	g.label(screen, 14, 10, fmt.Sprintf("ふしぎ錬金   %s   お金: %d   経過: %d 秒   ゴーレム: %d/%d   時間 ×%d", place, g.world.Money, g.world.Now/60, len(g.world.Golems), g.world.GolemSlots(), g.timeScale), white)
 	g.label(screen, 1100, 10, "F12: チート（お金と素材）  F11: 時間 ×10", muted)
-	if g.world.Player.Scene == defs.MapWorkshop && g.world.Battle == nil {
+	if g.world.Player.Scene == "workshop" && g.world.Battle == nil {
 		g.label(screen, 700, 10, g.rankText(), white)
 	}
 	for i, line := range strings.Split(g.message, "／") {

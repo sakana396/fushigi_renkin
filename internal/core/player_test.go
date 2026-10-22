@@ -10,13 +10,13 @@ import (
 // 計算例の地図を作る（DES-FLD-01〜05）。
 func playerCatalog() defs.Catalog {
 	return defs.Catalog{Maps: map[string]defs.MapDef{
-		defs.MapWorkshop: {ID: defs.MapWorkshop, Rows: []string{"########", "#.KS..G#", "#......#", "#......#", "#......#", "####1###"}, StartX: 4, StartY: 3, Exits: []defs.ExitDef{{Mark: '1', To: defs.MapTown, Dir: defs.DirUp, X: 4, Y: 5}}},
-		defs.MapTown:     {ID: defs.MapTown, Rows: []string{"TTTTTTT", "TWW1WWT", "TM,,,QT", "TF,,,,T", "TTT2TTT"}, StartX: 3, StartY: 2, Exits: []defs.ExitDef{{Mark: '1', To: defs.MapWorkshop, Dir: defs.DirDown, X: 3, Y: 1}, {Mark: '2', To: defs.ExitGather, Dir: defs.DirUp, X: 3, Y: 4}}},
+		"workshop":   {ID: "workshop", Rows: []string{"########", "#.DM..Q#", "#......#", "#......#", "#......#", "####1###"}, StartX: 4, StartY: 3, Exits: []defs.ExitDef{{Mark: '1', To: defs.MapTown, Dir: defs.DirUp, X: 4, Y: 5}}},
+		defs.MapTown: {ID: defs.MapTown, Rows: []string{"TTTTTTT", "TWW1WWT", "TM,,,QT", "TD,,,,T", "TTT2TTT"}, StartX: 3, StartY: 2, Exits: []defs.ExitDef{{Mark: '1', To: "workshop", Dir: defs.DirDown, X: 3, Y: 1}, {Mark: '2', To: defs.ExitGather, Dir: defs.DirUp, X: 3, Y: 4}}},
 	}}
 }
 
 func TestPlayerExamples(t *testing.T) {
-	workshop := defs.MapWorkshop
+	workshop := "workshop"
 	town := defs.MapTown
 	gather := SceneGather
 	down, up, left, right := defs.DirDown, defs.DirUp, defs.DirLeft, defs.DirRight
@@ -43,12 +43,12 @@ func TestPlayerExamples(t *testing.T) {
 		{7, "TC-FR-FLD-02-07", Player{workshop, 640, 336, right}, "move", 1, 0, 1, Player{workshop, 640, 336, right}, "", false, nil, false, false},
 		{8, "TC-FR-FLD-02-08", Player{workshop, 640, 336, right}, "move", 1, 1, 1, Player{workshop, 640, 341, right}, "", false, nil, false, false},
 		{9, "TC-FR-FLD-02-09", Player{workshop, 240, 336, down}, "move", 0, -1, 17, Player{workshop, 240, 224, up}, "", false, nil, false, false},
-		{10, "TC-IF-08-01", Player{workshop, 240, 224, up}, "fixture", 0, 0, 0, Player{workshop, 240, 224, up}, defs.FixtureCauldron, true, nil, false, false},
-		{11, "TC-IF-08-02", Player{workshop, 288, 224, up}, "fixture", 0, 0, 0, Player{workshop, 288, 224, up}, defs.FixtureCauldron, true, nil, false, false},
-		{12, "TC-IF-08-03", Player{workshop, 290, 224, up}, "fixture", 0, 0, 0, Player{workshop, 290, 224, up}, defs.FixtureShelf, true, nil, false, false},
+		{10, "TC-IF-08-01", Player{workshop, 240, 224, up}, "fixture", 0, 0, 0, Player{workshop, 240, 224, up}, defs.FixtureWorkshopDoor, true, nil, false, false},
+		{11, "TC-IF-08-02", Player{workshop, 288, 224, up}, "fixture", 0, 0, 0, Player{workshop, 288, 224, up}, defs.FixtureWorkshopDoor, true, nil, false, false},
+		{12, "TC-IF-08-03", Player{workshop, 290, 224, up}, "fixture", 0, 0, 0, Player{workshop, 290, 224, up}, defs.FixtureShop, true, nil, false, false},
 		{13, "TC-IF-08-04", Player{workshop, 240, 224, down}, "fixture", 0, 0, 0, Player{workshop, 240, 224, down}, "", false, nil, false, false},
 		{14, "TC-IF-08-05", Player{workshop, 240, 240, up}, "fixture", 0, 0, 0, Player{workshop, 240, 240, up}, "", false, nil, false, false},
-		{15, "TC-IF-08-06", Player{workshop, 240, 239, up}, "fixture", 0, 0, 0, Player{workshop, 240, 239, up}, defs.FixtureCauldron, true, nil, false, false},
+		{15, "TC-IF-08-06", Player{workshop, 240, 239, up}, "fixture", 0, 0, 0, Player{workshop, 240, 239, up}, defs.FixtureWorkshopDoor, true, nil, false, false},
 		{16, "TC-FR-FLD-02-10", Player{workshop, 391, 432, down}, "move", 0, 1, 3, Player{workshop, 391, 448, down}, "", false, nil, false, false},
 		{17, "TC-FR-FLD-03-01", Player{workshop, 432, 432, up}, "move", 0, 1, 7, Player{town, 336, 240, down}, "", false, nil, false, false},
 		{18, "TC-FR-FLD-03-02", Player{town, 336, 336, up}, "move", 0, 1, 7, Player{gather, 336, 385, down}, "", false, nil, false, false},
@@ -131,16 +131,16 @@ func TestPlayerAdditionalRules(t *testing.T) {
 	})
 	t.Run("TC-FR-FLD-02-17 地図外と未知の文字", func(t *testing.T) {
 		c := playerCatalog()
-		m := c.Maps[defs.MapWorkshop]
+		m := c.Maps["workshop"]
 		m.Rows[3] = "#.X....#"
-		c.Maps[defs.MapWorkshop] = m
+		c.Maps["workshop"] = m
 		for _, tc := range []struct {
 			p      Player
 			dx, dy int
 			want   Player
 		}{
-			{Player{defs.MapWorkshop, 128, 336, defs.DirLeft}, -1, 0, Player{defs.MapWorkshop, 128, 336, defs.DirLeft}},
-			{Player{defs.MapWorkshop, 240, 256, defs.DirDown}, 0, 1, Player{defs.MapWorkshop, 240, 256, defs.DirDown}},
+			{Player{"workshop", 128, 336, defs.DirLeft}, -1, 0, Player{"workshop", 128, 336, defs.DirLeft}},
+			{Player{"workshop", 240, 256, defs.DirDown}, 0, 1, Player{"workshop", 240, 256, defs.DirDown}},
 		} {
 			w := NewWorld(c, 1)
 			w.Player = tc.p
@@ -154,15 +154,15 @@ func TestPlayerAdditionalRules(t *testing.T) {
 	})
 	t.Run("TC-FR-FLD-02-18 不明な行き先の出口を通れない", func(t *testing.T) {
 		c := playerCatalog()
-		m := c.Maps[defs.MapWorkshop]
+		m := c.Maps["workshop"]
 		m.Exits[0].To = "missing"
-		c.Maps[defs.MapWorkshop] = m
+		c.Maps["workshop"] = m
 		w := NewWorld(c, 1)
-		w.Player = Player{defs.MapWorkshop, 432, 448, defs.DirDown}
+		w.Player = Player{"workshop", 432, 448, defs.DirDown}
 		if err := w.MovePlayer(0, 1); err != nil {
 			t.Fatal(err)
 		}
-		if w.Player != (Player{defs.MapWorkshop, 432, 448, defs.DirDown}) {
+		if w.Player != (Player{"workshop", 432, 448, defs.DirDown}) {
 			t.Errorf("主人公=%+v", w.Player)
 		}
 	})
@@ -171,7 +171,7 @@ func TestPlayerAdditionalRules(t *testing.T) {
 			t.Fatal("負の座標の切り捨て")
 		}
 		w := NewWorld(playerCatalog(), 1)
-		m := w.catalog.Maps[defs.MapWorkshop]
+		m := w.catalog.Maps["workshop"]
 		if w.passable(m, -1, 2) {
 			t.Fatal("地図外を通れる")
 		}
@@ -182,7 +182,7 @@ func TestPlayerAdditionalRules(t *testing.T) {
 		if err := w.MovePlayer(0, -1); err != nil {
 			t.Fatal(err)
 		}
-		want := Player{defs.MapWorkshop, 432, 432, defs.DirUp}
+		want := Player{"workshop", 432, 432, defs.DirUp}
 		if w.Player != want {
 			t.Errorf("主人公=%+v, 期待=%+v", w.Player, want)
 		}
@@ -226,7 +226,7 @@ func TestPlayerAdditionalRules(t *testing.T) {
 				t.Fatal(err)
 			}
 		}
-		if w.Player != (Player{defs.MapWorkshop, 453, 336, defs.DirRight}) || w.Now != 10 {
+		if w.Player != (Player{"workshop", 453, 336, defs.DirRight}) || w.Now != 10 {
 			t.Fatalf("移動後: %+v, Now=%d", w.Player, w.Now)
 		}
 	})
@@ -254,14 +254,14 @@ func TestPlayerReviewMoves(t *testing.T) {
 		want    Player
 		wantErr error
 	}{
-		{"TC-FR-FLD-02-20 重なり24は補正する", Player{defs.MapWorkshop, 392, 448, defs.DirDown}, 0, 1, Player{defs.MapWorkshop, 399, 448, defs.DirDown}, nil},
-		{"TC-FR-FLD-02-21 補正時は押す向きに寄せない", Player{defs.MapWorkshop, 410, 445, defs.DirDown}, 0, 1, Player{defs.MapWorkshop, 416, 445, defs.DirDown}, nil},
-		{"TC-FR-FLD-02-22 右移動の角を下へ補正", Player{defs.MapWorkshop, 544, 210, defs.DirDown}, 1, 0, Player{defs.MapWorkshop, 544, 217, defs.DirRight}, nil},
-		{"TC-FR-FLD-02-23 上移動の角を左へ補正", Player{defs.MapWorkshop, 180, 224, defs.DirUp}, 0, -1, Player{defs.MapWorkshop, 173, 224, defs.DirUp}, nil},
-		{"TC-FR-FLD-02-24 斜めで現在の向きが入力に含まれない", Player{defs.MapWorkshop, 432, 336, defs.DirUp}, 1, 1, Player{defs.MapWorkshop, 437, 341, defs.DirRight}, nil},
-		{"TC-FR-FLD-02-25 上移動で設備の手前に止まる", Player{defs.MapWorkshop, 240, 230, defs.DirUp}, 0, -1, Player{defs.MapWorkshop, 240, 224, defs.DirUp}, nil},
-		{"TC-IF-08-15 縦方向の不正な入力", Player{defs.MapWorkshop, 432, 336, defs.DirDown}, 0, 2, Player{defs.MapWorkshop, 432, 336, defs.DirDown}, ErrInvalidDirection},
-		{"TC-IF-08-16 負の不正な入力", Player{defs.MapWorkshop, 432, 336, defs.DirDown}, -2, 0, Player{defs.MapWorkshop, 432, 336, defs.DirDown}, ErrInvalidDirection},
+		{"TC-FR-FLD-02-20 重なり24は補正する", Player{"workshop", 392, 448, defs.DirDown}, 0, 1, Player{"workshop", 399, 448, defs.DirDown}, nil},
+		{"TC-FR-FLD-02-21 補正時は押す向きに寄せない", Player{"workshop", 410, 445, defs.DirDown}, 0, 1, Player{"workshop", 416, 445, defs.DirDown}, nil},
+		{"TC-FR-FLD-02-22 右移動の角を下へ補正", Player{"workshop", 544, 210, defs.DirDown}, 1, 0, Player{"workshop", 544, 217, defs.DirRight}, nil},
+		{"TC-FR-FLD-02-23 上移動の角を左へ補正", Player{"workshop", 180, 224, defs.DirUp}, 0, -1, Player{"workshop", 173, 224, defs.DirUp}, nil},
+		{"TC-FR-FLD-02-24 斜めで現在の向きが入力に含まれない", Player{"workshop", 432, 336, defs.DirUp}, 1, 1, Player{"workshop", 437, 341, defs.DirRight}, nil},
+		{"TC-FR-FLD-02-25 上移動で設備の手前に止まる", Player{"workshop", 240, 230, defs.DirUp}, 0, -1, Player{"workshop", 240, 224, defs.DirUp}, nil},
+		{"TC-IF-08-15 縦方向の不正な入力", Player{"workshop", 432, 336, defs.DirDown}, 0, 2, Player{"workshop", 432, 336, defs.DirDown}, ErrInvalidDirection},
+		{"TC-IF-08-16 負の不正な入力", Player{"workshop", 432, 336, defs.DirDown}, -2, 0, Player{"workshop", 432, 336, defs.DirDown}, ErrInvalidDirection},
 		{"TC-FR-FLD-03-11 採取地で無入力", Player{SceneGather, 336, 385, defs.DirDown}, 0, 0, Player{SceneGather, 336, 385, defs.DirDown}, ErrNotOnMap},
 	}
 	for _, tc := range cases {
@@ -300,10 +300,10 @@ func TestFacingFixtureReview(t *testing.T) {
 		fixture string
 		found   bool
 	}{
-		{"TC-IF-08-17 右向きに作業台", Player{defs.MapWorkshop, 544, 144, defs.DirRight}, defs.FixtureWorkbench, true},
-		{"TC-IF-08-18 左向きに棚", Player{defs.MapWorkshop, 416, 144, defs.DirLeft}, defs.FixtureShelf, true},
-		{"TC-IF-08-19 壁は設備ではない", Player{defs.MapWorkshop, 128, 144, defs.DirLeft}, "", false},
-		{"TC-IF-08-21 右向きの前の帯は16", Player{defs.MapWorkshop, 529, 144, defs.DirRight}, defs.FixtureWorkbench, true},
+		{"TC-IF-08-17 右向きに依頼板", Player{"workshop", 544, 144, defs.DirRight}, defs.FixtureQuestBoard, true},
+		{"TC-IF-08-18 左向きに店", Player{"workshop", 416, 144, defs.DirLeft}, defs.FixtureShop, true},
+		{"TC-IF-08-19 壁は設備ではない", Player{"workshop", 128, 144, defs.DirLeft}, "", false},
+		{"TC-IF-08-21 右向きの前の帯は16", Player{"workshop", 529, 144, defs.DirRight}, defs.FixtureQuestBoard, true},
 	}
 	for _, tc := range cases {
 		t.Run(tc.id, func(t *testing.T) {
@@ -320,15 +320,15 @@ func TestFacingFixtureReview(t *testing.T) {
 	}
 	t.Run("TC-IF-08-20 同面積なら上の設備", func(t *testing.T) {
 		c := playerCatalog()
-		m := c.Maps[defs.MapWorkshop]
-		m.Rows = []string{"#####", "#..K#", "#..S#", "#...#"}
+		m := c.Maps["workshop"]
+		m.Rows = []string{"#####", "#..D#", "#..M#", "#...#"}
 		m.StartX, m.StartY = 2, 2
-		c.Maps[defs.MapWorkshop] = m
+		c.Maps["workshop"] = m
 		w := NewWorld(c, 1)
-		w.Player = Player{defs.MapWorkshop, 256, 192, defs.DirRight}
+		w.Player = Player{"workshop", 256, 192, defs.DirRight}
 		got, found := w.FacingFixture()
-		if got != defs.FixtureCauldron || !found {
-			t.Errorf("設備=(%q,%v), 期待=(%q,true)", got, found, defs.FixtureCauldron)
+		if got != defs.FixtureWorkshopDoor || !found {
+			t.Errorf("設備=(%q,%v), 期待=(%q,true)", got, found, defs.FixtureWorkshopDoor)
 		}
 	})
 }
@@ -347,10 +347,10 @@ func TestPlayerSideArrival(t *testing.T) {
 			c := playerCatalog()
 			m := c.Maps[defs.MapTown]
 			m.Rows = []string{"TTTTT", "T.1.T", "T...T", "TTTTT"}
-			m.Exits = []defs.ExitDef{{Mark: '1', To: defs.MapWorkshop, Dir: tc.dir, X: 2, Y: 1}}
+			m.Exits = []defs.ExitDef{{Mark: '1', To: "workshop", Dir: tc.dir, X: 2, Y: 1}}
 			c.Maps[defs.MapTown] = m
 			w := NewWorld(c, 1)
-			w.Player = Player{defs.MapWorkshop, 432, 474, defs.DirDown}
+			w.Player = Player{"workshop", 432, 474, defs.DirDown}
 			if err := w.MovePlayer(0, 1); err != nil {
 				t.Fatal(err)
 			}

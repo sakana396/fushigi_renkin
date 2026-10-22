@@ -1,0 +1,23 @@
+[game]
+day_seconds = 300
+[[item]]
+id = "herb"
+[[facility]]
+id = "market"
+levels = [{look="stall"}, {look="house"}]
+[[gather]]
+id = "meadow"
+rolls = 1
+cooldown_seconds = 1
+respawn_seconds = 2
+drops = [{item="herb",weight=1,quality_min=1,quality_max=1}]
+[[map]]
+id = "town"
+start = {x=5,y=5}
+rows = ["TTTTTTTTT", "T,aaa,,QT", "T,aaa,,,T", "T,aaa,,DT", "T,,,,,,MT", "T,,,,,,,T", "TTTT2TTTT"]
+lots = [{mark="a",facility="market"}]
+exits = [{mark="2",to="gather",dir="up",look="road"}]
+[[map]]
+id = "meadow"
+rows = ["TTTTTTT", "T*,,,,T", "T,,o,,T", "T*,,,,T", "TTT1TTT"]
+exits = [{mark="1",to="town",dir="up",look="road"}]

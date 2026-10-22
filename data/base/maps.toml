@@ -1,52 +1,28 @@
-[[map]]
-id = "workshop"
-name = "工房"
-start = { x = 9, y = 8 }
-rows = [
-  "####################",
-  "#..................#",
-  "#..................#",
-  "#..................#",
-  "#..................#",
-  "#....S...K...G.....#",
-  "#..................#",
-  "#..................#",
-  "#..................#",
-  "#..................#",
-  "#..................#",
-  "#########1##########",
-]
-exits = [
-  { mark = "1", to = "town", dir = "up", look = "stone_door" },
-]
-
+# 反復 6 の検証を満たす最小の移行データ。景色・規模の本調整は #106。
 [[map]]
 id = "town"
 name = "街"
-start = { x = 10, y = 15 }
-rows = [
-  "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTT",
-  "T,,,,,,,,,,,,,,,,,,,,,,,,,,,,T",
-  "T,,^^^^^,,,,,,,,,,,,,,^^^^^,,T",
-  "T,,^^^^^,,,,,,,,,,,,,,^^^^^,,T",
-  "T,,WWWWW,,,,,,,,,,,,,,WWWWW,,T",
-  "T,,,,,,,,,,,,,::,,,,,,,,,,,,,T",
-  "T,,,,,,,,,,,,,::,,,,,,,,,,,,,T",
-  "T,,T,,,,,,,,,,::,,,,,,,,,,T,,T",
-  "T,,,,,,,,,,,,,::,,,,,,,,,,,,,T",
-  "T,,,,,,,,,,,,,::,,,,,,,,,,,,,T",
-  "T,,,,,,,,,,,,,::,,,,,,,,,,,,,T",
-  "T,,,,,,,,,,,,,::,,,,,,,,,,,,,T",
-  "T,,,,,,,^^^^^,::,^^^^^,,,,,,,T",
-  "T,,,,,,,^^^^^,::,^^^^^,,,,,,,T",
-  "T,,,,,,,WW1WW,::,WWWWW,,,,,,,T",
-  "T,,,,,,,,::::::::::M,,,,,,,,,T",
-  "T,,,,,,,,::::Q::F::,,,,,,,,,,T",
-  "T,,,,,,,,::::::::::,,,,,,,,,,T",
-  "T,,,,,,,,,,,,,::,,,,,,,,,,,,,T",
-  "TTTTTTTTTTTTTT2TTTTTTTTTTTTTTT",
-]
-exits = [
-  { mark = "1", to = "workshop", dir = "down", look = "wood_door" },
-  { mark = "2", to = "gather", dir = "up", look = "road" },
-]
+start = {x=10,y=5}
+rows = ["TTTTTTTTTTTTT", "T,aaa,bbb,,QT", "T,aaa,bbb,,,T", "T,aaa,bbb,,DT", "T,,,,,,,,,,MT", "T,,,,,,,,,,,T", "TTTTTT2TTTTTT"]
+lots = [{mark="a",facility="market"},{mark="b",facility="workshop"}]
+exits = [{mark="2",to="gather",dir="up",look="road"}]
+
+[[map]]
+id = "meadow"
+rows = ["TTTTTTT", "T*,,,ET", "T,,o,,T", "T*,,,,T", "TTT1TTT"]
+exits = [{mark="1",to="town",dir="up",look="road"}]
+
+[[map]]
+id = "spring_cave"
+rows = ["TTTTTTT", "T*,,,ET", "T,,o,,T", "T*,,,,T", "TTT1TTT"]
+exits = [{mark="1",to="town",dir="up",look="road"}]
+
+[[map]]
+id = "sunny_hill"
+rows = ["TTTTTTT", "T*,,,ET", "T,,o,,T", "T*,,,,T", "TTT1TTT"]
+exits = [{mark="1",to="town",dir="up",look="road"}]
+
+[[map]]
+id = "crystal_forest"
+rows = ["TTTTTTT", "T*,,,ET", "T,,o,,T", "T*,,,,T", "TTT1TTT"]
+exits = [{mark="1",to="town",dir="up",look="road"}]

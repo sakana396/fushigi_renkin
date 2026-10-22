@@ -33,8 +33,8 @@ type World struct {
 func NewWorld(catalog defs.Catalog, seed uint64) *World {
 	source := rand.NewPCG(seed, 0)
 	w := &World{catalog: catalog, rng: rand.New(source), rngSource: source, questRNG: rand.New(rand.NewPCG(seed, 1)), Money: catalog.Game.StartMoney}
-	if m, ok := catalog.Map(defs.MapWorkshop); ok {
-		w.Player = Player{Scene: defs.MapWorkshop, X: m.StartX*playerTile + playerTile/2, Y: m.StartY*playerTile + playerTile/2, Facing: defs.DirDown}
+	if m, ok := catalog.Map("workshop"); ok {
+		w.Player = Player{Scene: "workshop", X: m.StartX*playerTile + playerTile/2, Y: m.StartY*playerTile + playerTile/2, Facing: defs.DirDown}
 	}
 	for i := range w.Quests {
 		w.Quests[i] = w.drawQuest()
