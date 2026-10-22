@@ -9,6 +9,7 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
+	"github.com/sakana396/fushigi_renkin/internal/core"
 	"github.com/sakana396/fushigi_renkin/internal/defs"
 )
 
@@ -36,6 +37,9 @@ func (g *Game) drawMap(screen *ebiten.Image) {
 			baseTown, baseNumber := groundTile(ground)
 			g.drawTile(dst, baseTown, baseNumber, px, py)
 			ch := m.Cell(x, y)
+			if defs.TileInfo(ch).Kind == defs.CellLot {
+				continue
+			}
 			town, n := mapTile(m, x, y, ch)
 			if ch == ground {
 				continue
@@ -49,6 +53,17 @@ func (g *Game) drawMap(screen *ebiten.Image) {
 				}
 			}
 			g.drawTile(dst, town, n, px, py)
+		}
+	}
+	for _, lot := range m.Lots {
+		facility := g.catalog.Facilities[lot.Facility]
+		level := g.world.Facilities[lot.Facility]
+		look := ""
+		if level > 0 && level <= len(facility.Levels) {
+			look = facility.Levels[level-1].Look
+		}
+		for i, n := range lotTiles(look) {
+			g.drawTile(dst, true, n, ox+(lot.X+i%3)*tilePixels, oy+(lot.Y+i/3)*tilePixels)
 		}
 	}
 	g.drawPlayer(dst, ox, oy)
@@ -66,6 +81,9 @@ func (g *Game) drawMapNames(dst *ebiten.Image, m defs.MapDef, ox, oy, x0, x1, y0
 			ch := m.Cell(x, y)
 			info := defs.TileInfo(ch)
 			name := info.Name
+			if info.Kind == defs.CellLot {
+				continue
+			}
 			if info.Kind == defs.CellExit {
 				for _, exit := range m.Exits {
 					if exit.Mark == ch {
@@ -84,6 +102,17 @@ func (g *Game) drawMapNames(dst *ebiten.Image, m defs.MapDef, ox, oy, x0, x1, y0
 			}
 			g.drawMapName(dst, ox+x*tilePixels, oy+y*tilePixels, name, ink)
 		}
+	}
+	for _, lot := range m.Lots {
+		if lot.X+3 <= x0 || lot.X >= x1 || lot.Y+3 <= y0 || lot.Y >= y1 {
+			continue
+		}
+		name := lotName(g.catalog.Facilities[lot.Facility].Name, g.world.Facilities[lot.Facility])
+		ink := white
+		if facing && fixture.Kind == core.TargetLot && fixture.ID == lot.Facility {
+			ink = color.RGBA{255, 235, 93, 255}
+		}
+		g.drawMapName(dst, ox+lot.X*tilePixels, oy+lot.Y*tilePixels, name, ink)
 	}
 }
 
@@ -197,15 +226,11 @@ func mapTile(m defs.MapDef, x, y int, ch byte) (bool, int) {
 		return true, n
 	case 'T':
 		return true, 4
-	case 'K':
-		return false, 32
-	case 'S':
-		return false, 75
-	case 'G':
-		return false, 74
+	case 'D':
+		return true, 86
 	case 'M':
 		return true, 57
-	case 'Q', 'F':
+	case 'Q':
 		return true, 83
 	}
 	return true, 25
@@ -253,17 +278,8 @@ func (g *Game) drawPlayer(dst *ebiten.Image, ox, oy int) {
 	}
 	dst.DrawImage(tile, op)
 	ink := color.RGBA{255, 231, 75, 255}
-	var ax, ay, bx, by, cx, cy float32
-	switch p.Facing {
-	case defs.DirUp:
-		ax, ay, bx, by, cx, cy = float32(x), float32(y-17), float32(x-6), float32(y-9), float32(x+6), float32(y-9)
-	case defs.DirDown:
-		ax, ay, bx, by, cx, cy = float32(x), float32(y+17), float32(x-6), float32(y+9), float32(x+6), float32(y+9)
-	case defs.DirLeft:
-		ax, ay, bx, by, cx, cy = float32(x-17), float32(y), float32(x-9), float32(y-6), float32(x-9), float32(y+6)
-	default:
-		ax, ay, bx, by, cx, cy = float32(x+17), float32(y), float32(x+9), float32(y-6), float32(x+9), float32(y+6)
-	}
+	points := directionMarker(x, y, p.Facing)
+	ax, ay, bx, by, cx, cy := points[0], points[1], points[2], points[3], points[4], points[5]
 	var path vector.Path
 	path.MoveTo(ax, ay)
 	path.LineTo(bx, by)

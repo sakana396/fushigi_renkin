@@ -48,6 +48,8 @@ type Game struct {
 	quantity           int
 	timeScale          int
 	window             string
+	windowFacility     string
+	workshopTab        string
 	windowDrawing      bool
 	windowImage        *ebiten.Image
 	mapImage           *ebiten.Image
@@ -76,7 +78,7 @@ const (
 
 // NewGame は本体の目録と World を画面に結び付ける（DES-PKG-05）。
 func NewGame(world *core.World, catalog defs.Catalog) *Game {
-	return &Game{world: world, catalog: catalog, face: text.NewGoXFace(bitmapfont.Face), selectedGolem: -1, quantity: 1, timeScale: 1, lastHorizontal: defs.DirRight, message: "WASD・矢印キーで歩き、設備の前で E かスペースを押してください"}
+	return &Game{world: world, catalog: catalog, face: text.NewGoXFace(bitmapfont.Face), selectedGolem: -1, quantity: 1, timeScale: 1, lastHorizontal: defs.DirRight, message: "WASD・矢印キーで歩き、工房の扉や店の前で E かスペースを押してください"}
 }
 
 // Run は画面を開き、ゲームを起動する（DES-PKG-05）。
@@ -141,7 +143,7 @@ func (g *Game) Update() error {
 		}
 		if inpututil.IsKeyJustPressed(ebiten.KeyE) || inpututil.IsKeyJustPressed(ebiten.KeySpace) {
 			if fixture, ok := g.world.FacingTarget(); ok {
-				g.window = fixture.ID
+				g.window, g.windowFacility = windowForTarget(fixture)
 			}
 		}
 	} else if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
@@ -160,6 +162,9 @@ func (g *Game) Update() error {
 		g.world.Tick()
 	}
 	g.showRankUps()
+	for _, day := range g.world.TakeNewDays() {
+		g.message += "／" + dayNotice(day)
+	}
 	return nil
 }
 
@@ -184,7 +189,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	} else if g.world.Player.Scene == core.SceneGather {
 		g.drawGather(screen)
 		g.drawBattleResult(screen)
-		g.button(screen, 270, 76, 120, 28, "街へ戻る", false, func() { g.result("街へ戻りました", g.world.LeaveGather()) })
+		g.button(screen, returnX, returnY, returnWidth, returnHeight, "街へ戻る", false, func() { g.result("街へ戻りました", g.world.LeaveGather()) })
 	} else {
 		g.drawMap(screen)
 		if g.window != "" {
@@ -201,10 +206,10 @@ func (g *Game) drawHeader(screen *ebiten.Image) {
 	if m, ok := g.catalog.Map(g.world.Player.Scene); ok {
 		place = m.Name
 	}
-	g.label(screen, 14, 10, fmt.Sprintf("ふしぎ錬金   %s   お金: %d   経過: %d 秒   ゴーレム: %d/%d   時間 ×%d", place, g.world.Money, g.world.Now/60, len(g.world.Golems), g.world.GolemSlots(), g.timeScale), white)
+	g.label(screen, 14, 10, fmt.Sprintf("ふしぎ錬金   %s   お金: %d   経過: %d 秒   %s   ゴーレム: %d/%d   時間 ×%d", place, g.world.Money, g.world.Now/60, dayText(g.world.Day()), len(g.world.Golems), g.world.GolemSlots(), g.timeScale), white)
 	g.label(screen, 1100, 10, "F12: チート（お金と素材）  F11: 時間 ×10", muted)
-	if g.world.Player.Scene == "workshop" && g.world.Battle == nil {
-		g.label(screen, 700, 10, g.rankText(), white)
+	if g.world.Battle == nil && g.world.Player.Scene != core.SceneGather {
+		g.label(screen, 700, 49, g.rankText(), white)
 	}
 	for i, line := range strings.Split(g.message, "／") {
 		y := 35 + i*14
@@ -226,37 +231,46 @@ func (g *Game) drawHeader(screen *ebiten.Image) {
 	}
 }
 
-// drawQuests は依頼の条件・報酬と納品操作を表示する（DES-UI-07、DES-QST-02、UC-14）。
+// drawQuests は候補と受注一覧を分けて依頼を操作する（DES-UI-25）。
 func (g *Game) drawQuests(dst *ebiten.Image) {
-	const x, y, w = 1195, 130, 395
-	g.box(dst, x, y, w, 440, "依頼板")
-	g.label(dst, x+8, y+28, g.rankText(), white)
+	g.box(dst, 10, 70, 775, 385, "今日の依頼")
+	g.label(dst, 20, 100, g.rankText(), white)
 	for i, id := range g.world.Quests {
-		yy := y + 52 + i*125
-		if id == "" {
-			g.label(dst, x+8, yy, fmt.Sprintf("依頼 %d: 空き", i+1), muted)
-			continue
-		}
-		quest, ok := g.catalog.Quest(id)
-		if !ok {
-			g.label(dst, x+8, yy, fmt.Sprintf("依頼 %d: 内容を確認できません", i+1), muted)
-			continue
-		}
-		g.label(dst, x+8, yy, fmt.Sprintf("依頼 %d: %s Q%d 以上 ×%d", i+1, g.itemName(quest.Item), quest.MinQuality, quest.Count), white)
-		g.label(dst, x+8, yy+22, fmt.Sprintf("報酬: %d 円", quest.Reward), muted)
-		eligible := 0
-		for _, stack := range g.world.Inventory.Stacks() {
-			if stack.Key.ItemID == quest.Item && stack.Key.Quality >= quest.MinQuality {
-				eligible += stack.Count
-			}
-		}
-		g.label(dst, x+8, yy+43, fmt.Sprintf("納品できる在庫: %d/%d", eligible, quest.Count), muted)
-		index := i
-		g.button(dst, x+8, yy+66, 150, 28, "納品する", false, func() {
-			g.result("納品しました", g.world.DeliverQuest(index))
-			g.showRankUps()
-		})
+		g.drawQuestRow(dst, id, i, 130+i*100, false)
 	}
+	g.box(dst, 10, 470, 775, 420, fmt.Sprintf("受けた依頼（%d/3）", len(g.world.Accepted)))
+	for i, id := range g.world.Accepted {
+		g.drawQuestRow(dst, id, i, 510+i*120, true)
+	}
+}
+
+// drawQuestRow は製品・品質・個数・報酬・評判と操作を表示する（DES-UI-25）。
+func (g *Game) drawQuestRow(dst *ebiten.Image, id string, index, y int, accepted bool) {
+	if id == "" {
+		g.label(dst, 20, y, "（明日また来てください）", muted)
+		return
+	}
+	quest, ok := g.catalog.Quest(id)
+	if !ok {
+		g.label(dst, 20, y, "依頼の内容を確認できません", muted)
+		return
+	}
+	title, reward := questLines(quest, g.itemName(quest.Item))
+	g.label(dst, 20, y, title, white)
+	g.label(dst, 20, y+22, reward, muted)
+	if !accepted {
+		g.button(dst, 600, y, 150, 28, "受ける", false, func() { g.result("依頼を受けました", g.world.AcceptQuest(index)) })
+		return
+	}
+	eligible := 0
+	for _, stack := range g.world.Inventory.Stacks() {
+		if stack.Key.ItemID == quest.Item && stack.Key.Quality >= quest.MinQuality {
+			eligible += stack.Count
+		}
+	}
+	g.label(dst, 20, y+44, fmt.Sprintf("納品できる在庫: %d/%d", eligible, quest.Count), muted)
+	g.button(dst, 430, y, 150, 28, "納品", false, func() { g.result("納品しました", g.world.DeliverQuest(index)); g.showRankUps() })
+	g.button(dst, 600, y, 150, 28, "やめる", false, func() { g.result("依頼をやめました", g.world.AbandonQuest(index)) })
 }
 
 // rankText は現在のランクと次のランクに必要な評判を表示する（DES-UI-11）。
@@ -652,7 +666,18 @@ func contains(values []string, wanted string) bool {
 // drawShop は固定品質・価格の売り物を表示し、指定数を購入する（DES-PKG-05、UC-02）。
 func (g *Game) drawShop(dst *ebiten.Image) {
 	const x, y, w = 800, 95, 385
-	g.box(dst, x, y, w, 175, "店（クリックで指定数購入）")
+	g.box(dst, x, y, w, 175, "店")
+	g.label(dst, x+70, y+7, fmt.Sprintf("売買数: %d", g.quantity), white)
+	g.button(dst, x+200, y+3, 35, 24, "－", false, func() {
+		if g.quantity > 1 {
+			g.quantity--
+		}
+	})
+	g.button(dst, x+240, y+3, 35, 24, "＋", false, func() {
+		if g.quantity < 99 {
+			g.quantity++
+		}
+	})
 	for i, offer := range g.catalog.Game.Shop {
 		index := i
 		title := fmt.Sprintf("%s Q%d   %d 円×%d = %d 円", g.itemName(offer.Item), offer.Quality, offer.Price, g.quantity, offer.Price*g.quantity)
@@ -662,7 +687,7 @@ func (g *Game) drawShop(dst *ebiten.Image) {
 
 // drawGather はプレイヤーの採取地をページ送りで表示する（DES-PKG-05、DES-UI-05、UC-01）。
 func (g *Game) drawGather(dst *ebiten.Image) {
-	const x, y, w = 10, 95, 775
+	const x, y, w = 10, gatherTop, 775
 	g.box(dst, x, y, w, 420, "採取地")
 	ids := g.availableGathers()
 	const rows = 6
@@ -712,34 +737,33 @@ func materials(values []defs.ItemAmount, name func(string) string) string {
 	return strings.Join(parts, "、")
 }
 
-// drawFacilities は次段階の費用・効果を表示して建設する（DES-PKG-05、UC-07）。
+// drawFacilities は向いて開いた施設一つだけを表示する（DES-UI-23）。
 func (g *Game) drawFacilities(dst *ebiten.Image) {
-	const x, y, w = 800, 280, 385
-	g.box(dst, x, y, w, 505, "施設（クリックで次の段階を建設）")
-	for i, id := range keys(g.catalog.Facilities) {
-		facility := g.catalog.Facilities[id]
-		level := g.world.Facilities[id]
-		yy := y + 35 + i*175
-		title := fmt.Sprintf("%s  段階 %d/%d", facility.Name, level, len(facility.Levels))
-		facilityID := id
-		g.button(dst, x+8, yy, w-16, 29, title, false, func() { g.result("施設を建設しました", g.world.BuildFacility(facilityID)) })
-		if level < len(facility.Levels) {
-			next := facility.Levels[level]
-			g.label(dst, x+12, yy+34, fmt.Sprintf("費用: %d 円", next.Money), muted)
-			g.label(dst, x+12, yy+55, "材料: "+materials(next.Materials, g.itemName), muted)
-			for j, e := range next.Effects {
-				effect := e.Kind
-				if effect == "golem_slots" {
-					effect = "ゴーレム枠"
-				} else if effect == "sell_rate" {
-					effect = "売値"
-				}
-				g.label(dst, x+12, yy+76+j*20, fmt.Sprintf("効果: %s +%d", effect, e.Value), muted)
-			}
-		} else {
-			g.label(dst, x+12, yy+37, "最大段階", muted)
-		}
+	const x, y, w = 800, 70, 775
+	facility, ok := g.catalog.Facilities[g.windowFacility]
+	if !ok {
+		return
 	}
+	level := g.world.Facilities[g.windowFacility]
+	g.box(dst, x, y, w, 350, facility.Name)
+	g.label(dst, x+12, y+35, fmt.Sprintf("今の段階: %d/%d", level, len(facility.Levels)), white)
+	if level >= len(facility.Levels) {
+		g.label(dst, x+12, y+70, "最大の段階です", muted)
+		return
+	}
+	next := facility.Levels[level]
+	g.label(dst, x+12, y+70, fmt.Sprintf("費用: %d 円", next.Money), muted)
+	g.label(dst, x+12, y+95, "材料: "+materials(next.Materials, g.itemName), muted)
+	for j, e := range next.Effects {
+		effect := e.Kind
+		if effect == "golem_slots" {
+			effect = "ゴーレム枠"
+		} else if effect == "sell_rate" {
+			effect = "売値"
+		}
+		g.label(dst, x+12, y+120+j*22, fmt.Sprintf("効果: %s +%d", effect, e.Value), muted)
+	}
+	g.button(dst, x+12, y+240, 150, 28, "建設", false, func() { g.result("施設を建設しました", g.world.BuildFacility(g.windowFacility)) })
 }
 
 // selectRecipe は錬金だけに使うレシピを選ぶ（DES-PKG-05、DES-UI-04、UC-03）。

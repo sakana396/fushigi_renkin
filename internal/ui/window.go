@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"fmt"
 	"image/color"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -19,33 +18,26 @@ func (g *Game) drawWindow(screen *ebiten.Image) {
 	panel.Clear()
 	g.windowDrawing = true
 	switch g.window {
-	case defs.FixtureCauldron:
-		g.drawInventory(panel, false)
-		g.drawCandidates(panel)
-		g.drawRecipes(panel)
-		g.drawCraft(panel)
-	case defs.FixtureShelf:
-		g.drawInventory(panel, false)
-	case defs.FixtureWorkbench:
-		g.drawGolems(panel)
-		g.drawAssignment(panel)
+	case defs.FixtureWorkshopDoor:
+		g.workshopTab = workshopTab(g.workshopTab)
+		switch g.workshopTab {
+		case "錬金":
+			g.drawInventory(panel, false)
+			g.drawCandidates(panel)
+			g.drawRecipes(panel)
+			g.drawCraft(panel)
+		case "ゴーレム":
+			g.drawGolems(panel)
+			g.drawAssignment(panel)
+		case "在庫":
+			g.drawInventory(panel, false)
+		}
 	case defs.FixtureShop:
-		g.label(panel, 1195, 100, fmt.Sprintf("売買数: %d", g.quantity), white)
-		g.button(panel, 1295, 95, 35, 24, "－", false, func() {
-			if g.quantity > 1 {
-				g.quantity--
-			}
-		})
-		g.button(panel, 1335, 95, 35, 24, "＋", false, func() {
-			if g.quantity < 99 {
-				g.quantity++
-			}
-		})
 		g.drawInventory(panel, true)
 		g.drawShop(panel)
 	case defs.FixtureQuestBoard:
 		g.drawQuests(panel)
-	case defs.FixtureFacilityBoard:
+	case "lot":
 		g.drawInventory(panel, false)
 		g.drawFacilities(panel)
 	}
@@ -55,13 +47,21 @@ func (g *Game) drawWindow(screen *ebiten.Image) {
 	screen.DrawImage(panel, op)
 	vector.DrawFilledRect(screen, 0, 72, width, 34, panelColor, false)
 	g.button(screen, 10, 76, 120, 28, "閉じる", false, func() { g.window = "" })
-	name := g.window
-	for _, ch := range []byte{'K', 'S', 'G', 'M', 'Q', 'F'} {
-		info := defs.TileInfo(ch)
-		if info.Fixture == g.window {
-			name = info.Name
-			break
-		}
+	name := ""
+	switch g.window {
+	case defs.FixtureWorkshopDoor:
+		name = "工房"
+	case defs.FixtureShop:
+		name = "店"
+	case defs.FixtureQuestBoard:
+		name = "依頼板"
+	case "lot":
+		name = g.catalog.Facilities[g.windowFacility].Name
 	}
 	g.label(screen, 140, 82, name, white)
+	if g.window == defs.FixtureWorkshopDoor {
+		for i, tab := range []string{"錬金", "ゴーレム", "在庫"} {
+			g.button(screen, 240+i*120, 76, 110, 28, tab, g.workshopTab == tab, func() { g.workshopTab = tab })
+		}
+	}
 }
