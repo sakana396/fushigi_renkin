@@ -31,7 +31,7 @@ func TestPickExamples(t *testing.T) {
 		run func(*testing.T, *World)
 	}{
 		{"TC-FR-FLD-03-80 F-1", func(t *testing.T, w *World) {
-			if w.Player != (Player{"town", 528, 528, defs.DirUp}) {
+			if w.Player != (Player{"town", 528, 512, defs.DirUp}) {
 				t.Fatal(w.Player)
 			}
 		}},

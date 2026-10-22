@@ -34,7 +34,7 @@ func TestPlayerExamples(t *testing.T) {
 		noMaps        bool
 	}
 	cases := []example{
-		{1, "TC-FR-FLD-02-01", Player{}, "new", 0, 0, 0, Player{town, 336, 240, up}, "", false, nil, false, false},
+		{1, "TC-FR-FLD-02-01", Player{}, "new", 0, 0, 0, Player{town, 336, 224, up}, "", false, nil, false, false},
 		{2, "TC-FR-FLD-02-02", Player{workshop, 432, 336, down}, "move", 1, 0, 1, Player{workshop, 439, 336, right}, "", false, nil, false, false},
 		{3, "TC-FR-FLD-02-03", Player{workshop, 432, 336, down}, "move", 1, 1, 1, Player{workshop, 437, 341, down}, "", false, nil, false, false},
 		{4, "TC-FR-FLD-02-04", Player{workshop, 432, 336, down}, "move", -1, -1, 1, Player{workshop, 427, 331, left}, "", false, nil, false, false},
@@ -233,7 +233,7 @@ func TestPlayerAdditionalRules(t *testing.T) {
 				t.Fatal(err)
 			}
 		}
-		if w.Player != (Player{"town", 357, 240, defs.DirRight}) || w.Now != 10 {
+		if w.Player != (Player{"town", 357, 224, defs.DirRight}) || w.Now != 10 {
 			t.Fatalf("移動後: %+v, Now=%d", w.Player, w.Now)
 		}
 	})

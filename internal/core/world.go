@@ -34,7 +34,8 @@ func NewWorld(catalog defs.Catalog, seed uint64) *World {
 	source := rand.NewPCG(seed, 0)
 	w := &World{catalog: catalog, rng: rand.New(source), rngSource: source, questRNG: rand.New(rand.NewPCG(seed, 1)), Money: catalog.Game.StartMoney}
 	if m, ok := catalog.Map(defs.MapTown); ok {
-		w.Player = Player{Scene: defs.MapTown, X: m.StartX*playerTile + playerTile/2, Y: m.StartY*playerTile + playerTile/2, Facing: defs.DirUp}
+		// 開始マスの上端に当たり判定の上端をそろえる（DES-FLD-05、E-110）。
+		w.Player = Player{Scene: defs.MapTown, X: m.StartX*playerTile + playerTile/2, Y: m.StartY*playerTile + playerHalf, Facing: defs.DirUp}
 	}
 	for i := range w.Quests {
 		w.Quests[i] = w.drawQuest()

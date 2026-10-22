@@ -53,7 +53,7 @@
 
 | ID | 対象 | 前提 | 入力・操作 | 期待結果 | 種別 |
 |---|---|---|---|---|---|
-| TC-FR-FLD-02-01 | FR-FLD-02、DES-FLD-01 | 目録に例の街と旧工房の地図（反復 6 で変更） | 計算例 1: NewWorld | 街 (336,240)、上 | 正常 |
+| TC-FR-FLD-02-01 | FR-FLD-02、DES-FLD-01 | 目録に例の街と旧工房の地図（反復 6 で変更） | 計算例 1: NewWorld | 街 (336,224)、上（E-110） | 正常 |
 | TC-FR-FLD-02-02 | FR-FLD-02、DES-FLD-02 | 工房 (432,336)、下 | 計算例 2: 右 | 工房 (439,336)、右 | 正常 |
 | TC-FR-FLD-02-03 | FR-FLD-02、DES-FLD-02 | 工房 (432,336)、下 | 計算例 3: 右下 | 工房 (437,341)、下 | 正常 |
 | TC-FR-FLD-02-04 | FR-FLD-02、DES-FLD-02 | 工房 (432,336)、下 | 計算例 4: 左上 | 工房 (427,331)、左 | 正常 |
@@ -181,7 +181,7 @@
 | TC-IF-08-10 | IF-08、DES-FLD-02、DES-WLD-01 | 地図なし、戦闘中 | MovePlayer(0,0) | ErrInBattle が地図の誤りより先、状態不変 | 異常 |
 | TC-IF-08-11 | IF-08、DES-FLD-07 | gather にいる（反復 6 で変更） | FacingTarget | Target{}、false、状態不変 | 異常 |
 | TC-IF-08-12 | IF-08、DES-FLD-01 | 定数 | SceneGather を比較 | defs.ExitGather と同じ値 | 正常 |
-| TC-IF-08-13 | IF-08、DES-TIME-02、NFR-06 | 街の開始位置（反復 6 で変更） | Tick 10 回、右へ 3 回 | Tick で位置不変・Now=10、移動で (357,240)・Now=10 | 正常 |
+| TC-IF-08-13 | IF-08、DES-TIME-02、NFR-06 | 街の開始位置（反復 6 で変更） | Tick 10 回、右へ 3 回 | Tick で位置不変・Now=10、移動で (357,224)・Now=10（E-110） | 正常 |
 | TC-IF-08-14 | IF-08、DES-TIME-02、NFR-06 | 同じ地図とシードの世界を 2 つ | 同じ移動列 | 主人公の最終状態が一致 | 正常 |
 | TC-IF-08-15 | IF-08、DES-FLD-02、DES-WLD-01 | 工房 (432,336)、下 | MovePlayer(0,2) | ErrInvalidDirection、状態不変 | 異常 |
 | TC-IF-08-16 | IF-08、DES-FLD-02、DES-WLD-01 | 工房 (432,336)、下 | MovePlayer(-2,0) | ErrInvalidDirection、状態不変 | 異常 |
