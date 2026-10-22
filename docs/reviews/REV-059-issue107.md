@@ -5,13 +5,14 @@
 - 実装: Codex
 - レビュー: spec-reviewer（仕様適合レビュー、Claude Code）。手動テスト: general-purpose エージェント（Windows）
 - 承認: 設計書（`docs/03_design/design-it06.md` 7 章の 4.3 節の表の変更）に、区画の絵のタイル番号を 5 行書き足した（空き地・`stall`・`cottage`・`house`・`manor`）。DES-UI-24 が実装の Issue に任せた範囲。開発者が、修正後の絵（`C:\Users\Public\fushigi\test107\shots\lot_fixed.png` ほか）を見て承認した（2026-10-23、選択式の回答「承認する」）
-- 結果: F-01〜F-08 を修正し、手動テストの再試験で確かめた。承認
+- 結果: F-01〜F-09 を修正し、手動テストの再試験で確かめた。承認
 
 ## 検証
 
 - `gofmt -l .` は出力なし。`GOOS=windows go build ./...`・`GOOS=windows go vet ./...` は成功
 - `go test ./...` は data・core・defload・defs・ui/assets・tools/tccheck が成功（ui と cmd は Linux に X11 のヘッダーがないためビルドできない）
 - ui の単体テストは 2 つの方法で実行した。(1) `go test -buildvcs=false internal/ui/windows_model.go internal/ui/windows_model_test.go`（windows_model.go は Ebitengine を取り込まない）。(2) `GOOS=windows go test -c` で作ったテストの exe を Windows 側で実行。どちらも成功
+- PR #114 の CI で、ui パッケージのテストが「glfw: X11: The DISPLAY environment variable is missing」で落ちた（F-09）。windows_model.go とそのテストを `internal/ui/uimodel` に移したあと、`go test ./internal/ui/uimodel` が WSL で通り、`GOOS=windows go build ./...`・`GOOS=windows go vet ./...` も通った
 - `go run ./tools/tccheck` は整合 OK（警告 175 件。手動テストの ID だけ）
 - 区画の絵は Tiny Town の画像から切り出して目で確かめた。上の表示の 1 行目の幅は bitmapfont で測った（大きな値でも x 536 まで）
 - Windows の手動テスト（4e63bcb）: 9 件中 8 件合格。TC-FR-TWN-07-62 は空き地の柵が木の茂みに見えて不合格（F-02 と同じ）
@@ -40,13 +41,14 @@
 | F-06 | 低 | 期待値が変わる既存の手動テスト（TC-FR-FLD-03-42、TC-IF-08-42〜58 の一部）に「反復 6 で変更」の印がない | 設計どおりへの修正 | 元の仕様書に印を付け、test-spec-it06 に置き換えの一覧を書いた |
 | F-07 | 低 | 手動テストの期待結果に、誤りの文・施設ごとの見た目がない。起動したときの文と地図でのランクの表示を確かめるテストがない | 設計どおりへの修正 | 期待結果に誤りの全文・施設ごとの見た目・起動文・ランクの表示を書いた。再試験で確かめた |
 | F-08 | 低 | 受けた依頼の上限 3 を直接書いている | 設計どおりへの修正 | `core.MaxAcceptedQuests` を使う |
+| F-09 | 中 | ui パッケージに単体テストを置いたため、CI（画面なし）の `go test ./...` で Ebitengine の初期化が落ちた | 設計どおりへの修正（ui の中の構成） | 描画を伴わない計算とそのテストを、Ebitengine に依存しない `internal/ui/uimodel` に移した（Claude Code が修正）。CI の設定は変えていない |
 
 ## 実装者からの提案
 
 | # | 提案 | 判定 |
 |---|---|---|
 | P-1 | 区画のタイル番号を選び、設計書の表と README に書く | 設計の範囲内（DES-UI-24 が任せた範囲）。開発者が承認した |
-| P-2 | 計算を windows_model.go に切り出し、ファイル指定で単体テストを実行する | 設計の範囲内 |
+| P-2 | 計算を windows_model.go に切り出し、ファイル指定で単体テストを実行する | 設計の範囲内。F-09 で `internal/ui/uimodel` に移した |
 | P-3 | 店の欄の見出しを「店」にし、売買数の操作を見出しの行に入れる | 設計の範囲内（U-5） |
 | P-4 | 依頼の行に評判を出す | 設計どおり（DES-UI-25） |
 | P-5 | 依頼板の窓と区画の窓の位置 | 設計の範囲内 |

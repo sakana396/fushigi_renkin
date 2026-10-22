@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"github.com/sakana396/fushigi_renkin/internal/ui/uimodel"
 	"image/color"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -19,7 +20,7 @@ func (g *Game) drawWindow(screen *ebiten.Image) {
 	g.windowDrawing = true
 	switch g.window {
 	case defs.FixtureWorkshopDoor:
-		g.workshopTab = workshopTab(g.workshopTab)
+		g.workshopTab = uimodel.WorkshopTab(g.workshopTab)
 		switch g.workshopTab {
 		case "錬金":
 			g.drawInventory(panel, false)

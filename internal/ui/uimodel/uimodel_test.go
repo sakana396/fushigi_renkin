@@ -1,4 +1,4 @@
-package ui
+package uimodel
 
 import (
 	"testing"
@@ -21,7 +21,7 @@ func TestWindowTarget(t *testing.T) {
 		{"TC-IF-08-63 対象外", core.Target{Kind: core.TargetEnemy, ID: "meadow"}, "", ""},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			w, f := windowForTarget(tc.target)
+			w, f := WindowForTarget(tc.target)
 			if w != tc.window || f != tc.facility {
 				t.Fatalf("%q %q", w, f)
 			}
@@ -32,16 +32,16 @@ func TestWindowTarget(t *testing.T) {
 func TestWindowTextAndGeometry(t *testing.T) {
 	t.Run("TC-IF-06-40 タブの初期値と保持", func(t *testing.T) {
 		for _, tab := range []string{"錬金", "ゴーレム", "在庫"} {
-			if workshopTab(tab) != tab {
+			if WorkshopTab(tab) != tab {
 				t.Fatal(tab)
 			}
 		}
-		if workshopTab("") != "錬金" {
+		if WorkshopTab("") != "錬金" {
 			t.Fatal("初期値")
 		}
 	})
 	t.Run("TC-FR-TWN-07-60 区画の名前", func(t *testing.T) {
-		if lotName("市場", 0) != "市場（空き地）" || lotName("市場", 2) != "市場 Lv2" {
+		if LotName("市場", 0) != "市場（空き地）" || LotName("市場", 2) != "市場 Lv2" {
 			t.Fatal("名前")
 		}
 	})
@@ -58,7 +58,7 @@ func TestWindowTextAndGeometry(t *testing.T) {
 			"inn":        {"", "cottage", "manor"},
 		} {
 			for level, want := range looks {
-				if got := lotLook(catalog.Facilities[id], level); got != want {
+				if got := LotLook(catalog.Facilities[id], level); got != want {
 					t.Errorf("%s 段階%d: got=%q want=%q", id, level, got, want)
 				}
 			}
@@ -71,14 +71,14 @@ func TestWindowTextAndGeometry(t *testing.T) {
 			"house":   {48, 49, 50, 60, 61, 62, 84, 86, 87},
 			"manor":   {48, 51, 50, 60, 63, 62, 84, 86, 87},
 		} {
-			if got := lotTiles(look); got != want {
+			if got := LotTiles(look); got != want {
 				t.Errorf("%q: got=%v want=%v", look, got, want)
 			}
 		}
 	})
 	t.Run("TC-IF-08-64 向きの印", func(t *testing.T) {
-		up := directionMarker(100, 100, defs.DirUp)
-		down := directionMarker(100, 100, defs.DirDown)
+		up := DirectionMarker(100, 100, defs.DirUp)
+		down := DirectionMarker(100, 100, defs.DirDown)
 		for i := 1; i < 6; i += 2 {
 			if up[i] >= 68 || down[i] <= 116 {
 				t.Fatal(up, down)
@@ -86,7 +86,7 @@ func TestWindowTextAndGeometry(t *testing.T) {
 		}
 	})
 	t.Run("TC-FR-PRG-05-60 日の文字列", func(t *testing.T) {
-		if dayText(2) != "2 日目" || dayNotice(2) != "2 日目になりました。依頼板の依頼が入れ替わりました" {
+		if DayText(2) != "2 日目" || DayNotice(2) != "2 日目になりました。依頼板の依頼が入れ替わりました" {
 			t.Fatal("日の表示")
 		}
 	})
@@ -94,13 +94,13 @@ func TestWindowTextAndGeometry(t *testing.T) {
 
 func TestQuestLines(t *testing.T) {
 	t.Run("TC-IF-06-41 依頼の条件と報酬", func(t *testing.T) {
-		a, b := questLines(defs.QuestDef{MinQuality: 20, Count: 3, Reward: 45, Reputation: 1}, "小麦粉")
+		a, b := QuestLines(defs.QuestDef{MinQuality: 20, Count: 3, Reward: 45, Reputation: 1}, "小麦粉")
 		if a != "小麦粉 Q20 以上 ×3" || b != "報酬: 45 円 / 評判 +1" {
 			t.Fatal(a, b)
 		}
 	})
 	t.Run("TC-IF-06-42 戻るボタンの位置", func(t *testing.T) {
-		if returnX != 10 || returnY != 76 || returnWidth != 120 || returnHeight != 28 || gatherTop != 112 || returnY+returnHeight >= gatherTop {
+		if ReturnX != 10 || ReturnY != 76 || ReturnWidth != 120 || ReturnHeight != 28 || GatherTop != 112 || ReturnY+ReturnHeight >= GatherTop {
 			t.Fatal("見出しと一覧が重なる")
 		}
 	})
@@ -121,17 +121,17 @@ func TestNoticeMessage(t *testing.T) {
 			{"同じ更新", "納品しました", []string{"工房ランク 2", "工房ランク 3"}, []int{2}, "工房ランク 2／工房ランク 3／2 日目になりました。依頼板の依頼が入れ替わりました"},
 			{"最新の日だけ", "前の知らせ", nil, []int{2, 3}, "3 日目になりました。依頼板の依頼が入れ替わりました"},
 		} {
-			if got := noticeMessage(tc.current, tc.ranks, tc.days); got != tc.want {
+			if got := NoticeMessage(tc.current, tc.ranks, tc.days); got != tc.want {
 				t.Errorf("%s: got=%q want=%q", tc.name, got, tc.want)
 			}
 		}
 		message := "錬金しました"
 		for day := 2; day <= 100; day++ {
-			message = noticeMessage(message, nil, []int{day})
-			if message != dayNotice(day) {
+			message = NoticeMessage(message, nil, []int{day})
+			if message != DayNotice(day) {
 				t.Fatalf("%d日目に過去の知らせが残る: %q", day, message)
 			}
-			if got := noticeMessage(message, nil, nil); got != message {
+			if got := NoticeMessage(message, nil, nil); got != message {
 				t.Fatalf("次の更新で変わる: %q", got)
 			}
 		}

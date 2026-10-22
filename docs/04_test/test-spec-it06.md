@@ -343,7 +343,7 @@ F-03 の検証補足: TC-FR-FLD-05-03 は、拾う場所でないマスにも未
 
 ## #107 工房・区画・依頼板・日の表示
 
-描画を伴わない計算は `go test -buildvcs=false internal/ui/windows_model.go internal/ui/windows_model_test.go` でも実行できる。Ebitengine を初期化しないため、WSL から実行可能。
+描画を伴わない計算は、Ebitengine に依存しないパッケージ `internal/ui/uimodel` に置き、`go test ./internal/ui/uimodel` で実行する。ui パッケージにテストを置くと、テストの実行時に Ebitengine が画面を初期化して、画面のない CI と WSL で落ちるため（REV-059 F-09）。
 
 | ID | 対象（要求・設計） | 前提 | 入力・操作 | 期待結果 | 種別 |
 |---|---|---|---|---|---|

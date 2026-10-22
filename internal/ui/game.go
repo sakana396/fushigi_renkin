@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"github.com/sakana396/fushigi_renkin/internal/ui/uimodel"
 	"image/color"
 	"sort"
 	"strings"
@@ -143,7 +144,7 @@ func (g *Game) Update() error {
 		}
 		if inpututil.IsKeyJustPressed(ebiten.KeyE) || inpututil.IsKeyJustPressed(ebiten.KeySpace) {
 			if fixture, ok := g.world.FacingTarget(); ok {
-				g.window, g.windowFacility = windowForTarget(fixture)
+				g.window, g.windowFacility = uimodel.WindowForTarget(fixture)
 			}
 		}
 	} else if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
@@ -186,7 +187,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 	} else if g.world.Player.Scene == core.SceneGather {
 		g.drawGather(screen)
 		g.drawBattleResult(screen)
-		g.button(screen, returnX, returnY, returnWidth, returnHeight, "街へ戻る", false, func() { g.result("街へ戻りました", g.world.LeaveGather()) })
+		g.button(screen, uimodel.ReturnX, uimodel.ReturnY, uimodel.ReturnWidth, uimodel.ReturnHeight, "街へ戻る", false, func() { g.result("街へ戻りました", g.world.LeaveGather()) })
 	} else {
 		g.drawMap(screen)
 		if g.window != "" {
@@ -203,7 +204,7 @@ func (g *Game) drawHeader(screen *ebiten.Image) {
 	if m, ok := g.catalog.Map(g.world.Player.Scene); ok {
 		place = m.Name
 	}
-	g.label(screen, 14, 10, fmt.Sprintf("ふしぎ錬金   %s   お金: %d   経過: %d 秒   %s   ゴーレム: %d/%d   時間 ×%d", place, g.world.Money, g.world.Now/60, dayText(g.world.Day()), len(g.world.Golems), g.world.GolemSlots(), g.timeScale), white)
+	g.label(screen, 14, 10, fmt.Sprintf("ふしぎ錬金   %s   お金: %d   経過: %d 秒   %s   ゴーレム: %d/%d   時間 ×%d", place, g.world.Money, g.world.Now/60, uimodel.DayText(g.world.Day()), len(g.world.Golems), g.world.GolemSlots(), g.timeScale), white)
 	g.label(screen, 1100, 10, "F12: チート（お金と素材）  F11: 時間 ×10", muted)
 	if g.world.Battle == nil && g.world.Player.Scene != core.SceneGather {
 		g.label(screen, 700, 10, g.rankText(), white)
@@ -252,7 +253,7 @@ func (g *Game) drawQuestRow(dst *ebiten.Image, id string, index, y int, accepted
 		g.label(dst, 20, y, "依頼の内容を確認できません", muted)
 		return
 	}
-	title, reward := questLines(quest, g.itemName(quest.Item))
+	title, reward := uimodel.QuestLines(quest, g.itemName(quest.Item))
 	g.label(dst, 20, y, title, white)
 	g.label(dst, 20, y+22, reward, muted)
 	if !accepted {
@@ -312,7 +313,7 @@ func (g *Game) showNotices() {
 		}
 		notices = append(notices, notice)
 	}
-	g.message = noticeMessage(g.message, notices, g.world.TakeNewDays())
+	g.message = uimodel.NoticeMessage(g.message, notices, g.world.TakeNewDays())
 }
 
 // availableRecipes は現在のランクで解放済みのレシピを ID 順に返す（DES-UI-11）。
@@ -682,7 +683,7 @@ func (g *Game) drawShop(dst *ebiten.Image) {
 
 // drawGather はプレイヤーの採取地をページ送りで表示する（DES-PKG-05、DES-UI-05、UC-01）。
 func (g *Game) drawGather(dst *ebiten.Image) {
-	const x, y, w = 10, gatherTop, 775
+	const x, y, w = 10, uimodel.GatherTop, 775
 	g.box(dst, x, y, w, 420, "採取地")
 	ids := g.availableGathers()
 	const rows = 6

@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"github.com/sakana396/fushigi_renkin/internal/ui/uimodel"
 	"image"
 	"image/color"
 	"math"
@@ -58,8 +59,8 @@ func (g *Game) drawMap(screen *ebiten.Image) {
 	for _, lot := range m.Lots {
 		facility := g.catalog.Facilities[lot.Facility]
 		level := g.world.Facilities[lot.Facility]
-		look := lotLook(facility, level)
-		for i, n := range lotTiles(look) {
+		look := uimodel.LotLook(facility, level)
+		for i, n := range uimodel.LotTiles(look) {
 			g.drawTile(dst, true, n, ox+(lot.X+i%3)*tilePixels, oy+(lot.Y+i/3)*tilePixels)
 		}
 	}
@@ -104,7 +105,7 @@ func (g *Game) drawMapNames(dst *ebiten.Image, m defs.MapDef, ox, oy, x0, x1, y0
 		if lot.X+3 <= x0 || lot.X >= x1 || lot.Y+3 <= y0 || lot.Y >= y1 {
 			continue
 		}
-		name := lotName(g.catalog.Facilities[lot.Facility].Name, g.world.Facilities[lot.Facility])
+		name := uimodel.LotName(g.catalog.Facilities[lot.Facility].Name, g.world.Facilities[lot.Facility])
 		ink := white
 		if facing && fixture.Kind == core.TargetLot && fixture.ID == lot.Facility {
 			name = "E: " + name
@@ -276,7 +277,7 @@ func (g *Game) drawPlayer(dst *ebiten.Image, ox, oy int) {
 	}
 	dst.DrawImage(tile, op)
 	ink := color.RGBA{255, 231, 75, 255}
-	points := directionMarker(x, y, p.Facing)
+	points := uimodel.DirectionMarker(x, y, p.Facing)
 	ax, ay, bx, by, cx, cy := points[0], points[1], points[2], points[3], points[4], points[5]
 	var path vector.Path
 	path.MoveTo(ax, ay)
