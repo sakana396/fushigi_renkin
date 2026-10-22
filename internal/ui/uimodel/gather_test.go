@@ -164,3 +164,38 @@ func TestGatherMap(t *testing.T) {
 		}
 	})
 }
+
+func TestEnemyAppearance(t *testing.T) {
+	for _, tc := range []struct {
+		name, unit, unitName string
+		tile                 int
+		initial              string
+	}{
+		{"TC-FR-FLD-05-84 スライム", "slime", "スライム", 108, ""},
+		{"TC-FR-FLD-05-84 甲殻虫", "beetle", "甲殻虫", 110, ""},
+		{"TC-FR-FLD-05-84 オオカミ", "wolf", "オオカミ", 123, ""},
+		{"TC-FR-FLD-05-84 石ゴーレム", "stone_golem", "石ゴーレム", 109, ""},
+		{"TC-FR-FLD-05-85 MODの日本語名", "mod_slime", "青スライム", -1, "青"},
+		{"TC-FR-FLD-05-85 MODの英語名", "mod_beast", "Beast", -1, "B"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			c := defs.Catalog{Units: map[string]defs.UnitDef{"slime": {Name: "スライム"}}}
+			c.Units[tc.unit] = defs.UnitDef{Name: tc.unitName}
+			site := defs.GatherDef{Battle: &defs.BattleDef{Enemies: []defs.Placement{{Unit: tc.unit}, {Unit: "slime"}}}}
+			tile, initial := EnemyAppearance(c, site)
+			if tile != tc.tile || initial != tc.initial {
+				t.Fatalf("絵=%d 頭文字=%q、期待=%d %q", tile, initial, tc.tile, tc.initial)
+			}
+			if got := EnemyName(c, site); got != tc.unitName+" たち" {
+				t.Fatalf("最初の敵の名前: %q", got)
+			}
+		})
+	}
+	t.Run("TC-FR-FLD-05-85 戦闘なし・敵なし・空の名前", func(t *testing.T) {
+		for _, site := range []defs.GatherDef{{}, {Battle: &defs.BattleDef{}}, {Battle: &defs.BattleDef{Enemies: []defs.Placement{{Unit: "mod_empty"}}}}} {
+			if tile, initial := EnemyAppearance(defs.Catalog{}, site); tile != -1 || initial != "" {
+				t.Fatalf("絵=%d 頭文字=%q", tile, initial)
+			}
+		}
+	})
+}

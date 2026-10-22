@@ -41,6 +41,14 @@ func (g *Game) drawMap(screen *ebiten.Image) {
 			if defs.TileInfo(ch).Kind == defs.CellLot {
 				continue
 			}
+			switch ch {
+			case '~':
+				g.drawWater(dst, px, py)
+				continue
+			case 'E':
+				g.drawMapEnemy(dst, m.ID, px, py)
+				continue
+			}
 			town, n := uimodel.MapTile(m, x, y, ch)
 			if ch == ground {
 				continue
@@ -164,6 +172,24 @@ func (g *Game) drawTileAlpha(dst *ebiten.Image, town bool, n, x, y int, alpha fl
 	op.ColorScale.ScaleAlpha(alpha)
 	op.GeoM.Translate(float64(x), float64(y))
 	dst.DrawImage(tile, op)
+}
+
+// drawWater は通れない水を青いマスと暗い青の縁で描く（DES-UI-26、DES-IT06 7章）。
+func (g *Game) drawWater(dst *ebiten.Image, x, y int) {
+	vector.DrawFilledRect(dst, float32(x), float32(y), tilePixels, tilePixels, color.RGBA{35, 81, 133, 255}, false)
+	vector.DrawFilledRect(dst, float32(x+3), float32(y+3), tilePixels-6, tilePixels-6, color.RGBA{53, 119, 184, 255}, false)
+}
+
+// drawMapEnemy は最初の敵の絵、または色の四角と名前の頭文字を描く（DES-UI-26）。
+func (g *Game) drawMapEnemy(dst *ebiten.Image, siteID string, x, y int) {
+	tile, initial := uimodel.EnemyAppearance(g.catalog, g.catalog.Gathers[siteID])
+	if tile >= 0 {
+		g.drawTile(dst, false, tile, x, y)
+		return
+	}
+	vector.DrawFilledRect(dst, float32(x+6), float32(y+6), tilePixels-12, tilePixels-12, color.RGBA{163, 70, 75, 255}, false)
+	w, h := text.Measure(initial, g.face, 0)
+	g.label(dst, x+(tilePixels-int(math.Ceil(w)))/2, y+(tilePixels-int(math.Ceil(h)))/2, initial, white)
 }
 
 // drawPlayer は足元と当たり判定を合わせ、向きの印を描く（DES-UI-17）。

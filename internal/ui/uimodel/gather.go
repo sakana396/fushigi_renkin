@@ -68,6 +68,23 @@ func EnemyName(c defs.Catalog, site defs.GatherDef) string {
 	return name
 }
 
+// EnemyAppearance は最初の敵をTDの絵番号に対応付け、表にない敵には名前の頭文字を返す（DES-UI-26）。
+// 絵番号が-1なら、色の四角と頭文字で描く。
+func EnemyAppearance(c defs.Catalog, site defs.GatherDef) (tile int, initial string) {
+	if site.Battle == nil || len(site.Battle.Enemies) == 0 {
+		return -1, ""
+	}
+	id := site.Battle.Enemies[0].Unit
+	tiles := map[string]int{"slime": 108, "beetle": 110, "wolf": 123, "stone_golem": 109}
+	if tile, ok := tiles[id]; ok {
+		return tile, ""
+	}
+	for _, ch := range c.Units[id].Name {
+		return -1, string(ch)
+	}
+	return -1, ""
+}
+
 // StackText は採取結果と戦闘報酬を日本語名・品質・個数で並べる（DES-UI-26・29）。
 func StackText(stacks []core.Stack, name func(string) string) string {
 	parts := make([]string, 0, len(stacks))
