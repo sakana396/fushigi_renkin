@@ -1,6 +1,7 @@
 package uimodel
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 
@@ -132,7 +133,7 @@ func TestGatherMap(t *testing.T) {
 			ch   byte
 			town bool
 			n    int
-		}{{',', true, 0}, {'.', false, 48}, {'*', true, 5}, {'o', false, 6}, {'T', true, 4}, {'#', false, 40}} {
+		}{{',', true, 0}, {'.', false, 48}, {'*', true, 5}, {'o', false, -1}, {'T', true, 4}, {'#', false, 40}} {
 			town, n := MapTile(defs.MapDef{}, 0, 0, tc.ch)
 			if town != tc.town || n != tc.n {
 				t.Errorf("%c: %v %d", tc.ch, town, n)
@@ -198,4 +199,26 @@ func TestEnemyAppearance(t *testing.T) {
 			}
 		}
 	})
+}
+
+func TestBattleStartErrorText(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		err   error
+		ticks uint64
+		want  string
+	}{
+		{"TC-IF-07-54 残り1tick", core.ErrInjured, 1, "操作失敗: 負傷中です（残り 1 秒）"},
+		{"TC-IF-07-54 残り60tick", core.ErrInjured, 60, "操作失敗: 負傷中です（残り 1 秒）"},
+		{"TC-IF-07-54 包んだ負傷の残り61tick", fmt.Errorf("探索: %w", core.ErrInjured), 61, "操作失敗: 負傷中です（残り 2 秒）"},
+		{"TC-IF-07-54 残り0tick", core.ErrInjured, 0, "操作失敗: 負傷中です（残り 0 秒）"},
+		{"TC-IF-07-54 別の誤り", core.ErrNoBattle, 61, "操作失敗: " + core.ErrNoBattle.Error()},
+		{"TC-IF-07-54 誤りなし", nil, 0, ""},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := BattleStartErrorText(tc.err, tc.ticks); got != tc.want {
+				t.Errorf("%q, want %q", got, tc.want)
+			}
+		})
+	}
 }

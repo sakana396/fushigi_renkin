@@ -42,6 +42,10 @@ func (g *Game) drawMap(screen *ebiten.Image) {
 				continue
 			}
 			switch ch {
+			case 'o':
+				_, alpha := uimodel.PickDisplay(g.world.PickRemaining(m.ID, x, y))
+				g.drawRock(dst, px, py, alpha)
+				continue
 			case '~':
 				g.drawWater(dst, px, py)
 				continue
@@ -236,4 +240,21 @@ func (g *Game) exitName(to string) string {
 		return m.Name + "へ"
 	}
 	return fmt.Sprintf("%sへ", to)
+}
+
+// drawRock は背景のない灰色の岩を床に重ね、空のときは絵全体を薄くする（DES-UI-26、DES-IT06 7章）。
+func (g *Game) drawRock(dst *ebiten.Image, x, y int, alpha float32) {
+	if g.rockImage == nil {
+		g.rockImage = ebiten.NewImage(tilePixels, tilePixels)
+		// 大小の岩に暗い縁と左上からの光を付ける。
+		for _, rock := range []struct{ x, y, radius float32 }{{15, 32, 10}, {29, 29, 14}, {23, 19, 12}} {
+			vector.DrawFilledCircle(g.rockImage, rock.x, rock.y, rock.radius, color.RGBA{66, 69, 75, 255}, false)
+			vector.DrawFilledCircle(g.rockImage, rock.x-1, rock.y-1, rock.radius-2, color.RGBA{133, 137, 145, 255}, false)
+			vector.DrawFilledCircle(g.rockImage, rock.x-3, rock.y-4, rock.radius/3, color.RGBA{189, 193, 199, 255}, false)
+		}
+	}
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(float64(x), float64(y))
+	op.ColorScale.ScaleAlpha(alpha)
+	dst.DrawImage(g.rockImage, op)
 }

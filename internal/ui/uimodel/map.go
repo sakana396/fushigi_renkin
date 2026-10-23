@@ -63,7 +63,7 @@ func GroundTile(ch byte) (bool, int) {
 	}
 }
 
-// MapTile は文字と隣の文字を絵番号に対応付ける（DES-UI-15、4.3 節）。
+// MapTile は文字と隣の文字を絵番号に対応付ける。岩は画像を使わず-1を返す（DES-UI-15・26）。
 func MapTile(m defs.MapDef, x, y int, ch byte) (bool, int) {
 	switch ch {
 	case '.':
@@ -98,7 +98,7 @@ func MapTile(m defs.MapDef, x, y int, ch byte) (bool, int) {
 	case '*':
 		return true, 5
 	case 'o':
-		return false, 6
+		return false, -1
 	case 'T':
 		return true, 4
 	case 'D':

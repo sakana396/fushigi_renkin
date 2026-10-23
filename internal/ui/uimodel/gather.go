@@ -1,6 +1,7 @@
 package uimodel
 
 import (
+	"errors"
 	"fmt"
 	"strings"
 
@@ -124,3 +125,14 @@ func BattleResultLines(report core.BattleReport, site string, now uint64, name f
 
 // GatherExitMarker は街の採取地行き出口に矢印と明るい名前を付ける（DES-UI-28 U-3）。
 func GatherExitMarker(to string) bool { return to == defs.ExitGather }
+
+// BattleStartErrorText は負傷による開始失敗に一覧と同じ残り秒数を付ける（DES-UI-26、UC-12 1a）。
+func BattleStartErrorText(err error, remaining uint64) string {
+	if err == nil {
+		return ""
+	}
+	if errors.Is(err, core.ErrInjured) {
+		return fmt.Sprintf("操作失敗: %s（残り %d 秒）", core.ErrInjured, Seconds(remaining))
+	}
+	return "操作失敗: " + err.Error()
+}

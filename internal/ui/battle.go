@@ -357,7 +357,7 @@ func (g *Game) drawBattleResult(dst *ebiten.Image) {
 		return
 	}
 	const x, y, w = 10, 70, 1000
-	g.box(dst, x, y, w, 440, "戦闘の結果")
+	g.box(dst, x, y, w, 440, "")
 	site, _ := g.catalog.Gather(report.GatherID)
 	for i, line := range uimodel.BattleResultLines(*report, site.Name, g.world.Now, g.itemName) {
 		g.label(dst, x+8, y+35+i*25, line, white)

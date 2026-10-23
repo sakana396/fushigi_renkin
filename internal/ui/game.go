@@ -54,6 +54,7 @@ type Game struct {
 	windowDrawing      bool
 	windowImage        *ebiten.Image
 	mapImage           *ebiten.Image
+	rockImage          *ebiten.Image
 	markerImage        *ebiten.Image
 	townTiles          *ebiten.Image
 	dungeonTiles       *ebiten.Image
@@ -151,6 +152,13 @@ func (g *Game) Update() error {
 				case "battle":
 					err := g.world.StartBattleFacing()
 					g.result("戦闘を始めました", err)
+					if err != nil {
+						var remaining uint64
+						if g.world.Now < g.world.InjuredUntil {
+							remaining = g.world.InjuredUntil - g.world.Now
+						}
+						g.message = uimodel.BattleStartErrorText(err, remaining)
+					}
 					if err == nil {
 						g.battleAction = moveAction
 						g.battleItem = core.ItemKey{}
