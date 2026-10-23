@@ -14,7 +14,7 @@ import (
 	"github.com/sakana396/fushigi_renkin/internal/defs"
 )
 
-const tilePixels = 48
+const tilePixels = uimodel.TilePixels
 
 // drawMap は見えるマスだけをカメラの範囲に描く（DES-UI-15、DES-UI-16）。
 func (g *Game) drawMap(screen *ebiten.Image) {
@@ -27,33 +27,57 @@ func (g *Game) drawMap(screen *ebiten.Image) {
 	}
 	dst := g.mapImage
 	dst.Clear()
-	ox := cameraOffset(m.Width()*tilePixels, width, g.world.Player.X/2)
-	oy := cameraOffset(m.Height()*tilePixels, height-72, g.world.Player.Y/2)
-	ground := dominantFloor(m)
-	x0, x1 := visibleRange(ox, m.Width(), width)
-	y0, y1 := visibleRange(oy, m.Height(), height-72)
+	ox := uimodel.CameraOffset(m.Width()*tilePixels, width, g.world.Player.X/2)
+	oy := uimodel.CameraOffset(m.Height()*tilePixels, height-72, g.world.Player.Y/2)
+	ground := uimodel.DominantFloor(m)
+	x0, x1 := uimodel.VisibleRange(ox, m.Width(), width)
+	y0, y1 := uimodel.VisibleRange(oy, m.Height(), height-72)
 	for y := y0; y < y1; y++ {
 		for x := x0; x < x1; x++ {
 			px, py := ox+x*tilePixels, oy+y*tilePixels
-			baseTown, baseNumber := groundTile(ground)
+			baseTown, baseNumber := uimodel.GroundTile(ground)
 			g.drawTile(dst, baseTown, baseNumber, px, py)
 			ch := m.Cell(x, y)
 			if defs.TileInfo(ch).Kind == defs.CellLot {
 				continue
 			}
-			town, n := mapTile(m, x, y, ch)
+			switch ch {
+			case 'o':
+				_, alpha := uimodel.PickDisplay(g.world.PickRemaining(m.ID, x, y))
+				g.drawRock(dst, px, py, alpha)
+				continue
+			case '~':
+				g.drawWater(dst, px, py)
+				continue
+			case 'E':
+				g.drawMapEnemy(dst, m.ID, px, py)
+				continue
+			}
+			town, n := uimodel.MapTile(m, x, y, ch)
 			if ch == ground {
 				continue
 			}
 			if ch >= '1' && ch <= '9' {
 				for _, exit := range m.Exits {
 					if exit.Mark == ch {
-						town, n = exitTile(exit.Look)
+						town, n = uimodel.ExitTile(exit.Look)
 						break
 					}
 				}
 			}
-			g.drawTile(dst, town, n, px, py)
+			alpha := float32(1)
+			if defs.TileInfo(ch).Kind == defs.CellPick {
+				_, alpha = uimodel.PickDisplay(g.world.PickRemaining(m.ID, x, y))
+			}
+			g.drawTileAlpha(dst, town, n, px, py, alpha)
+			for _, exit := range m.Exits {
+				if exit.X == x && exit.Y == y && uimodel.GatherExitMarker(exit.To) {
+					arrow := uimodel.ExitArrow(px, py)
+					vector.StrokeLine(dst, arrow[0], arrow[1], arrow[2], arrow[3], 3, color.RGBA{255, 235, 93, 255}, false)
+					vector.StrokeLine(dst, arrow[4], arrow[5], arrow[2], arrow[3], 3, color.RGBA{255, 235, 93, 255}, false)
+					vector.StrokeLine(dst, 2*arrow[0]-arrow[4], arrow[5], arrow[2], arrow[3], 3, color.RGBA{255, 235, 93, 255}, false)
+				}
+			}
 		}
 	}
 	for _, lot := range m.Lots {
@@ -79,6 +103,13 @@ func (g *Game) drawMapNames(dst *ebiten.Image, m defs.MapDef, ox, oy, x0, x1, y0
 			ch := m.Cell(x, y)
 			info := defs.TileInfo(ch)
 			name := info.Name
+			if info.Kind == defs.CellPick {
+				name, _ = uimodel.PickDisplay(g.world.PickRemaining(m.ID, x, y))
+			}
+			if info.Kind == defs.CellEnemy {
+				name = uimodel.EnemyName(g.catalog, g.catalog.Gathers[m.ID])
+			}
+			bright := false
 			if info.Kind == defs.CellLot {
 				continue
 			}
@@ -86,6 +117,7 @@ func (g *Game) drawMapNames(dst *ebiten.Image, m defs.MapDef, ox, oy, x0, x1, y0
 				for _, exit := range m.Exits {
 					if exit.Mark == ch {
 						name = g.exitName(exit.To)
+						bright = uimodel.GatherExitMarker(exit.To)
 						break
 					}
 				}
@@ -94,7 +126,10 @@ func (g *Game) drawMapNames(dst *ebiten.Image, m defs.MapDef, ox, oy, x0, x1, y0
 				continue
 			}
 			ink := white
-			if facing && info.Fixture != "" && info.Fixture == fixture.ID {
+			if bright {
+				ink = color.RGBA{255, 235, 93, 255}
+			}
+			if uimodel.FacingCell(fixture, facing, x, y) && (info.Kind == defs.CellFixture || info.Kind == defs.CellPick || info.Kind == defs.CellEnemy) {
 				name = "E: " + name
 				ink = color.RGBA{255, 235, 93, 255}
 			}
@@ -119,135 +154,18 @@ func (g *Game) drawMapNames(dst *ebiten.Image, m defs.MapDef, ox, oy, x0, x1, y0
 func (g *Game) drawMapName(dst *ebiten.Image, x, y int, name string, ink color.RGBA) {
 	w, h := text.Measure(name, g.face, 0)
 	boxW, boxH := int(math.Ceil(w))+6, int(math.Ceil(h))+4
-	if x+boxW > width {
-		x = width - boxW
-	}
-	if x < 0 {
-		x = 0
-	}
-	y -= boxH
-	if y < 0 {
-		y = 0
-	}
+	x, y = uimodel.MapNamePosition(x, y, boxW, boxH, width)
 	vector.DrawFilledRect(dst, float32(x), float32(y), float32(boxW), float32(boxH), color.RGBA{22, 28, 37, 230}, false)
 	g.label(dst, x+3, y+2, name, ink)
 }
 
-// cameraOffset は小さい地図を中央に置き、大きい地図の端で止める（DES-UI-16）。
-func cameraOffset(size, viewport, player int) int {
-	if size <= viewport {
-		return (viewport - size) / 2
-	}
-	offset := viewport/2 - player
-	if offset > 0 {
-		return 0
-	}
-	if offset < viewport-size {
-		return viewport - size
-	}
-	return offset
-}
-
-// visibleRange は表示枠に交わるマスの範囲を求める（DES-UI-16）。
-func visibleRange(offset, count, viewport int) (int, int) {
-	first := 0
-	if offset < 0 {
-		first = (-offset) / tilePixels
-	}
-	last := (viewport - offset + tilePixels - 1) / tilePixels
-	if last > count {
-		last = count
-	}
-	return first, last
-}
-
-// dominantFloor は下地の床を個数と優先順で選ぶ（DES-UI-15）。
-func dominantFloor(m defs.MapDef) byte {
-	count := map[byte]int{'.': 0, ',': 0, ':': 0}
-	for _, row := range m.Rows {
-		for i := 0; i < len(row); i++ {
-			if _, ok := count[row[i]]; ok {
-				count[row[i]]++
-			}
-		}
-	}
-	best := byte('.')
-	for _, ch := range []byte{',', ':'} {
-		if count[ch] > count[best] {
-			best = ch
-		}
-	}
-	return best
-}
-
-func groundTile(ch byte) (bool, int) {
-	switch ch {
-	case ',':
-		return true, 0
-	case ':':
-		return true, 25
-	default:
-		return false, 48
-	}
-}
-
-// mapTile は文字と隣の文字を絵番号に対応付ける（DES-UI-15、4.3 節）。
-func mapTile(m defs.MapDef, x, y int, ch byte) (bool, int) {
-	switch ch {
-	case '.':
-		return false, 48
-	case ',':
-		return true, 0
-	case ':':
-		return true, 25
-	case '#':
-		return false, 40
-	case 'W':
-		left, right := m.Cell(x-1, y), m.Cell(x+1, y)
-		if left != 'W' && !(left >= '1' && left <= '9') && (right == 'W' || right >= '1' && right <= '9') {
-			return true, 72
-		}
-		if right != 'W' && !(right >= '1' && right <= '9') && (left == 'W' || left >= '1' && left <= '9') {
-			return true, 75
-		}
-		return true, 73
-	case '^':
-		n := 53
-		if m.Cell(x-1, y) != '^' && m.Cell(x+1, y) == '^' {
-			n = 52
-		}
-		if m.Cell(x+1, y) != '^' && m.Cell(x-1, y) == '^' {
-			n = 54
-		}
-		if m.Cell(x, y-1) == '^' {
-			n += 12
-		}
-		return true, n
-	case 'T':
-		return true, 4
-	case 'D':
-		return true, 86
-	case 'M':
-		return true, 57
-	case 'Q':
-		return true, 83
-	}
-	return true, 25
-}
-
-func exitTile(look string) (bool, int) {
-	switch look {
-	case "stone_door":
-		return false, 45
-	case "wood_door":
-		return true, 86
-	default:
-		return true, 25
-	}
-}
-
 // drawTile は番号 n の 16×16 px を 3 倍で描く（DES-UI-14、DES-UI-16）。
 func (g *Game) drawTile(dst *ebiten.Image, town bool, n, x, y int) {
+	g.drawTileAlpha(dst, town, n, x, y, 1)
+}
+
+// drawTileAlpha は空の拾う場所だけ同じ絵を半透明にする（DES-UI-26）。
+func (g *Game) drawTileAlpha(dst *ebiten.Image, town bool, n, x, y int, alpha float32) {
 	sheet := g.dungeonTiles
 	if town {
 		sheet = g.townTiles
@@ -255,8 +173,27 @@ func (g *Game) drawTile(dst *ebiten.Image, town bool, n, x, y int) {
 	tile := sheet.SubImage(image.Rect((n%12)*16, (n/12)*16, (n%12+1)*16, (n/12+1)*16)).(*ebiten.Image)
 	op := &ebiten.DrawImageOptions{}
 	op.GeoM.Scale(3, 3)
+	op.ColorScale.ScaleAlpha(alpha)
 	op.GeoM.Translate(float64(x), float64(y))
 	dst.DrawImage(tile, op)
+}
+
+// drawWater は通れない水を青いマスと暗い青の縁で描く（DES-UI-26、DES-IT06 7章）。
+func (g *Game) drawWater(dst *ebiten.Image, x, y int) {
+	vector.DrawFilledRect(dst, float32(x), float32(y), tilePixels, tilePixels, color.RGBA{35, 81, 133, 255}, false)
+	vector.DrawFilledRect(dst, float32(x+3), float32(y+3), tilePixels-6, tilePixels-6, color.RGBA{53, 119, 184, 255}, false)
+}
+
+// drawMapEnemy は最初の敵の絵、または色の四角と名前の頭文字を描く（DES-UI-26）。
+func (g *Game) drawMapEnemy(dst *ebiten.Image, siteID string, x, y int) {
+	tile, initial := uimodel.EnemyAppearance(g.catalog, g.catalog.Gathers[siteID])
+	if tile >= 0 {
+		g.drawTile(dst, false, tile, x, y)
+		return
+	}
+	vector.DrawFilledRect(dst, float32(x+6), float32(y+6), tilePixels-12, tilePixels-12, color.RGBA{163, 70, 75, 255}, false)
+	w, h := text.Measure(initial, g.face, 0)
+	g.label(dst, x+(tilePixels-int(math.Ceil(w)))/2, y+(tilePixels-int(math.Ceil(h)))/2, initial, white)
 }
 
 // drawPlayer は足元と当たり判定を合わせ、向きの印を描く（DES-UI-17）。
@@ -303,4 +240,21 @@ func (g *Game) exitName(to string) string {
 		return m.Name + "へ"
 	}
 	return fmt.Sprintf("%sへ", to)
+}
+
+// drawRock は背景のない灰色の岩を床に重ね、空のときは絵全体を薄くする（DES-UI-26、DES-IT06 7章）。
+func (g *Game) drawRock(dst *ebiten.Image, x, y int, alpha float32) {
+	if g.rockImage == nil {
+		g.rockImage = ebiten.NewImage(tilePixels, tilePixels)
+		// 大小の岩に暗い縁と左上からの光を付ける。
+		for _, rock := range []struct{ x, y, radius float32 }{{15, 32, 10}, {29, 29, 14}, {23, 19, 12}} {
+			vector.DrawFilledCircle(g.rockImage, rock.x, rock.y, rock.radius, color.RGBA{66, 69, 75, 255}, false)
+			vector.DrawFilledCircle(g.rockImage, rock.x-1, rock.y-1, rock.radius-2, color.RGBA{133, 137, 145, 255}, false)
+			vector.DrawFilledCircle(g.rockImage, rock.x-3, rock.y-4, rock.radius/3, color.RGBA{189, 193, 199, 255}, false)
+		}
+	}
+	op := &ebiten.DrawImageOptions{}
+	op.GeoM.Translate(float64(x), float64(y))
+	op.ColorScale.ScaleAlpha(alpha)
+	dst.DrawImage(g.rockImage, op)
 }

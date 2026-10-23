@@ -3,12 +3,12 @@ package ui
 import (
 	"fmt"
 	"image/color"
-	"strings"
 	"unicode/utf8"
 
 	"github.com/hajimehoshi/ebiten/v2"
 	"github.com/hajimehoshi/ebiten/v2/vector"
 	"github.com/sakana396/fushigi_renkin/internal/core"
+	"github.com/sakana396/fushigi_renkin/internal/ui/uimodel"
 )
 
 const battleX, battleY, cellSize = 20, 140, 85
@@ -50,7 +50,7 @@ func (g *Game) advanceBattleEvents() {
 	g.battleLogPage = pageLimit(g.battleEventIndex, 8)
 }
 
-// endBattleEvents は再生または飛ばしを終え、勝敗を採取地に示す（DES-UI-12、DES-UI-10）。
+// endBattleEvents は再生または飛ばしを終え、勝敗を採取地に示す（DES-UI-12、DES-UI-29）。
 func (g *Game) endBattleEvents() {
 	g.battleEvents = nil
 	g.battleEventIndex = 0
@@ -63,6 +63,7 @@ func (g *Game) endBattleEvents() {
 			g.message = "敗北しました"
 		}
 		g.battleItem = core.ItemKey{}
+		g.window = uimodel.BattleResultWindow(false, g.world.LastBattle)
 	} else if g.world.Battle != nil {
 		g.battleLogPage = pageLimit(len(g.world.Battle.Log), 8)
 	}
@@ -349,36 +350,17 @@ func (g *Game) drawBattleLog(dst *ebiten.Image, log []string, x, y, w, h int) {
 	g.pageControls(dst, x+8, y+h-30, len(log), rows, &g.battleLogPage)
 }
 
-// drawBattleResult は前回の勝敗、報酬または負傷、記録を採取地に表示する（DES-UI-10）。
+// drawBattleResult は前回の勝敗、報酬または負傷、記録を採取地に表示する（DES-UI-10・29）。
 func (g *Game) drawBattleResult(dst *ebiten.Image) {
 	report := g.world.LastBattle
 	if report == nil {
 		return
 	}
-	const x, y, w = 800, 95, 790
-	g.box(dst, x, y, w, 825, "探索の結果")
+	const x, y, w = 10, 70, 1000
+	g.box(dst, x, y, w, 440, "")
 	site, _ := g.catalog.Gather(report.GatherID)
-	if report.Won {
-		g.label(dst, x+8, y+35, site.Name+": 勝利", white)
-		parts := make([]string, 0, len(report.Rewards))
-		for _, stack := range report.Rewards {
-			parts = append(parts, fmt.Sprintf("%s Q%d ×%d", g.itemName(stack.Key.ItemID), stack.Key.Quality, stack.Count))
-		}
-		if len(parts) == 0 {
-			parts = append(parts, "なし")
-		}
-		g.label(dst, x+8, y+60, "報酬: "+strings.Join(parts, "、"), white)
-	} else {
-		g.label(dst, x+8, y+35, site.Name+": 敗北", white)
-		remaining := uint64(0)
-		if g.world.Now < report.InjuredUntil {
-			remaining = (report.InjuredUntil - g.world.Now + 59) / 60
-		}
-		if remaining == 0 {
-			g.label(dst, x+8, y+60, "負傷: 治った", white)
-		} else {
-			g.label(dst, x+8, y+60, fmt.Sprintf("負傷: 残り %d 秒", remaining), white)
-		}
+	for i, line := range uimodel.BattleResultLines(*report, site.Name, g.world.Now, g.itemName) {
+		g.label(dst, x+8, y+35+i*25, line, white)
 	}
 	g.drawBattleLog(dst, report.Log, x+8, y+105, w-16, 285)
 }
